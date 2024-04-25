@@ -24,6 +24,7 @@ pub enum ItemTypes {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug)]
 pub enum BlockKeywords {
     LATTICE_CART,
     LATTICE_ABC,
@@ -43,4 +44,11 @@ pub enum BlockKeywords {
     SPECIES_LCAO_STATES,
     EXTERNAL_PRESSURE,
     IONIC_VELOCITIES,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+pub enum CellLatticeVectors {
+    LATTICE_ABC,
+    LATTICE_CART,
 }
