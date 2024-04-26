@@ -1,6 +1,12 @@
 #![allow(dead_code)]
-mod de;
-mod error;
+use data::{IonicPosition, LatticeParam};
+
+mod data;
 mod keywords;
-mod parsers;
-mod ser;
+mod parsing;
+
+#[derive(Debug)]
+pub struct CellDocument {
+    lattice: LatticeParam,
+    ionic_positions: IonicPosition,
+}
