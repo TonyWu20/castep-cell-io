@@ -1,3 +1,5 @@
+use super::CellData;
+
 #[derive(Debug, Clone, Copy)]
 pub enum LatticeParam {
     LatticeCart(LatticeCart),
@@ -39,3 +41,6 @@ impl LatticeABC {
         }
     }
 }
+
+/// Marker trait implmentation
+impl CellData for LatticeParam {}
