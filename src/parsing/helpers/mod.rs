@@ -28,6 +28,7 @@ fn get_keyword<'s>(input: &mut &'s str) -> PResult<&'s str> {
     alt((strip_to_block_name, field_name)).parse_next(input)
 }
 
+// TODO! Handle `Misc` case to skip the unwanted data
 pub fn current_sections(input: &mut &str) -> PResult<DocumentSections> {
     let keyword: &str = get_keyword(input)?;
     let assign = alt((assign_lattice_type, assign_positions_type)).parse(keyword);

@@ -37,16 +37,19 @@ impl<'a> CellParser<'a> {
                     self.ionic_positions = Some(positions);
                 }
                 _ => {
-                    if self.lattice_param.is_some() && self.ionic_positions.is_some() {
-                        break;
-                    }
+                    println!("{:?}", section)
                 }
+            }
+            if self.lattice_param.is_some() && self.ionic_positions.is_some() {
+                println!("Done");
+                break;
             }
         }
         let cell_doc = CellDocument::new(
             self.lattice_param.unwrap(),
             self.ionic_positions.as_ref().unwrap().to_owned(),
         );
+
         Ok(cell_doc)
     }
 }
@@ -61,6 +64,11 @@ mod test {
     fn test_cell_parser() {
         let root = env!("CARGO_MANIFEST_DIR");
         let path = Path::new(root).join("SAC_GDY_V.cell");
+        let input = fs::read_to_string(path).unwrap();
+        let mut cell_parser = CellParser::from_str(&input);
+        let cell_doc = cell_parser.parse().unwrap();
+        println!("{:#?}", cell_doc);
+        let path = Path::new(root).join("SAC_GDY_V_test.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from_str(&input);
         let cell_doc = cell_parser.parse().unwrap();
