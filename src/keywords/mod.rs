@@ -23,7 +23,7 @@ pub enum ItemTypes {
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum DocumentSections {
-    CellLatticeVectors(CellLatticeVectorsKeywords),
+    CellLatticeVectors(LatticeBlockType),
     IonicPositions(PositionsKeywords),
     KPoint,
     Symmetry,
