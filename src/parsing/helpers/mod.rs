@@ -49,7 +49,7 @@ mod test {
 
     use super::{current_sections, keywords::ionic_positions::parse_ionic_positions};
 
-    const TEST_DOC: &'static str = r#"%BLOCK LATTICE_CART
+    const TEST_DOC: &str = r#"%BLOCK LATTICE_CART
    18.931530020488704480   -0.000000000000003553    0.000000000000000000
    -9.465765010246645517   16.395185930251127360    0.000000000000000000
     0.000000000000000000    0.000000000000000000    9.999213039981000861
@@ -220,7 +220,7 @@ FIX_COM : false
 ",
         ];
         block_input.iter_mut().for_each(|s| {
-            if let Ok(_) = current_sections(s) {
+            if current_sections(s).is_ok() {
                 let data = get_block_data(s);
                 println!("{:?}", data);
                 // println!(

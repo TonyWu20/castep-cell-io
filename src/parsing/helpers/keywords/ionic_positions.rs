@@ -39,7 +39,7 @@ fn parse_mixture(input: &mut &str) -> PResult<Mixture> {
         let id = id
             .parse::<usize>()
             .map_err(|_| ErrMode::Cut(ContextError::<StrContext>::new()))?;
-        return Ok(Mixture::new(id, val));
+        Ok(Mixture::new(id, val))
     } else {
         Err(ErrMode::Cut(ContextError::<StrContext>::new()))
     }
@@ -69,7 +69,7 @@ fn parse_line_of_position(input: &mut &str) -> PResult<IonicPosition> {
 
 pub fn parse_ionic_positions(input: &mut &str) -> Result<Vec<IonicPosition>, CellParseError> {
     let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
-    let mut lines: Vec<&str> = data.lines().into_iter().collect();
+    let mut lines: Vec<&str> = data.lines().collect();
     lines
         .iter_mut()
         .map(|line| parse_line_of_position(line).map_err(|_| CellParseError::Invalid))

@@ -87,13 +87,10 @@ mod test {
 %ENDBLOCK LATTICE_CART
 ";
         let section = current_sections(&mut input).unwrap();
-        match section {
-            DocumentSections::CellLatticeVectors(LatticeBlockType::LATTICE_CART) => {
-                let data = get_block_data(&mut input).unwrap();
-                let lattice_cart = parse_lattice_cart(data).unwrap();
-                println!("{:?}", lattice_cart);
-            }
-            _ => (),
+        if let DocumentSections::CellLatticeVectors(LatticeBlockType::LATTICE_CART) = section {
+            let data = get_block_data(&mut input).unwrap();
+            let lattice_cart = parse_lattice_cart(data).unwrap();
+            println!("{:?}", lattice_cart);
         }
     }
 }
