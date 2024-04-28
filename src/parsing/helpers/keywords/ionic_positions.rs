@@ -18,13 +18,13 @@ use crate::{
     parsing::CellParseError,
 };
 
-fn assign_positions_frac(input: &mut &str) -> PResult<DocumentSections> {
+fn assign_positions_frac<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     Caseless("positions_frac")
         .map(|_| DocumentSections::IonicPositions(PositionsKeywords::POSITIONS_FRAC))
         .parse_next(input)
 }
 
-fn assign_positions_abs(input: &mut &str) -> PResult<DocumentSections> {
+fn assign_positions_abs<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     Caseless("positions_abs")
         .map(|_| DocumentSections::IonicPositions(PositionsKeywords::POSITIONS_ABS))
         .parse_next(input)
@@ -45,7 +45,7 @@ fn parse_mixture(input: &mut &str) -> PResult<Mixture> {
     }
 }
 
-pub fn assign_positions_type(input: &mut &str) -> PResult<DocumentSections> {
+pub fn assign_positions_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     alt((assign_positions_frac, assign_positions_abs)).parse_next(input)
 }
 
@@ -69,7 +69,11 @@ fn parse_line_of_position(input: &mut &str) -> PResult<IonicPosition> {
 
 pub fn parse_ionic_positions(input: &mut &str) -> Result<Vec<IonicPosition>, CellParseError> {
     let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
-    let mut lines: Vec<&str> = data.lines().collect();
+    let mut lines: Vec<&str> = data
+        .lines()
+        // Filter out blank lines to prevent error in `parse_line_of_position`
+        .filter_map(|s| if s.trim().len() > 0 { Some(s) } else { None })
+        .collect();
     lines
         .iter_mut()
         .map(|line| parse_line_of_position(line).map_err(|_| CellParseError::Invalid))
@@ -79,24 +83,20 @@ pub fn parse_ionic_positions(input: &mut &str) -> Result<Vec<IonicPosition>, Cel
 #[cfg(test)]
 mod test {
 
-    use crate::parsing::helpers::{
-        block::get_block_data, keywords::ionic_positions::parse_ionic_positions,
-    };
+    use crate::parsing::helpers::keywords::ionic_positions::parse_ionic_positions;
 
     #[test]
     fn keywords_position() {
         let mut input = "  C  0.0756034347004260  0.0756034355668187  0.5000000004346841
   C  0.1496332166229109  0.1496332194727908  0.5000000000710555
-  C  0.2145289813410105  0.2145289823390266  0.4999999994942101
+  C  0.2145289813410105  0.2145289823390266  0.4999999994942101 ##
   C  0.4243965644332829 -0.0000000008663758  0.5000000004346841
   C  0.3503667805273500 -0.0000000028498315  0.5000000000710555
-  V  0.3934837276229430  0.6065302751523840  0.5001896946183580 SPIN=  2.0000000000
+  #V  0.3934837276229430  0.6065302751523840  0.5001896946183580 SPIN=  2.0000000000
 %ENDBLOCK POSITIONS_FRAC
 
 ";
-        let mut data = get_block_data(&mut input).unwrap();
-        println!("{:#}", data);
-        let positions = parse_ionic_positions(&mut data);
+        let positions = parse_ionic_positions(&mut input);
         println!("{:#?}", positions);
     }
 }

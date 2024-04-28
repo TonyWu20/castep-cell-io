@@ -19,14 +19,20 @@ pub enum ItemTypes {
     IntegerVector,
 }
 
+#[derive(Debug)]
+pub enum KeywordType<'s> {
+    Block(&'s str),
+    Field(&'s str),
+}
+
 #[allow(non_camel_case_types)]
 #[non_exhaustive]
 #[derive(Debug)]
-pub enum DocumentSections {
+pub enum DocumentSections<'s> {
     CellLatticeVectors(LatticeBlockType),
     IonicPositions(PositionsKeywords),
     KPoint,
     Symmetry,
     Species,
-    Misc,
+    Misc(KeywordType<'s>),
 }

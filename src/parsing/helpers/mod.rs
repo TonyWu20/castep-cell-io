@@ -1,37 +1,53 @@
 use winnow::{
-    combinator::alt,
+    ascii::{line_ending, till_line_ending},
+    combinator::{alt, terminated},
     error::{ContextError, ErrMode},
-    token::take_until,
     PResult, Parser,
 };
 
-use crate::keywords::DocumentSections;
+use crate::keywords::{DocumentSections, KeywordType};
 
 use self::{
     block::strip_to_block_name,
-    keywords::{ionic_positions::assign_positions_type, lattice::assign_lattice_type},
+    fields::field_name,
+    keywords::{any_block, ionic_positions::assign_positions_type, lattice::assign_lattice_type},
 };
 
 mod block;
+mod fields;
 mod keywords;
 
 pub use keywords::{ionic_positions::parse_ionic_positions, lattice::parse_lattice_param};
 
-/// When it is "keyword : value"
-fn field_name<'s>(input: &mut &'s str) -> PResult<&'s str> {
-    take_until(0.., ":")
-        .map(|s: &str| s.trim())
-        .parse_next(input)
-}
-
-fn get_keyword<'s>(input: &mut &'s str) -> PResult<&'s str> {
+fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
     alt((strip_to_block_name, field_name)).parse_next(input)
 }
 
+pub fn skip_comments_blank_lines<'s>(input: &mut &'s str) -> PResult<Option<&'s str>> {
+    (alt(("#", "!", line_ending)), till_line_ending, line_ending)
+        .map(|_| None)
+        .parse_next(input)
+}
+
+/// Remove comment contents from the line (all the right to the first '#' or '!')
+/// and move to next line
+pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
+    terminated(till_line_ending, line_ending)
+        .map(|s: &str| {
+            let pat = |c| c == '#' || c == '!';
+            s.split(pat).next().unwrap().trim()
+        })
+        .parse_next(input)
+}
+
 // TODO! Handle `Misc` case to skip the unwanted data
-pub fn current_sections(input: &mut &str) -> PResult<DocumentSections> {
-    let keyword: &str = get_keyword(input)?;
-    let assign = alt((assign_lattice_type, assign_positions_type)).parse(keyword);
+pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+    let keyword: KeywordType<'_> = get_keyword(input)?;
+    let block_keyword_identifiers = (assign_lattice_type, assign_positions_type, any_block);
+    let assign = match keyword {
+        KeywordType::Block(block) => alt(block_keyword_identifiers).parse(block),
+        KeywordType::Field(name) => Ok(DocumentSections::Misc(KeywordType::Field(name))),
+    };
     if let Ok(sec) = assign {
         Ok(sec)
     } else {
