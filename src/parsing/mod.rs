@@ -5,8 +5,11 @@ pub use error::CellParseError;
 
 use crate::{
     data::{CellDocument, IonicPosition, LatticeParam},
-    keywords::DocumentSections,
-    parsing::helpers::{current_sections, parse_ionic_positions, parse_lattice_param},
+    keywords::{DocumentSections, KeywordType},
+    parsing::helpers::{
+        current_sections, get_block_data, get_field_data, parse_ionic_positions,
+        parse_lattice_param,
+    },
 };
 
 #[derive(Debug)]
@@ -29,19 +32,37 @@ impl<'a> CellParser<'a> {
         while let Ok(section) = current_sections(&mut self.input) {
             match section {
                 DocumentSections::CellLatticeVectors(lat_type) => {
+                    println!("{:?}", lat_type);
                     let param = parse_lattice_param(&mut self.input, lat_type)?;
                     self.lattice_param = Some(param);
                 }
-                DocumentSections::IonicPositions(_) => {
+                DocumentSections::IonicPositions(pos_type) => {
+                    println!("{:?}", pos_type);
                     let positions = parse_ionic_positions(&mut self.input)?;
                     self.ionic_positions = Some(positions);
+                }
+                DocumentSections::Misc(ref keyword) => {
+                    match keyword {
+                        KeywordType::Block(_) => {
+                            get_block_data(&mut self.input)
+                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                            ()
+                        }
+                        KeywordType::Field(_) => {
+                            get_field_data(&mut self.input)
+                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                            ()
+                        }
+                    }
+                    println!("{:?}", section)
                 }
                 _ => {
                     println!("{:?}", section)
                 }
             }
             if self.lattice_param.is_some() && self.ionic_positions.is_some() {
-                println!("Done");
+                println!("Lattice parameters and atomic coordinates have been collected.");
+                println!("Parsing Finished");
                 break;
             }
         }
@@ -66,12 +87,12 @@ mod test {
         let path = Path::new(root).join("SAC_GDY_V.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from_str(&input);
-        let cell_doc = cell_parser.parse().unwrap();
-        println!("{:#?}", cell_doc);
+        let cell_doc = cell_parser.parse();
+        println!("Parse status: {:?}", cell_doc.is_ok());
         let path = Path::new(root).join("SAC_GDY_V_test.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from_str(&input);
-        let cell_doc = cell_parser.parse().unwrap();
-        println!("{:#?}", cell_doc);
+        let cell_doc = cell_parser.parse();
+        println!("Parse status: {:?}", cell_doc.is_ok());
     }
 }

@@ -1,6 +1,6 @@
 use winnow::{
     ascii::{line_ending, till_line_ending},
-    combinator::{alt, terminated},
+    combinator::{alt, repeat, terminated},
     error::{ContextError, ErrMode},
     PResult, Parser,
 };
@@ -17,6 +17,8 @@ mod block;
 mod fields;
 mod keywords;
 
+pub use block::get_block_data;
+pub use fields::get_field_data;
 pub use keywords::{ionic_positions::parse_ionic_positions, lattice::parse_lattice_param};
 
 fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
@@ -24,8 +26,14 @@ fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
 }
 
 pub fn skip_comments_blank_lines<'s>(input: &mut &'s str) -> PResult<Option<&'s str>> {
-    (alt(("#", "!", line_ending)), till_line_ending, line_ending)
-        .map(|_| None)
+    alt((comment_line, line_ending))
+        .map(|_| Some("skip"))
+        .parse_next(input)
+}
+
+fn comment_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
+    (alt(('#', '!')), till_line_ending, line_ending)
+        .map(|(_, comment, _)| comment)
         .parse_next(input)
 }
 
@@ -42,6 +50,8 @@ pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 
 // TODO! Handle `Misc` case to skip the unwanted data
 pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+    // Skip the possible comments and blank lines between the blocks and field data.
+    repeat(0.., skip_comments_blank_lines).parse_next(input)?;
     let keyword: KeywordType<'_> = get_keyword(input)?;
     let block_keyword_identifiers = (assign_lattice_type, assign_positions_type, any_block);
     let assign = match keyword {
@@ -207,19 +217,22 @@ FIX_COM : false
 
     #[test]
     fn test_helpers() {
-        let mut input = [
-            "%BLOCK KPOINTS_LIST\n",
-            "FIX_ALL_CELL  : true",
-            "%BLOCK LAttICE_CART\n",
-            "%BLOCK LATTIcE_ABC\n",
-            "%BLOCK POSITIONS_FRAC\n 0.0000",
-        ];
-        input.iter_mut().for_each(|s| {
-            println!("{:?}", get_keyword(s));
-            println!("Remain:{}", s);
-        });
+        // let mut input = [
+        //     "%BLOCK KPOINTS_LIST\n",
+        //     "FIX_ALL_CELL  : true",
+        //     "%BLOCK LAttICE_CART\n",
+        //     "%BLOCK LATTIcE_ABC\n",
+        //     "%BLOCK POSITIONS_FRAC\n 0.0000",
+        // ];
+        // input.iter_mut().for_each(|s| {
+        //     println!("{:?}", get_keyword(s));
+        //     println!("Remain:{}", s);
+        // });
         let mut block_input = [
-            "%BLOCK LATTICE_CART
+            "
+
+# Start
+%BLOCK LATTICE_CART
    18.931530020488704480   -0.000000000000003553    0.000000000000000000
    -9.465765010246645517   16.395185930251127360    0.000000000000000000
     0.000000000000000000    0.000000000000000000    9.999213039981000861
@@ -237,7 +250,9 @@ FIX_COM : false
 ",
         ];
         block_input.iter_mut().for_each(|s| {
-            if current_sections(s).is_ok() {
+            let section = current_sections(s);
+            println!("{:?}", section);
+            if section.is_ok() {
                 let data = get_block_data(s);
                 println!("{:?}", data);
                 // println!(
