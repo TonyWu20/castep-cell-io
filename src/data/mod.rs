@@ -20,6 +20,14 @@ impl CellDocument {
             ionic_positions,
         }
     }
+
+    pub fn lattice(&self) -> LatticeParam {
+        self.lattice
+    }
+
+    pub fn ionic_positions(&self) -> &[IonicPosition] {
+        self.ionic_positions.as_ref()
+    }
 }
 
 pub trait CellData {}
