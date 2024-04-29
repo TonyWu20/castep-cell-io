@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/TonyWu20/castep-cell-parser"
 repository ="https://github.com/TonyWu20/castep-cell-parser" 
 license = "MIT"
-keywords = ["chemistry", "computational_chemistry"]
+keywords = ["chemistry", "castep"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
