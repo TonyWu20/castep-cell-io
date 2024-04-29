@@ -2,6 +2,13 @@
 name = "castep-cell-parser"
 version = "0.1.0"
 edition = "2021"
+author = ["TonyWu20"]
+description = "A parser for `castep` input file format `.cell`"
+readme = "README.md"
+homepage = "https://github.com/TonyWu20/castep-cell-parser"
+repository ="https://github.com/TonyWu20/castep-cell-parser" 
+license = "MIT"
+keywords = ["chemistry", "computational_chemistry"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
