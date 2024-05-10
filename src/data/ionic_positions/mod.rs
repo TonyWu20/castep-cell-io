@@ -24,4 +24,16 @@ impl IonicPosition {
             mixture,
         }
     }
+
+    pub fn coordinate(&self) -> [f64; 3] {
+        self.coordinate
+    }
+
+    pub fn symbol(&self) -> ElementSymbol {
+        self.symbol
+    }
+
+    pub fn mixture(&self) -> Option<Mixture> {
+        self.mixture
+    }
 }
