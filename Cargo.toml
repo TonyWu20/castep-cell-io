@@ -1,12 +1,12 @@
 [package]
-name = "castep-cell-parser"
+name = "castep-cell-io"
 version = "0.1.0"
 edition = "2021"
 author = ["TonyWu20"]
-description = "A parser for `castep` input file format `.cell`"
+description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
 readme = "README.md"
-homepage = "https://github.com/TonyWu20/castep-cell-parser"
-repository ="https://github.com/TonyWu20/castep-cell-parser" 
+homepage = "https://github.com/TonyWu20/castep-cell-io"
+repository ="https://github.com/TonyWu20/castep-cell-io" 
 license = "MIT"
 keywords = ["chemistry", "castep"]
 

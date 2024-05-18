@@ -1,6 +1,6 @@
-# castep-cell-parser
+# castep-cell-io
 
-Parser for `.cell` of `Castep`.
+A crate helping to parse, edit and save `.cell` of `Castep`.
 
 ## Development
 
@@ -27,6 +27,6 @@ use castep_cell_parser::{CellParser, CellDocument};
 
 let path = Path::new("SAC_GDY_V.cell");
 let input = fs::read_to_string(path).unwrap();
-let mut cell_parser = CellParser::from_str(&input);
+let mut cell_parser = CellParser::from(&input.as_str());
 let cell_doc: CellDocument = cell_parser.parse().unwrap();
 ```
