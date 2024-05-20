@@ -10,7 +10,7 @@ pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParam
 pub use units::*;
 
 /// A structure to represent the `.cell` file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CellDocument {
     lattice: LatticeParamBlock,
     ionic_positions: IonicPositionBlock,
