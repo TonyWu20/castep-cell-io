@@ -4,7 +4,7 @@ mod helpers;
 pub use error::CellParseError;
 
 use crate::{
-    data::{CellDocument, IonicPosition, LatticeParam},
+    data::{CellDocument, IonicPosition, LatticeParamBlock},
     keywords::{DocumentSections, KeywordType},
     parsing::helpers::{
         current_sections, get_block_data, get_field_data, parse_ionic_positions,
@@ -15,19 +15,21 @@ use crate::{
 #[derive(Debug)]
 pub struct CellParser<'a> {
     input: &'a str,
-    lattice_param: Option<LatticeParam>,
+    lattice_param: Option<LatticeParamBlock>,
     ionic_positions: Option<Vec<IonicPosition>>,
 }
 
-impl<'a> CellParser<'a> {
-    pub fn from_str(input: &'a str) -> Self {
+impl<'a> From<&'a str> for CellParser<'a> {
+    fn from(value: &'a str) -> Self {
         Self {
-            input,
+            input: value,
             lattice_param: None,
             ionic_positions: None,
         }
     }
+}
 
+impl<'a> CellParser<'a> {
     pub fn parse(&mut self) -> Result<CellDocument, CellParseError> {
         while let Ok(section) = current_sections(&mut self.input) {
             match section {
@@ -46,12 +48,10 @@ impl<'a> CellParser<'a> {
                         KeywordType::Block(_) => {
                             get_block_data(&mut self.input)
                                 .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                            ()
                         }
                         KeywordType::Field(_) => {
                             get_field_data(&mut self.input)
                                 .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                            ()
                         }
                     }
                     println!("{:?}", section)
@@ -86,12 +86,12 @@ mod test {
         let root = env!("CARGO_MANIFEST_DIR");
         let path = Path::new(root).join("SAC_GDY_V.cell");
         let input = fs::read_to_string(path).unwrap();
-        let mut cell_parser = CellParser::from_str(&input);
+        let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
         let path = Path::new(root).join("SAC_GDY_V_test.cell");
         let input = fs::read_to_string(path).unwrap();
-        let mut cell_parser = CellParser::from_str(&input);
+        let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
     }

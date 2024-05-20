@@ -1,4 +1,16 @@
-use super::CellData;
+use super::{units::LengthUnit, CellData};
+
+#[derive(Debug, Clone, Copy)]
+pub struct LatticeParamBlock {
+    unit: LengthUnit,
+    parameter: LatticeParam,
+}
+
+impl LatticeParamBlock {
+    pub fn new(unit: LengthUnit, parameter: LatticeParam) -> Self {
+        Self { unit, parameter }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum LatticeParam {
