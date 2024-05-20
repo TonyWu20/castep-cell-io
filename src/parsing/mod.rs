@@ -4,7 +4,7 @@ mod helpers;
 pub use error::CellParseError;
 
 use crate::{
-    data::{CellDocument, IonicPosition, LatticeParamBlock},
+    data::{CellDocument, IonicPositionBlock, LatticeParamBlock},
     keywords::{DocumentSections, KeywordType},
     parsing::helpers::{
         current_sections, get_block_data, get_field_data, parse_ionic_positions,
@@ -16,7 +16,7 @@ use crate::{
 pub struct CellParser<'a> {
     input: &'a str,
     lattice_param: Option<LatticeParamBlock>,
-    ionic_positions: Option<Vec<IonicPosition>>,
+    ionic_positions: Option<IonicPositionBlock>,
 }
 
 impl<'a> From<&'a str> for CellParser<'a> {
@@ -40,7 +40,7 @@ impl<'a> CellParser<'a> {
                 }
                 DocumentSections::IonicPositions(pos_type) => {
                     println!("{:?}", pos_type);
-                    let positions = parse_ionic_positions(&mut self.input)?;
+                    let positions = parse_ionic_positions(&mut self.input, pos_type)?;
                     self.ionic_positions = Some(positions);
                 }
                 DocumentSections::Misc(ref keyword) => {
@@ -61,8 +61,6 @@ impl<'a> CellParser<'a> {
                 }
             }
             if self.lattice_param.is_some() && self.ionic_positions.is_some() {
-                println!("Lattice parameters and atomic coordinates have been collected.");
-                println!("Parsing Finished");
                 break;
             }
         }
@@ -89,10 +87,12 @@ mod test {
         let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
+        println!("{}", cell_doc.unwrap().write_out());
         let path = Path::new(root).join("SAC_GDY_V_test.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
+        println!("{}", cell_doc.unwrap().write_out());
     }
 }

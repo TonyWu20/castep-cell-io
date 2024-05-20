@@ -11,12 +11,15 @@ use winnow::{
     PResult, Parser,
 };
 
+use crate::data::IonicPositionBlock;
 use crate::parsing::helpers::block::get_block_data;
 use crate::{
     data::{IonicPosition, Mixture},
     keywords::{DocumentSections, PositionsKeywords},
     parsing::CellParseError,
 };
+
+use super::length_unit;
 
 fn assign_positions_frac<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     Caseless("positions_frac")
@@ -67,23 +70,51 @@ fn parse_line_of_position(input: &mut &str) -> PResult<IonicPosition> {
     Ok(position)
 }
 
-pub fn parse_ionic_positions(input: &mut &str) -> Result<Vec<IonicPosition>, CellParseError> {
+pub fn parse_ionic_positions(
+    input: &mut &str,
+    position_keyword: PositionsKeywords,
+) -> Result<IonicPositionBlock, CellParseError> {
     let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
     let mut lines: Vec<&str> = data
         .lines()
         // Filter out blank lines to prevent error in `parse_line_of_position`
-        .filter_map(|s| if s.trim().len() > 0 { Some(s) } else { None })
+        .filter(|s| !s.is_empty())
         .collect();
-    lines
+    let spin_polarised = data
+        .lines()
+        .any(|line| line.to_lowercase().contains("spin"));
+    let unit = lines
         .iter_mut()
-        .map(|line| parse_line_of_position(line).map_err(|_| CellParseError::Invalid))
-        .collect()
+        .peekable()
+        .peek()
+        .and_then(|s| length_unit(s).ok());
+    let positions: Result<Vec<IonicPosition>, CellParseError> = if unit.is_some() {
+        lines
+            .iter_mut()
+            .skip(1)
+            .map(|line| parse_line_of_position(line).map_err(|_| CellParseError::Invalid))
+            .collect()
+    } else {
+        lines
+            .iter_mut()
+            .map(|line| parse_line_of_position(line).map_err(|_| CellParseError::Invalid))
+            .collect()
+    };
+    Ok(IonicPositionBlock::new(
+        unit.unwrap_or_default(),
+        positions?,
+        position_keyword,
+        spin_polarised,
+    ))
 }
 
 #[cfg(test)]
 mod test {
 
-    use crate::parsing::helpers::keywords::ionic_positions::parse_ionic_positions;
+    use crate::{
+        keywords::PositionsKeywords,
+        parsing::helpers::keywords::ionic_positions::parse_ionic_positions,
+    };
 
     #[test]
     fn keywords_position() {
@@ -96,7 +127,7 @@ mod test {
 %ENDBLOCK POSITIONS_FRAC
 
 ";
-        let positions = parse_ionic_positions(&mut input);
+        let positions = parse_ionic_positions(&mut input, PositionsKeywords::POSITIONS_FRAC);
         println!("{:#?}", positions);
     }
 }

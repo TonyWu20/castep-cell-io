@@ -201,8 +201,8 @@ FIX_COM : false
                     let param = parse_lattice_param(&mut input, lat_type).unwrap();
                     println!("{:?}", param);
                 }
-                DocumentSections::IonicPositions(_) => {
-                    let positions = parse_ionic_positions(&mut input).unwrap();
+                DocumentSections::IonicPositions(pos_type) => {
+                    let positions = parse_ionic_positions(&mut input, pos_type).unwrap();
                     println!("{:#?}", positions);
                 }
                 _ => {
