@@ -1,27 +1,30 @@
 mod ionic_positions;
 mod lattice_parameters;
+mod units;
 
 #[allow(unused_imports)]
 pub use ionic_positions::{IonicPosition, Mixture};
 #[allow(unused_imports)]
-pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam};
+pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
+#[allow(unused_imports)]
+pub use units::*;
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug)]
 pub struct CellDocument {
-    lattice: LatticeParam,
+    lattice: LatticeParamBlock,
     ionic_positions: Vec<IonicPosition>,
 }
 
 impl CellDocument {
-    pub fn new(lattice: LatticeParam, ionic_positions: Vec<IonicPosition>) -> Self {
+    pub fn new(lattice: LatticeParamBlock, ionic_positions: Vec<IonicPosition>) -> Self {
         Self {
             lattice,
             ionic_positions,
         }
     }
 
-    pub fn lattice(&self) -> LatticeParam {
+    pub fn lattice(&self) -> LatticeParamBlock {
         self.lattice
     }
 
