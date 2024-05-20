@@ -11,7 +11,7 @@ use super::{effective_line, KeywordType};
 /// essential for matching the next data is block type or field type.
 pub fn strip_to_block_name<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
     preceded(terminated(Caseless("%block"), space1), effective_line)
-        .map(|s| KeywordType::Block(s))
+        .map(KeywordType::Block)
         .parse_next(input)
 }
 /// Get contents in block
@@ -30,11 +30,11 @@ fn end_of_block<'s>(input: &mut &'s str) -> PResult<(&'s str, &'s str)> {
 /// is directly the lines for data and the ending line of the block
 /// Returns the lines and throw away the ending to move out of the
 /// block in `input`
-pub fn get_block_data<'s>(input: &mut &'s str) -> PResult<String> {
+pub fn get_block_data(input: &mut &str) -> PResult<String> {
     terminated(contents_in_block, end_of_block)
         .map(|s: &str| {
-            if s.len() == 0 {
-                return s.to_string();
+            if s.is_empty() {
+                s.to_string()
             } else {
                 repeat(0.., effective_line)
                     .map(|s: Vec<&str>| s.join("\n"))

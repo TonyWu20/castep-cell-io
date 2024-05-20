@@ -69,9 +69,7 @@ pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>
 mod test {
     use crate::{
         keywords::DocumentSections,
-        parsing::helpers::{
-            block::get_block_data, get_keyword, keywords::lattice::parse_lattice_param,
-        },
+        parsing::helpers::{block::get_block_data, keywords::lattice::parse_lattice_param},
     };
 
     use super::{current_sections, keywords::ionic_positions::parse_ionic_positions};
