@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 mod data;
-mod errors;
 mod formatting;
 mod keywords;
 mod parsing;
