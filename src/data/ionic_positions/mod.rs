@@ -37,6 +37,22 @@ impl IonicPositionBlock {
             spin_polarised,
         }
     }
+
+    pub fn positions(&self) -> &[IonicPosition] {
+        self.positions.as_ref()
+    }
+
+    pub fn keyword(&self) -> PositionsKeywords {
+        self.keyword
+    }
+
+    pub fn spin_polarised(&self) -> bool {
+        self.spin_polarised
+    }
+
+    pub fn unit(&self) -> LengthUnit {
+        self.unit
+    }
 }
 
 impl BlockDisplay for IonicPositionBlock {
