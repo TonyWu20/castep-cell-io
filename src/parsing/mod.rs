@@ -87,12 +87,10 @@ mod test {
         let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
-        println!("{}", cell_doc.unwrap().write_out());
         let path = Path::new(root).join("SAC_GDY_V_test.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from(input.as_str());
         let cell_doc = cell_parser.parse();
         println!("Parse status: {:?}", cell_doc.is_ok());
-        println!("{}", cell_doc.unwrap().write_out());
     }
 }

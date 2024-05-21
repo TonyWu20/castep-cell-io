@@ -53,6 +53,10 @@ impl IonicPositionBlock {
     pub fn unit(&self) -> LengthUnit {
         self.unit
     }
+
+    pub fn positions_mut(&mut self) -> &mut Vec<IonicPosition> {
+        &mut self.positions
+    }
 }
 
 impl BlockDisplay for IonicPositionBlock {
@@ -118,16 +122,11 @@ impl IonicPosition {
             .map(|v| format!("{v:20.16}"))
             .collect::<Vec<String>>()
             .concat();
-        let element = ELEMENT_TABLE
-            .get_by_symbol(&format!("{:?}", self.symbol))
-            .unwrap();
+        let element = ELEMENT_TABLE.get_by_symbol(self.symbol()).unwrap();
         let spin = if spin_polarised && element.spin > 0 {
             format!(
                 " SPIN={:14.10}",
-                ELEMENT_TABLE
-                    .get_by_symbol(&format!("{:?}", self.symbol))
-                    .unwrap()
-                    .spin() as f64
+                ELEMENT_TABLE.get_by_symbol(self.symbol()).unwrap().spin() as f64
             )
         } else {
             "".into()
