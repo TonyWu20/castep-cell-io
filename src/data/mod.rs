@@ -34,16 +34,21 @@ impl CellDocument {
         &self.ionic_positions
     }
     pub fn write_out<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
-        let contents = [
-            format!("{}", self.lattice),
-            format!("{}", self.ionic_positions),
-        ]
-        .concat();
-        fs::write(path, contents)
+        fs::write(path, self.to_string())
     }
 
     pub fn ionic_positions_mut(&mut self) -> &mut IonicPositionBlock {
         &mut self.ionic_positions
+    }
+}
+
+impl ToString for CellDocument {
+    fn to_string(&self) -> String {
+        [
+            format!("{}", self.lattice),
+            format!("{}", self.ionic_positions),
+        ]
+        .concat()
     }
 }
 
