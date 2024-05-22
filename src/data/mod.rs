@@ -40,6 +40,10 @@ impl CellDocument {
     pub fn ionic_positions_mut(&mut self) -> &mut IonicPositionBlock {
         &mut self.ionic_positions
     }
+
+    pub fn append_position(&mut self, position: IonicPosition) {
+        self.ionic_positions.positions_mut().push(position)
+    }
 }
 
 impl ToString for CellDocument {
