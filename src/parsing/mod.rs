@@ -34,31 +34,24 @@ impl<'a> CellParser<'a> {
         while let Ok(section) = current_sections(&mut self.input) {
             match section {
                 DocumentSections::CellLatticeVectors(lat_type) => {
-                    println!("{:?}", lat_type);
                     let param = parse_lattice_param(&mut self.input, lat_type)?;
                     self.lattice_param = Some(param);
                 }
                 DocumentSections::IonicPositions(pos_type) => {
-                    println!("{:?}", pos_type);
                     let positions = parse_ionic_positions(&mut self.input, pos_type)?;
                     self.ionic_positions = Some(positions);
                 }
-                DocumentSections::Misc(ref keyword) => {
-                    match keyword {
-                        KeywordType::Block(_) => {
-                            get_block_data(&mut self.input)
-                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                        }
-                        KeywordType::Field(_) => {
-                            get_field_data(&mut self.input)
-                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                        }
+                DocumentSections::Misc(ref keyword) => match keyword {
+                    KeywordType::Block(_) => {
+                        get_block_data(&mut self.input)
+                            .map_err(|_| CellParseError::GetBlockDataFailure)?;
                     }
-                    println!("{:?}", section)
-                }
-                _ => {
-                    println!("{:?}", section)
-                }
+                    KeywordType::Field(_) => {
+                        get_field_data(&mut self.input)
+                            .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                    }
+                },
+                _ => (),
             }
             if self.lattice_param.is_some() && self.ionic_positions.is_some() {
                 break;
