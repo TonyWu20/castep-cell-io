@@ -1,6 +1,7 @@
 mod ionic_positions;
+mod kpoint_settings;
 mod lattice_parameters;
-mod units;
+pub mod units;
 
 use std::{fs, io::Error, path::Path};
 
@@ -9,7 +10,6 @@ pub use ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 #[allow(unused_imports)]
 pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
 #[allow(unused_imports)]
-pub use units::*;
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug, Clone)]

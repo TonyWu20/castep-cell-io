@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use crate::formatting::BlockDisplay;
+use crate::{data::units::Degrees, formatting::BlockDisplay, LengthUnit};
 
-use super::{units::LengthUnit, CellData, Degrees};
+use super::CellData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeParamBlock {

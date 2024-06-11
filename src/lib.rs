@@ -6,6 +6,7 @@ mod keywords;
 mod parsing;
 
 pub use data::{
-    CellDocument, IonicPosition, IonicPositionBlock, LatticeABC, LatticeCart, LatticeParam,
+    units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock, LatticeABC,
+    LatticeCart, LatticeParam,
 };
 pub use parsing::{CellParseError, CellParser};

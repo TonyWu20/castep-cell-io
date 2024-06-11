@@ -21,3 +21,23 @@ impl Display for LengthUnit {
         }
     }
 }
+
+#[derive(Debug, Default, Clone, Copy)]
+pub enum InvLengthUnit {
+    Bohr,
+    Meter,
+    Nanometer,
+    #[default]
+    Ang,
+}
+
+impl Display for InvLengthUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InvLengthUnit::Bohr => f.write_str("1/"),
+            InvLengthUnit::Meter => f.write_str("1/m"),
+            InvLengthUnit::Nanometer => f.write_str("1/nm"),
+            InvLengthUnit::Ang => f.write_str("1/ang"),
+        }
+    }
+}

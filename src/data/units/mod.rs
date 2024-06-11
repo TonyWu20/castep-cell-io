@@ -1,6 +1,4 @@
-mod length_units;
-
-pub use length_units::LengthUnit;
+pub mod length_units;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Degrees(f64);
