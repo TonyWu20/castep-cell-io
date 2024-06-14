@@ -6,7 +6,7 @@ use castep_periodic_table::element::ElementSymbol;
 
 pub use lcao::{LCAOBasis, SpeciesLCAOStatesBlock};
 pub use mass::{SpeciesMass, SpeciesMassBlock};
-pub use potentials::{PseudoPot, SpeciesPotBlock};
+pub use potentials::{SpeciesPot, SpeciesPotBlock};
 
 pub trait SpeciesCharacter {
     type Output;

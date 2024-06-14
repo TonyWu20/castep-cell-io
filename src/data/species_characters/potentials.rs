@@ -7,30 +7,30 @@ use crate::formatting::BlockDisplay;
 use super::SpeciesCharacter;
 
 #[derive(Debug, Clone)]
-pub struct PseudoPot {
+pub struct SpeciesPot {
     element: ElementSymbol,
     pot_file: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct SpeciesPotBlock {
-    items: Vec<PseudoPot>,
+    items: Vec<SpeciesPot>,
 }
 
 impl SpeciesPotBlock {
-    pub fn new(items: Vec<PseudoPot>) -> Self {
+    pub fn new(items: Vec<SpeciesPot>) -> Self {
         Self { items }
     }
 }
 
-impl PseudoPot {
+impl SpeciesPot {
     pub fn new(element: ElementSymbol, pot_file: String) -> Self {
         Self { element, pot_file }
     }
 }
 
-impl SpeciesCharacter for PseudoPot {
-    type Output = PseudoPot;
+impl SpeciesCharacter for SpeciesPot {
+    type Output = SpeciesPot;
 
     fn from_element(element: ElementSymbol) -> Self::Output {
         Self::new(
@@ -40,7 +40,7 @@ impl SpeciesCharacter for PseudoPot {
     }
 }
 
-impl Display for PseudoPot {
+impl Display for SpeciesPot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:>8}  {}", format!("{}", self.element), self.pot_file)
     }

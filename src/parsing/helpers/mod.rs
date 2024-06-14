@@ -211,11 +211,11 @@ FIX_COM : false
             match section {
                 DocumentSections::CellLatticeVectors(lat_type) => {
                     let param = parse_lattice_param(&mut input, lat_type).unwrap();
-                    println!("{:?}", param);
+                    println!("{}", param);
                 }
                 DocumentSections::IonicPositions(pos_type) => {
                     let positions = parse_ionic_positions(&mut input, pos_type).unwrap();
-                    println!("{:#?}", positions);
+                    println!("{}", positions);
                 }
                 _ => {
                     let data = get_block_data(&mut input);

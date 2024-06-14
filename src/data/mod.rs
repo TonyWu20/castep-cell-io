@@ -12,7 +12,7 @@ pub use ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 pub use kpoint_settings::*;
 pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
 pub use species_characters::{
-    LCAOBasis, PseudoPot, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPotBlock,
+    LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
 pub use constraints::{FixAllCell, FixAllIons, FixCom};
