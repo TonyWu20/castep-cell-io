@@ -1,5 +1,3 @@
-use crate::InvLengthUnit;
-
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy)]
 /// For backwards compatibility the keywords beginning

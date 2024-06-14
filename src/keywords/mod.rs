@@ -5,8 +5,10 @@ mod positions;
 mod species;
 mod symmetry;
 
-pub use lattice::*;
-pub use positions::*;
+pub use kpoint::KPointKeywords;
+pub use lattice::LatticeBlockType;
+pub use positions::PositionsKeywords;
+pub use species::SpeciesKeywords;
 
 #[derive(Debug, Default)]
 pub enum ItemTypes {
@@ -31,8 +33,8 @@ pub enum KeywordType<'s> {
 pub enum DocumentSections<'s> {
     CellLatticeVectors(LatticeBlockType),
     IonicPositions(PositionsKeywords),
-    KPoint,
+    KPoint(KPointKeywords),
     Symmetry,
-    Species,
+    Species(SpeciesKeywords),
     Misc(KeywordType<'s>),
 }
