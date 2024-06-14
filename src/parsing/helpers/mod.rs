@@ -10,7 +10,10 @@ use crate::keywords::{DocumentSections, KeywordType};
 use self::{
     block::strip_to_block_name,
     fields::field_name,
-    keywords::{any_block, ionic_positions::assign_positions_type, lattice::assign_lattice_type},
+    keywords::{
+        any_block, ionic_positions::assign_positions_type, kpoint::assign_kpoint_list_type,
+        lattice::assign_lattice_type, species::assign_species_type,
+    },
 };
 
 mod block;
@@ -19,7 +22,10 @@ mod keywords;
 
 pub use block::get_block_data;
 pub use fields::get_field_data;
-pub use keywords::{ionic_positions::parse_ionic_positions, lattice::parse_lattice_param};
+pub use keywords::{
+    ionic_positions::parse_ionic_positions, kpoint::parse_kpoint_list,
+    lattice::parse_lattice_param, species::parse_species_mass_block,
+};
 
 fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
     alt((strip_to_block_name, field_name)).parse_next(input)
@@ -53,7 +59,13 @@ pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>
     // Skip the possible comments and blank lines between the blocks and field data.
     repeat(0.., skip_comments_blank_lines).parse_next(input)?;
     let keyword: KeywordType<'_> = get_keyword(input)?;
-    let block_keyword_identifiers = (assign_lattice_type, assign_positions_type, any_block);
+    let block_keyword_identifiers = (
+        assign_lattice_type,
+        assign_positions_type,
+        assign_kpoint_list_type,
+        assign_species_type,
+        any_block,
+    );
     let assign = match keyword {
         KeywordType::Block(block) => alt(block_keyword_identifiers).parse(block),
         KeywordType::Field(name) => Ok(DocumentSections::Misc(KeywordType::Field(name))),
