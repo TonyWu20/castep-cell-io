@@ -2,8 +2,6 @@ use std::fmt::Display;
 
 use crate::{data::units::Degrees, formatting::BlockDisplay, LengthUnit};
 
-use super::CellData;
-
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeParamBlock {
     unit: LengthUnit,
@@ -171,6 +169,3 @@ impl LatticeABC {
         self.gamma
     }
 }
-
-/// Marker trait implmentation
-impl CellData for LatticeParam {}
