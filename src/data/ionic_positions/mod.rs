@@ -7,7 +7,7 @@ use castep_periodic_table::{
 
 use crate::{formatting::BlockDisplay, keywords::PositionsKeywords};
 
-use super::LengthUnit;
+use crate::LengthUnit;
 
 #[derive(Debug, Clone)]
 pub struct IonicPositionBlock {
@@ -122,11 +122,11 @@ impl IonicPosition {
             .map(|v| format!("{v:20.16}"))
             .collect::<Vec<String>>()
             .concat();
-        let element = ELEMENT_TABLE.get_by_symbol(self.symbol()).unwrap();
+        let element = ELEMENT_TABLE.get_by_symbol(self.symbol());
         let spin = if spin_polarised && element.spin > 0 {
             format!(
                 " SPIN={:14.10}",
-                ELEMENT_TABLE.get_by_symbol(self.symbol()).unwrap().spin() as f64
+                ELEMENT_TABLE.get_by_symbol(self.symbol()).spin() as f64
             )
         } else {
             "".into()
@@ -137,7 +137,13 @@ impl IonicPosition {
             "".into()
         };
 
-        let line = format!("{:>3}{}{}{}", element.symbol(), coordinates, spin, mixture);
+        let line = format!(
+            "{:>3}{}{}{}",
+            format!("{}", element.symbol()),
+            coordinates,
+            spin,
+            mixture
+        );
         line
     }
 }

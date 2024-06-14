@@ -42,7 +42,7 @@ impl SpeciesCharacter for SpeciesMass {
 
 impl Display for SpeciesMass {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:>8}{:17.10}", self.element, self.mass)
+        write!(f, "{:>8}{:17.10}", format!("{}", self.element), self.mass)
     }
 }
 

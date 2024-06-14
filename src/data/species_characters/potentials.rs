@@ -42,7 +42,7 @@ impl SpeciesCharacter for PseudoPot {
 
 impl Display for PseudoPot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:>8}  {}", self.element, self.pot_file)
+        write!(f, "{:>8}  {}", format!("{}", self.element), self.pot_file)
     }
 }
 

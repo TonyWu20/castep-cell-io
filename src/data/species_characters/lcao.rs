@@ -43,7 +43,12 @@ impl SpeciesCharacter for LCAOBasis {
 
 impl Display for LCAOBasis {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:>8}{:9}", self.element, self.num_angular_momentum)
+        write!(
+            f,
+            "{:>8}{:9}",
+            format!("{}", self.element),
+            self.num_angular_momentum
+        )
     }
 }
 
