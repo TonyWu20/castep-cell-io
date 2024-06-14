@@ -6,6 +6,7 @@ pub enum CellParseError {
     UnexpectedValueType,
     Invalid,
     GetBlockDataFailure,
+    RequiredSectionMissing,
 }
 
 impl Display for CellParseError {
@@ -15,6 +16,9 @@ impl Display for CellParseError {
             Self::UnexpectedValueType => f.write_str("Unexpected value type"),
             Self::Invalid => f.write_str("Not valid keywords or data in `.cell`"),
             Self::GetBlockDataFailure => f.write_str("Fail to get block data"),
+            Self::RequiredSectionMissing => {
+                f.write_str("Missing lattice parameters and/or ionic positions!")
+            }
         }
     }
 }
