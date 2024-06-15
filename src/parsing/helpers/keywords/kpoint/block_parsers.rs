@@ -1,36 +1,14 @@
 use winnow::{
-    combinator::alt,
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
-    PResult, Parser,
+    PResult,
 };
 
 use crate::{
     data::{BSKpointPath, KpointListBlock, KpointSettings, KpointTask, NCKpointSettings},
-    keywords::DocumentSections,
     parsing::helpers::get_block_data,
     CellParseError,
 };
-
-pub(crate) mod assignments;
-
-use assignments::{
-    assign_bs_kpoint_list_block, assign_kpoint_list_block, assign_kpoint_mp_grid_field,
-    assign_kpoint_mp_offset_field, assign_kpoint_mp_spacing_field,
-};
-
-pub fn assign_kpoint_list_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
-    alt((assign_kpoint_list_block, assign_bs_kpoint_list_block)).parse_next(input)
-}
-
-pub fn assign_kpoint_field_settings<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
-    alt((
-        assign_kpoint_mp_grid_field,
-        assign_kpoint_mp_spacing_field,
-        assign_kpoint_mp_offset_field,
-    ))
-    .parse_next(input)
-}
 
 fn parse_line_of_kpoint(input: &mut &str) -> PResult<[f64; 4]> {
     let err_context = ContextError::<StrContext>::new().add_context(
@@ -70,18 +48,33 @@ fn parse_line_of_kpoint_path(input: &mut &str) -> PResult<[f64; 3]> {
 
 pub fn parse_kpoint_list(input: &mut &str) -> Result<KpointSettings, CellParseError> {
     let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
-    let mut lines: Vec<&str> = data.lines().filter(|s| !s.is_empty()).collect();
-    let kpoints: Result<Vec<[f64; 4]>, CellParseError> = lines
-        .iter_mut()
-        .map(|line| parse_line_of_kpoint(line).map_err(|_| CellParseError::Invalid))
-        .collect();
+    let kpoints = data
+        .lines()
+        .filter(|s| !s.is_empty())
+        .map(|mut line| parse_line_of_kpoint(&mut line))
+        .collect::<PResult<Vec<[f64; 4]>>>()
+        .map_err(|_| CellParseError::Invalid)?;
     Ok(KpointSettings::List(KpointListBlock::new(
         KpointTask::SCF,
-        kpoints?,
+        kpoints,
     )))
 }
 
-pub fn parse_kpoint_path(input: &mut &str) -> Result<NCKpointSettings, CellParseError> {
+pub fn parse_bs_kpoint_list(input: &mut &str) -> Result<NCKpointSettings, CellParseError> {
+    let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
+    let bs_kpoints = data
+        .lines()
+        .filter(|s| !s.is_empty())
+        .map(|mut line| parse_line_of_kpoint(&mut line))
+        .collect::<PResult<Vec<[f64; 4]>>>()
+        .map_err(|_| CellParseError::Invalid)?;
+    Ok(NCKpointSettings::List(KpointListBlock::new(
+        KpointTask::Spectral,
+        bs_kpoints,
+    )))
+}
+
+pub fn parse_bs_kpoint_path(input: &mut &str) -> Result<NCKpointSettings, CellParseError> {
     let data = get_block_data(input).map_err(|_| CellParseError::GetBlockDataFailure)?;
     let mut lines: Vec<&str> = data.lines().filter(|s| !s.is_empty()).collect();
     let kpoint_paths: Result<Vec<[f64; 3]>, CellParseError> = lines
@@ -90,5 +83,3 @@ pub fn parse_kpoint_path(input: &mut &str) -> Result<NCKpointSettings, CellParse
         .collect();
     Ok(NCKpointSettings::Path(BSKpointPath::new(kpoint_paths?)))
 }
-
-// TODO: other parsers for fields

@@ -96,8 +96,8 @@ pub enum CellEntries {
     ExtEfield,
     ExtPressure,
     SpeciesMass(SpeciesMassBlock),
-    SpeciesPot,
-    SpeciesLCAOStates,
+    SpeciesPot(SpeciesPotBlock),
+    SpeciesLCAOStates(SpeciesLCAOStatesBlock),
 }
 
 impl Display for CellEntries {
@@ -112,8 +112,8 @@ impl Display for CellEntries {
             CellEntries::ExtEfield => todo!(),
             CellEntries::ExtPressure => todo!(),
             CellEntries::SpeciesMass(v) => format!("{v}"),
-            CellEntries::SpeciesPot => todo!(),
-            CellEntries::SpeciesLCAOStates => todo!(),
+            CellEntries::SpeciesPot(v) => format!("{v}"),
+            CellEntries::SpeciesLCAOStates(v) => format!("{v}"),
         };
         write!(f, "{content}")
     }

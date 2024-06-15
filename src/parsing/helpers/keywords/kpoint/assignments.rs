@@ -52,3 +52,9 @@ pub fn assign_kpoint_bs_path_spacing_field<'s>(
     .map(|_| DocumentSections::KPoint(KPointKeywords::SPECTRAL_KPOINT_PATH_SPACING))
     .parse_next(input)
 }
+
+pub fn assign_bs_kpoint_path_block<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+    alt((Caseless("bs_kpoint_path"), Caseless("spectral_kpoint_path")))
+        .map(|_| DocumentSections::KPoint(KPointKeywords::SPECTRAL_KPOINT_PATH))
+        .parse_next(input)
+}

@@ -11,7 +11,7 @@ use self::{
     block::strip_to_block_name,
     fields::field_name,
     keywords::{
-        any_block, ionic_positions::assign_positions_type, kpoint::assign_kpoint_list_type,
+        any_block, ionic_positions::assign_positions_type, kpoint::assign_kpoint_block_type,
         lattice::assign_lattice_type, species::assign_species_type,
     },
 };
@@ -23,8 +23,10 @@ mod keywords;
 pub use block::get_block_data;
 pub use fields::get_field_data;
 pub use keywords::{
-    ionic_positions::parse_ionic_positions, kpoint::parse_kpoint_list,
-    lattice::parse_lattice_param, species::parse_species_mass_block,
+    ionic_positions::parse_ionic_positions,
+    kpoint::{parse_bs_kpoint_list, parse_bs_kpoint_path, parse_kpoint_list},
+    lattice::parse_lattice_param,
+    species::{parse_species_lcao_block, parse_species_mass_block, parse_species_pot_block},
 };
 
 fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
@@ -62,7 +64,7 @@ pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>
     let block_keyword_identifiers = (
         assign_lattice_type,
         assign_positions_type,
-        assign_kpoint_list_type,
+        assign_kpoint_block_type,
         assign_species_type,
         any_block,
     );
