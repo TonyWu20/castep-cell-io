@@ -1,8 +1,10 @@
 use crate::CellParseError;
 
 pub mod charge_units;
+pub mod efield_units;
 pub mod force_units;
 pub mod length_units;
+pub mod pressure_units;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Degrees(f64);

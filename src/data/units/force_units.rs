@@ -4,7 +4,7 @@ use crate::CellParseError;
 
 use super::ParsableUnit;
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ForceUnits {
     HartreePerBohr,
     #[default]

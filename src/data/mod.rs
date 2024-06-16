@@ -1,13 +1,16 @@
 #[allow(unused_imports)]
 mod constraints;
+mod external_fields;
 mod ionic_positions;
 mod kpoint_settings;
 mod lattice_parameters;
 mod species_characters;
+
 pub mod units;
 
 use std::{fmt::Display, fs, io::Error, path::Path};
 
+pub use external_fields::ExtEFieldBlock;
 pub use ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 pub use kpoint_settings::*;
 pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
@@ -93,7 +96,7 @@ pub enum CellEntries {
     /// This keyword controls whether or not the center of mass of the ions remains fixed during relaxation or molecular dynamics.
     FixCom(FixCom),
     IonicConstraints,
-    ExtEfield,
+    ExtEfield(ExtEFieldBlock),
     ExtPressure,
     SpeciesMass(SpeciesMassBlock),
     SpeciesPot(SpeciesPotBlock),
@@ -109,7 +112,7 @@ impl Display for CellEntries {
             CellEntries::FixAllIons(v) => format!("{v}"),
             CellEntries::FixCom(v) => format!("{v}"),
             CellEntries::IonicConstraints => todo!(),
-            CellEntries::ExtEfield => todo!(),
+            CellEntries::ExtEfield(v) => format!("{v}"),
             CellEntries::ExtPressure => todo!(),
             CellEntries::SpeciesMass(v) => format!("{v}"),
             CellEntries::SpeciesPot(v) => format!("{v}"),
