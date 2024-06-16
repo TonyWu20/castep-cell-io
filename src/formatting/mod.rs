@@ -16,6 +16,6 @@ pub trait FieldDisplay {
     fn field_tag(&self) -> String;
     fn value(&self) -> String;
     fn content(&self) -> String {
-        format!("{} : {}", self.field_tag(), self.value())
+        format!("{} : {}\n", self.field_tag(), self.value())
     }
 }
