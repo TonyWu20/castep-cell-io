@@ -4,7 +4,7 @@ mod helpers;
 
 pub use error::CellParseError;
 
-use crate::data::{CellEntries, IonicPositionBlock, LatticeParamBlock};
+use crate::cell_document::{CellEntries, IonicPositionBlock, LatticeParamBlock};
 
 #[derive(Debug)]
 pub struct CellParser<'a> {

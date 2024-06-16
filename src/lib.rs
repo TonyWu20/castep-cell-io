@@ -3,7 +3,6 @@
 mod cell_document;
 mod formatting;
 mod keywords;
-mod params;
 mod parsing;
 
 pub use cell_document::{

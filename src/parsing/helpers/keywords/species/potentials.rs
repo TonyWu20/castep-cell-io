@@ -5,7 +5,7 @@ use winnow::{
 };
 
 use crate::{
-    data::{SpeciesPot, SpeciesPotBlock},
+    cell_document::{SpeciesPot, SpeciesPotBlock},
     parsing::helpers::get_block_data,
     CellParseError,
 };

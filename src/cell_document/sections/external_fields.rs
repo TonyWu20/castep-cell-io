@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::formatting::BlockDisplay;
 
-use super::units::{efield_units::EFieldUnit, pressure_units::PressureUnits};
+use crate::cell_document::units::{efield_units::EFieldUnit, pressure_units::PressureUnits};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ExtEFieldBlock {
@@ -72,7 +72,7 @@ impl Display for ExtPressureBlock {
 
 #[cfg(test)]
 mod test {
-    use crate::data::external_fields::ExtPressureBlock;
+    use crate::cell_document::sections::external_fields::ExtPressureBlock;
 
     use super::ExtEFieldBlock;
 

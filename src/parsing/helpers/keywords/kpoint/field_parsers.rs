@@ -1,5 +1,7 @@
 use crate::{
-    data::{units::ParsableUnit, KpointMPGrid, KpointMPSpacing, KpointSettings, KpointTask},
+    cell_document::{
+        units::ParsableUnit, KpointMPGrid, KpointMPSpacing, KpointSettings, KpointTask,
+    },
     parsing::helpers::get_field_data,
     CellParseError, InvLengthUnit,
 };

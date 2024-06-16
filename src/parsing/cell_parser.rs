@@ -1,5 +1,5 @@
 use crate::{
-    data::{CellDocument, CellEntries},
+    cell_document::{CellDocument, CellEntries},
     keywords::{
         DocumentSections, KPointKeywords, KeywordType, LatticeBlockType, PositionsKeywords,
         SpeciesKeywords,

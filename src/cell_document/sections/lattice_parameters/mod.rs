@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{data::units::Degrees, formatting::BlockDisplay, LengthUnit};
+use crate::{cell_document::units::Degrees, formatting::BlockDisplay, LengthUnit};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeParamBlock {

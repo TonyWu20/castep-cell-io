@@ -5,7 +5,7 @@ use winnow::{
 };
 
 use crate::{
-    data::{BSKpointPath, KpointListBlock, KpointSettings, KpointTask, NCKpointSettings},
+    cell_document::{BSKpointPath, KpointListBlock, KpointSettings, KpointTask, NCKpointSettings},
     parsing::helpers::get_block_data,
     CellParseError,
 };

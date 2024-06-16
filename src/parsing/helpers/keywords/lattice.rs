@@ -1,7 +1,9 @@
 use winnow::{ascii::Caseless, combinator::alt, PResult, Parser};
 
 use crate::{
-    data::{units::ParsableUnit, LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock},
+    cell_document::{
+        units::ParsableUnit, LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock,
+    },
     keywords::{DocumentSections, LatticeBlockType},
     parsing::{helpers::block::get_block_data, CellParseError},
     LengthUnit,

@@ -11,12 +11,12 @@ use winnow::{
     PResult, Parser,
 };
 
-use crate::data::units::ParsableUnit;
-use crate::data::IonicPositionBlock;
+use crate::cell_document::units::ParsableUnit;
+use crate::cell_document::IonicPositionBlock;
 use crate::parsing::helpers::block::get_block_data;
 use crate::LengthUnit;
 use crate::{
-    data::{IonicPosition, Mixture},
+    cell_document::{IonicPosition, Mixture},
     keywords::{DocumentSections, PositionsKeywords},
     parsing::CellParseError,
 };

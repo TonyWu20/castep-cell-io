@@ -5,7 +5,7 @@ use winnow::{
 };
 
 use crate::{
-    data::{SpeciesMass, SpeciesMassBlock},
+    cell_document::{SpeciesMass, SpeciesMassBlock},
     parsing::helpers::get_block_data,
     CellParseError,
 };

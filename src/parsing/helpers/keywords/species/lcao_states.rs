@@ -5,7 +5,7 @@ use winnow::{
 };
 
 use crate::{
-    data::{LCAOBasis, SpeciesLCAOStatesBlock},
+    cell_document::{LCAOBasis, SpeciesLCAOStatesBlock},
     parsing::helpers::get_block_data,
     CellParseError,
 };
