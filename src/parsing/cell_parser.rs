@@ -12,7 +12,10 @@ use crate::{
     CellParseError, CellParser,
 };
 
-use super::helpers::{parse_bs_kpoint_path, parse_species_lcao_block};
+use super::helpers::{
+    parse_bs_kpoint_path, parse_kpoint_mp_grid_field, parse_kpoint_mp_spacing_field,
+    parse_species_lcao_block,
+};
 
 impl<'a> From<&'a str> for CellParser<'a> {
     fn from(value: &'a str) -> Self {
@@ -113,8 +116,12 @@ impl<'a> CellParser<'a> {
             KPointKeywords::KPOINT_LIST => Ok(CellEntries::KpointSettings(parse_kpoint_list(
                 &mut self.input,
             )?)),
-            KPointKeywords::KPOINT_MP_GRID => todo!(),
-            KPointKeywords::KPOINT_MP_SPACING => todo!(),
+            KPointKeywords::KPOINT_MP_GRID => Ok(CellEntries::KpointSettings(
+                parse_kpoint_mp_grid_field(&mut self.input)?,
+            )),
+            KPointKeywords::KPOINT_MP_SPACING => Ok(CellEntries::KpointSettings(
+                parse_kpoint_mp_spacing_field(&mut self.input)?,
+            )),
             KPointKeywords::KPOINT_MP_OFFSET => todo!(),
             KPointKeywords::SPECTRAL_KPOINT_LIST => Ok(CellEntries::NCKpointSettings(
                 parse_bs_kpoint_list(&mut self.input)?,

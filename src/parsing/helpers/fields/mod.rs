@@ -1,4 +1,4 @@
-use winnow::{ascii::space0, combinator::alt, token::take_until, PResult, Parser};
+use winnow::{token::take_until, PResult, Parser};
 
 use super::{effective_line, KeywordType};
 

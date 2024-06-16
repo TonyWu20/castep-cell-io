@@ -11,8 +11,11 @@ use self::{
     block::strip_to_block_name,
     fields::field_name,
     keywords::{
-        any_block, ionic_positions::assign_positions_type, kpoint::assign_kpoint_block_type,
-        lattice::assign_lattice_type, species::assign_species_type,
+        any_block, any_field,
+        ionic_positions::assign_positions_type,
+        kpoint::{assign_kpoint_block_type, assign_kpoint_field_settings},
+        lattice::assign_lattice_type,
+        species::assign_species_type,
     },
 };
 
@@ -24,7 +27,10 @@ pub use block::get_block_data;
 pub use fields::get_field_data;
 pub use keywords::{
     ionic_positions::parse_ionic_positions,
-    kpoint::{parse_bs_kpoint_list, parse_bs_kpoint_path, parse_kpoint_list},
+    kpoint::{
+        parse_bs_kpoint_list, parse_bs_kpoint_path, parse_kpoint_list, parse_kpoint_mp_grid_field,
+        parse_kpoint_mp_spacing_field,
+    },
     lattice::parse_lattice_param,
     species::{parse_species_lcao_block, parse_species_mass_block, parse_species_pot_block},
 };
@@ -68,9 +74,10 @@ pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>
         assign_species_type,
         any_block,
     );
+    let field_keyword_identifiers = (assign_kpoint_field_settings, any_field);
     let assign = match keyword {
         KeywordType::Block(block) => alt(block_keyword_identifiers).parse(block),
-        KeywordType::Field(name) => Ok(DocumentSections::Misc(KeywordType::Field(name))),
+        KeywordType::Field(name) => alt(field_keyword_identifiers).parse(name),
     };
     if let Ok(sec) = assign {
         Ok(sec)
