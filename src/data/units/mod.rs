@@ -1,3 +1,7 @@
+use crate::CellParseError;
+
+pub mod charge_units;
+pub mod force_units;
 pub mod length_units;
 
 #[derive(Debug, Clone, Copy)]
@@ -22,4 +26,8 @@ impl Radians {
     pub fn value(&self) -> f64 {
         self.0
     }
+}
+
+pub trait ParsableUnit<Output = Self> {
+    fn parse_from_str(input: &str) -> Result<Output, CellParseError>;
 }
