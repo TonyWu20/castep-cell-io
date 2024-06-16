@@ -2,13 +2,22 @@ pub trait BlockDisplay {
     fn block_tag(&self) -> String;
     fn entries(&self) -> String;
     fn content(&self) -> String {
-        [
-            format!("%BLOCK {}", self.block_tag()),
-            self.entries(),
-            format!("%ENDBLOCK {}", self.block_tag()),
-            "\n".to_string(),
-        ]
-        .join("\n")
+        if !self.entries().is_empty() {
+            [
+                format!("%BLOCK {}", self.block_tag()),
+                self.entries(),
+                format!("%ENDBLOCK {}", self.block_tag()),
+                "\n".to_string(),
+            ]
+            .join("\n")
+        } else {
+            [
+                format!("%BLOCK {}", self.block_tag()),
+                format!("%ENDBLOCK {}", self.block_tag()),
+                "\n".to_string(),
+            ]
+            .join("\n")
+        }
     }
 }
 

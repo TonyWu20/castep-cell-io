@@ -1,24 +1,18 @@
 #[allow(unused_imports)]
-mod constraints;
-mod external_fields;
-mod ionic_positions;
-mod kpoint_settings;
-mod lattice_parameters;
-mod species_characters;
-
+mod sections;
 pub mod units;
 
 use std::{fmt::Display, fs, io::Error, path::Path};
 
-pub use external_fields::ExtEFieldBlock;
-pub use ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
-pub use kpoint_settings::*;
-pub use lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
-pub use species_characters::{
+pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
+pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
+pub use sections::kpoint_settings::*;
+pub use sections::lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
+pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
-pub use constraints::{FixAllCell, FixAllIons, FixCom};
+pub use sections::constraints::{FixAllCell, FixAllIons, FixCom};
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug, Clone)]
@@ -97,7 +91,7 @@ pub enum CellEntries {
     FixCom(FixCom),
     IonicConstraints,
     ExtEfield(ExtEFieldBlock),
-    ExtPressure,
+    ExtPressure(ExtPressureBlock),
     SpeciesMass(SpeciesMassBlock),
     SpeciesPot(SpeciesPotBlock),
     SpeciesLCAOStates(SpeciesLCAOStatesBlock),
@@ -113,7 +107,7 @@ impl Display for CellEntries {
             CellEntries::FixCom(v) => format!("{v}"),
             CellEntries::IonicConstraints => todo!(),
             CellEntries::ExtEfield(v) => format!("{v}"),
-            CellEntries::ExtPressure => todo!(),
+            CellEntries::ExtPressure(v) => format!("{v}"),
             CellEntries::SpeciesMass(v) => format!("{v}"),
             CellEntries::SpeciesPot(v) => format!("{v}"),
             CellEntries::SpeciesLCAOStates(v) => format!("{v}"),

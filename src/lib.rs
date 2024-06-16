@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
-mod data;
+mod cell_document;
 mod formatting;
 mod keywords;
+mod params;
 mod parsing;
 
-pub use data::{
+pub use cell_document::{
     units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock, LatticeABC,
     LatticeCart, LatticeParam,
 };
