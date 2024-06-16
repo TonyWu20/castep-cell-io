@@ -14,6 +14,7 @@ use assignments::{
 };
 
 pub use block_parsers::{parse_bs_kpoint_list, parse_bs_kpoint_path, parse_kpoint_list};
+pub use field_parsers::{parse_kpoint_mp_grid_field, parse_kpoint_mp_spacing_field};
 
 pub fn assign_kpoint_block_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     alt((
