@@ -10,4 +10,5 @@ pub use cell_document::{
     units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock, LatticeABC,
     LatticeCart, LatticeParam,
 };
+pub use keywords::{DocumentSections, KPointKeywords, LatticeBlockType, PositionsKeywords};
 pub use parsing::{CellParseError, CellParser};
