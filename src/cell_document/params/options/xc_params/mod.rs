@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
-use super::{OptionDisplay, SectionDisplay};
-
 mod xc_functional;
 
 pub use xc_functional::XCFunctional;
+
+use super::{OptionDisplay, ParamSectionDisplay};
 
 #[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
@@ -24,7 +24,7 @@ impl OptionDisplay for XcParameter {
     fn value(&self) -> String {
         match self {
             XcParameter::SPIN_POLARIZED(b) => format!("{b}"),
-            XcParameter::XC_FUNCTIONAL(xc) => format!("{}", xc.value()),
+            XcParameter::XC_FUNCTIONAL(xc) => xc.value(),
         }
     }
 }
@@ -55,7 +55,7 @@ impl Default for XcParamSection {
     }
 }
 
-impl SectionDisplay for XcParamSection {
+impl ParamSectionDisplay for XcParamSection {
     fn options(&self) -> &[impl Display] {
         &self.params
     }

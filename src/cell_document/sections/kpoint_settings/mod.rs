@@ -14,6 +14,32 @@ pub enum KpointTask {
     Phonon,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub enum KpointQuality {
+    #[default]
+    Coarse,
+    Medium,
+    Fine,
+}
+
+impl KpointQuality {
+    pub fn spacing_value(&self, metal_selected: bool) -> f64 {
+        if metal_selected {
+            match self {
+                KpointQuality::Coarse => 0.07,
+                KpointQuality::Medium => 0.05,
+                KpointQuality::Fine => 0.04,
+            }
+        } else {
+            match self {
+                KpointQuality::Coarse => 0.1,
+                KpointQuality::Medium => 0.08,
+                KpointQuality::Fine => 0.07,
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum KpointSettings {
     List(KpointListBlock),

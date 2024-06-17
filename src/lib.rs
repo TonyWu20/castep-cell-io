@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+mod calc_setup;
 mod cell_document;
 mod formatting;
 mod keywords;

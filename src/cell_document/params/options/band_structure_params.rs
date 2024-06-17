@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::{OptionDisplay, SectionDisplay, XCFunctional};
+use super::{OptionDisplay, ParamSectionDisplay, XCFunctional};
 
 #[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
@@ -78,7 +78,7 @@ impl Display for BandStructureParam {
     }
 }
 
-impl SectionDisplay for BandStructureParamSection {
+impl ParamSectionDisplay for BandStructureParamSection {
     fn options(&self) -> &[impl Display] {
         self.params()
     }

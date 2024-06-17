@@ -229,7 +229,6 @@ impl Display for IonicConstraintsBlock {
 
 #[cfg(test)]
 mod test {
-    use crate::formatting::BlockDisplay;
 
     use super::IonicConstraintsBlock;
 

@@ -4,12 +4,13 @@ use crate::cell_document::units::charge_units::ChargeUnits;
 
 use opt_strategy::OptStrategy;
 
-use task::CastepTask;
-
-use super::{OptionDisplay, SectionDisplay};
+use super::{OptionDisplay, ParamSectionDisplay};
 
 mod opt_strategy;
 mod task;
+
+pub use task::CastepTask;
+
 #[derive(Debug, Clone)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum GeneralParam {
@@ -54,12 +55,12 @@ impl GeneralParamSection {
         Self::new(vec![
             GeneralParam::TASK(CastepTask::BandStructure),
             GeneralParam::COMMENT("CASTEP calculation from Materials Studio".to_string()),
-            GeneralParam::CONTINUATION("Default".to_string()),
+            GeneralParam::CONTINUATION("default".to_string()),
             GeneralParam::OPT_STRATEGY(OptStrategy::Speed),
             GeneralParam::PAGE_WVFNS(0),
             GeneralParam::CALCULATE_ELF(false),
             GeneralParam::CALCULATE_STRESS(false),
-            GeneralParam::CALCULATE_HIRSHFELD(true),
+            GeneralParam::CALCULATE_HIRSHFELD(false),
             GeneralParam::CALCULATE_DENSDIFF(false),
         ])
     }
@@ -156,7 +157,7 @@ impl Display for GeneralParam {
     }
 }
 
-impl SectionDisplay for GeneralParamSection {
+impl ParamSectionDisplay for GeneralParamSection {
     fn options(&self) -> &[impl Display] {
         &self.params
     }

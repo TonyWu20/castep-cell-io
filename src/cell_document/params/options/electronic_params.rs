@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::{OptionDisplay, SectionDisplay};
+use super::{OptionDisplay, ParamSectionDisplay};
 
 #[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
@@ -69,7 +69,7 @@ impl Display for ElectronicParam {
     }
 }
 
-impl SectionDisplay for ElectronicParamSection {
+impl ParamSectionDisplay for ElectronicParamSection {
     fn options(&self) -> &[impl Display] {
         self.params()
     }

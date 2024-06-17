@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::cell_document::params::OptionDisplay;
+use crate::cell_document::params::options::OptionDisplay;
 
 #[derive(Debug, Clone, Copy)]
 pub enum MetalsMethod {

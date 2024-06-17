@@ -36,7 +36,7 @@ mod test {
             );
             let data = get_field_data(s).map_err(|_| ErrMode::Backtrack(context));
             println!("{name:?}");
-            dbg!(data);
+            dbg!(data.ok());
         });
     }
 }

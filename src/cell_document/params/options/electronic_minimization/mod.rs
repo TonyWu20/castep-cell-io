@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use metals_method::{DensityMixing, Edft, MetalsMethod};
 
-use super::{OptionDisplay, SectionDisplay};
+use super::{OptionDisplay, ParamSectionDisplay};
 
 mod metals_method;
 /// Electronic minimization parameters
@@ -37,27 +37,29 @@ impl ElectroMinParamSection {
         Self { params }
     }
     pub fn with_edft() -> Self {
-        let mut to_use_param = Self::default();
-        to_use_param
-            .params
-            .iter_mut()
-            .filter(|p| matches!(p, ElectroMinParam::METALS_METHOD(_)))
-            .for_each(|p| *p = ElectroMinParam::METALS_METHOD(MetalsMethod::Edft(Edft::default())));
-        to_use_param
+        Self::new(vec![
+            ElectroMinParam::ELEC_ENERGY_TOL(1e-5),
+            ElectroMinParam::FIX_OCCUPANCY(false),
+            ElectroMinParam::METALS_METHOD(MetalsMethod::Edft(Edft::default())),
+            ElectroMinParam::MAX_SCF_CYCLES(6000),
+            ElectroMinParam::SMEARING_WIDTH(0.1_f64),
+            ElectroMinParam::SPIN_FIX(6),
+            ElectroMinParam::NUM_DUMP_CYCLES(0),
+        ])
     }
 }
 
 impl Default for ElectroMinParamSection {
     fn default() -> Self {
-        let params = vec![
+        Self::new(vec![
             ElectroMinParam::ELEC_ENERGY_TOL(1e-5),
             ElectroMinParam::FIX_OCCUPANCY(false),
             ElectroMinParam::METALS_METHOD(MetalsMethod::Dm(DensityMixing::default())),
             ElectroMinParam::MAX_SCF_CYCLES(6000),
             ElectroMinParam::SMEARING_WIDTH(0.1_f64),
             ElectroMinParam::SPIN_FIX(6),
-        ];
-        Self::new(params)
+            ElectroMinParam::NUM_DUMP_CYCLES(0),
+        ])
     }
 }
 
@@ -111,7 +113,7 @@ impl Display for ElectroMinParam {
     }
 }
 
-impl SectionDisplay for ElectroMinParamSection {
+impl ParamSectionDisplay for ElectroMinParamSection {
     fn options(&self) -> &[impl Display] {
         &self.params
     }

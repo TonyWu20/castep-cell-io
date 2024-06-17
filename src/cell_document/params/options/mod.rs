@@ -11,11 +11,14 @@ mod pseudopotentials;
 
 use std::fmt::Display;
 
-pub use basis_set::BasisSetParamSection;
-pub use electronic_minimization::ElectroMinParamSection;
-pub use general::GeneralParamSection;
-pub use geom_params::GeomOptParamSection;
-pub use xc_params::{XCFunctional, XcParamSection};
+pub use band_structure_params::*;
+pub use basis_set::*;
+pub use electronic_minimization::*;
+pub use electronic_params::*;
+pub use general::*;
+pub use geom_params::*;
+pub use populations::*;
+pub use xc_params::*;
 
 pub trait OptionDisplay {
     fn tag(&self) -> String;
@@ -25,7 +28,7 @@ pub trait OptionDisplay {
     }
 }
 
-pub trait SectionDisplay {
+pub trait ParamSectionDisplay {
     fn options(&self) -> &[impl Display];
     /// Join lines of `Option`
     fn section_content(&self) -> String {

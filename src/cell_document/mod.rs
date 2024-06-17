@@ -5,6 +5,7 @@ pub mod units;
 
 use std::{fmt::Display, fs, io::Error, path::Path};
 
+use castep_periodic_table::element::ElementSymbol;
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 pub use sections::kpoint_settings::*;
@@ -13,7 +14,8 @@ pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
-pub use sections::constraints::{FixAllCell, FixAllIons, FixCom};
+pub use params::{CastepParams, CastepParamsBuilder, CastepTask};
+pub use sections::constraints::{FixAllCell, FixAllIons, FixCom, IonicConstraintsBlock};
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug, Clone)]
@@ -58,6 +60,17 @@ impl CellDocument {
     pub fn set_entries(&mut self, entries: Option<Vec<CellEntries>>) {
         self.entries = entries;
     }
+    pub fn get_elements(&self) -> Vec<ElementSymbol> {
+        let mut symbols: Vec<ElementSymbol> = self
+            .ionic_positions()
+            .positions()
+            .iter()
+            .map(|pos| pos.symbol())
+            .collect();
+        symbols.sort();
+        symbols.dedup();
+        symbols
+    }
 }
 
 impl Display for CellDocument {
@@ -90,7 +103,7 @@ pub enum CellEntries {
     FixAllIons(FixAllIons),
     /// This keyword controls whether or not the center of mass of the ions remains fixed during relaxation or molecular dynamics.
     FixCom(FixCom),
-    IonicConstraints,
+    IonicConstraints(IonicConstraintsBlock),
     ExtEfield(ExtEFieldBlock),
     ExtPressure(ExtPressureBlock),
     SpeciesMass(SpeciesMassBlock),
@@ -106,7 +119,7 @@ impl Display for CellEntries {
             CellEntries::FixAllCell(v) => format!("{v}"),
             CellEntries::FixAllIons(v) => format!("{v}"),
             CellEntries::FixCom(v) => format!("{v}"),
-            CellEntries::IonicConstraints => todo!(),
+            CellEntries::IonicConstraints(v) => format!("{v}"),
             CellEntries::ExtEfield(v) => format!("{v}"),
             CellEntries::ExtPressure(v) => format!("{v}"),
             CellEntries::SpeciesMass(v) => format!("{v}"),

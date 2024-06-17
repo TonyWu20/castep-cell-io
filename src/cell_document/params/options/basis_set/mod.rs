@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use finite_basis_corr::FiniteBasisCorr;
 
-use super::{OptionDisplay, SectionDisplay};
+use super::{OptionDisplay, ParamSectionDisplay};
 
 mod finite_basis_corr;
 
@@ -30,11 +30,14 @@ impl BasisSetParamSection {
     pub fn new(params: Vec<BasisSetParam>) -> Self {
         Self { params }
     }
-    pub fn set_cutoff(&mut self, cutoff_energy: f64) {
-        self.params
-            .iter_mut()
-            .filter(|p| matches!(p, BasisSetParam::CUT_OFF_ENERGY(_)))
-            .for_each(|p| *p = BasisSetParam::CUT_OFF_ENERGY(cutoff_energy));
+    pub fn with_cutoff_energy(cutoff_energy: f64) -> Self {
+        Self::new(vec![
+            BasisSetParam::CUT_OFF_ENERGY(cutoff_energy),
+            BasisSetParam::GRID_SCALE(1.5),
+            BasisSetParam::FINE_GRID_SCALE(1.5),
+            BasisSetParam::FINITE_BASIS_CORR(FiniteBasisCorr::default()),
+            BasisSetParam::FIXED_NPW(false),
+        ])
     }
 }
 
@@ -78,7 +81,7 @@ impl Display for BasisSetParam {
     }
 }
 
-impl SectionDisplay for BasisSetParamSection {
+impl ParamSectionDisplay for BasisSetParamSection {
     fn options(&self) -> &[impl Display] {
         &self.params
     }
@@ -96,8 +99,7 @@ mod test {
 
     #[test]
     fn test_basis_set_pm() {
-        let mut pm = BasisSetParamSection::default();
-        pm.set_cutoff(380.0);
+        let pm = BasisSetParamSection::with_cutoff_energy(380.0);
         println!("{pm}");
     }
 }
