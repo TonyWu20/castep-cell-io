@@ -11,15 +11,15 @@ use winnow::{
     PResult, Parser,
 };
 
-use crate::data::IonicPositionBlock;
+use crate::cell_document::units::ParsableUnit;
+use crate::cell_document::IonicPositionBlock;
 use crate::parsing::helpers::block::get_block_data;
+use crate::LengthUnit;
 use crate::{
-    data::{IonicPosition, Mixture},
+    cell_document::{IonicPosition, Mixture},
     keywords::{DocumentSections, PositionsKeywords},
     parsing::CellParseError,
 };
-
-use super::length_unit;
 
 fn assign_positions_frac<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     Caseless("positions_frac")
@@ -87,7 +87,7 @@ pub fn parse_ionic_positions(
         .iter_mut()
         .peekable()
         .peek()
-        .and_then(|s| length_unit(s).ok());
+        .and_then(|s| LengthUnit::parse_from_str(s).ok());
     let positions: Result<Vec<IonicPosition>, CellParseError> = if unit.is_some() {
         lines
             .iter_mut()

@@ -1,12 +1,13 @@
 use winnow::{ascii::Caseless, combinator::alt, PResult, Parser};
 
 use crate::{
-    data::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock},
+    cell_document::{
+        units::ParsableUnit, LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock,
+    },
     keywords::{DocumentSections, LatticeBlockType},
     parsing::{helpers::block::get_block_data, CellParseError},
+    LengthUnit,
 };
-
-use super::length_unit;
 
 fn assign_lattice_cart<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     Caseless("lattice_cart")
@@ -27,7 +28,9 @@ pub fn assign_lattice_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<
 /// This should be receiving the output of `get_block_data()`
 fn parse_lattice_cart(data_input: &str) -> Result<LatticeParamBlock, CellParseError> {
     let mut lines = data_input.split_whitespace().peekable();
-    let length_unit = lines.peek().and_then(|s| length_unit(s).ok());
+    let length_unit = lines
+        .peek()
+        .and_then(|s| LengthUnit::parse_from_str(s).ok());
     let values: Vec<f64> = if length_unit.is_some() {
         lines
             .skip(1)
@@ -53,7 +56,9 @@ fn parse_lattice_cart(data_input: &str) -> Result<LatticeParamBlock, CellParseEr
 /// This should be receiving the output of `get_block_data()`
 fn parse_lattice_abc(data_input: &str) -> Result<LatticeParamBlock, CellParseError> {
     let mut lines = data_input.split_whitespace().peekable();
-    let length_unit = lines.peek().and_then(|s| length_unit(s).ok());
+    let length_unit = lines
+        .peek()
+        .and_then(|s| LengthUnit::parse_from_str(s).ok());
     let values: Vec<f64> = if length_unit.is_some() {
         lines
             .skip(1)
