@@ -55,6 +55,24 @@ pub enum LatticeParam {
     LatticeABC(LatticeABC),
 }
 
+impl LatticeParam {
+    pub fn try_into_lattice_cart(self) -> Result<LatticeCart, Self> {
+        if let Self::LatticeCart(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+
+    pub fn try_into_lattice_abc(self) -> Result<LatticeABC, Self> {
+        if let Self::LatticeABC(v) = self {
+            Ok(v)
+        } else {
+            Err(self)
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeCart {
     a: [f64; 3],
