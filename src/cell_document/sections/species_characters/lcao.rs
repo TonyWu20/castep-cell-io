@@ -15,6 +15,14 @@ impl SpeciesLCAOStatesBlock {
     pub fn new(basis_sets: Vec<LCAOBasis>) -> Self {
         Self { basis_sets }
     }
+    pub fn from_elememts(elements: &[ElementSymbol]) -> Self {
+        Self::new(
+            elements
+                .iter()
+                .map(|&elm| LCAOBasis::from_element(elm))
+                .collect(),
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -18,6 +18,14 @@ impl SpeciesMassBlock {
     pub fn new(items: Vec<SpeciesMass>) -> Self {
         Self { items }
     }
+    pub fn from_elements(elements: &[ElementSymbol]) -> Self {
+        Self::new(
+            elements
+                .iter()
+                .map(|&elm| SpeciesMass::from_element(elm))
+                .collect(),
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

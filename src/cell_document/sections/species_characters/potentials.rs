@@ -21,6 +21,14 @@ impl SpeciesPotBlock {
     pub fn new(items: Vec<SpeciesPot>) -> Self {
         Self { items }
     }
+    pub fn from_elements(elements: &[ElementSymbol]) -> Self {
+        Self::new(
+            elements
+                .iter()
+                .map(|&elm| SpeciesPot::from_element(elm))
+                .collect(),
+        )
+    }
 }
 
 impl SpeciesPot {
