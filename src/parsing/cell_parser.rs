@@ -55,10 +55,16 @@ impl<'a> CellParser<'a> {
                         KeywordType::Field(field_kw) => {
                             let field_data = get_field_data(&mut self.input)
                                 .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                            println!("{:?}: {}", field_kw, field_data);
+                            #[cfg(debug_assertions)]
+                            {
+                                println!("{:?}: {}", field_kw, field_data);
+                            }
                         }
                     }
-                    println!("{:?}", section)
+                    #[cfg(debug_assertions)]
+                    {
+                        println!("{:?}", section)
+                    }
                 }
                 _ => {
                     println!("{:?}", section)

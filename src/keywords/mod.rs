@@ -5,6 +5,7 @@ mod positions;
 mod species;
 mod symmetry;
 
+pub use constraints::ConstraintsKeywords;
 pub use kpoint::KPointKeywords;
 pub use lattice::LatticeBlockType;
 pub use positions::PositionsKeywords;
@@ -34,6 +35,7 @@ pub enum DocumentSections<'s> {
     CellLatticeVectors(LatticeBlockType),
     IonicPositions(PositionsKeywords),
     KPoint(KPointKeywords),
+    Constraints(ConstraintsKeywords),
     Symmetry,
     Species(SpeciesKeywords),
     Misc(KeywordType<'s>),
