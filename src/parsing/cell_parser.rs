@@ -17,10 +17,10 @@ use super::helpers::{
     parse_species_lcao_block,
 };
 
-impl<'a> From<&'a str> for CellParser<'a> {
-    fn from(value: &'a str) -> Self {
+impl<'a, S: AsRef<str>> From<&'a S> for CellParser<'a> {
+    fn from(value: &'a S) -> Self {
         Self {
-            input: value,
+            input: value.as_ref(),
             lattice_param: None,
             ionic_positions: None,
             other_entries: Vec::new(),

@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-mod params;
+pub mod params;
 mod sections;
 pub mod units;
 
@@ -14,7 +14,6 @@ pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
-pub use params::{CastepParams, CastepParamsBuilder, CastepTask};
 pub use sections::constraints::{FixAllCell, FixAllIons, FixCom, IonicConstraintsBlock};
 
 /// A structure to represent the `.cell` file.
