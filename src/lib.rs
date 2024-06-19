@@ -8,8 +8,8 @@ mod parsing;
 
 pub use calc_setup::SeedfileGenerator;
 pub use cell_document::{
-    units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock, LatticeABC,
-    LatticeCart, LatticeParam, LatticeParamBlock,
+    params::CastepTask, units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock,
+    LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock,
 };
 pub use keywords::{DocumentSections, KPointKeywords, LatticeBlockType, PositionsKeywords};
 pub use parsing::{CellParseError, CellParser};
