@@ -1,5 +1,5 @@
 use crate::{
-    cell_document::{CellDocument, CellEntries},
+    cell_document::{CellDocument, CellEntries, CellEssentials},
     keywords::{
         DocumentSections, KPointKeywords, KeywordType, LatticeBlockType, PositionsKeywords,
         SpeciesKeywords,
@@ -72,10 +72,11 @@ impl<'a> CellParser<'a> {
             }
         }
         if self.lattice_param.is_some() && self.ionic_positions.is_some() {
-            let mut cell_doc = CellDocument::new(
+            let model_description = CellEssentials::new(
                 self.lattice_param.unwrap(),
                 self.ionic_positions.as_ref().unwrap().to_owned(),
             );
+            let mut cell_doc = CellDocument::new(model_description);
             cell_doc.set_entries(Some(self.other_entries.clone()));
             Ok(cell_doc)
         } else {

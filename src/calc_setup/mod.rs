@@ -9,9 +9,10 @@ use castep_periodic_table::element::LookupElement;
 
 use crate::{
     cell_document::{
-        params::CastepParams, params::CastepTask, CellEntries, ExtEFieldBlock, ExtPressureBlock,
-        FixAllCell, FixCom, IonicConstraintsBlock, KpointListBlock, KpointQuality, KpointSettings,
-        NCKpointSettings, SpeciesLCAOStatesBlock, SpeciesMassBlock, SpeciesPotBlock,
+        params::{CastepParams, CastepTask},
+        CellEntries, ExtEFieldBlock, ExtPressureBlock, FixAllCell, FixCom, IonicConstraintsBlock,
+        KpointListBlock, KpointQuality, KpointSettings, NCKpointSettings, SpeciesLCAOStatesBlock,
+        SpeciesMassBlock, SpeciesPotBlock,
     },
     CellDocument,
 };

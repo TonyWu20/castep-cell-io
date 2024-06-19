@@ -124,12 +124,12 @@ impl LatticeCart {
 
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeABC {
-    a: f64,
-    b: f64,
-    c: f64,
-    alpha: Degrees,
-    beta: Degrees,
-    gamma: Degrees,
+    pub(crate) a: f64,
+    pub(crate) b: f64,
+    pub(crate) c: f64,
+    pub(crate) alpha: Degrees,
+    pub(crate) beta: Degrees,
+    pub(crate) gamma: Degrees,
 }
 
 impl Display for LatticeABC {

@@ -6,6 +6,8 @@ pub mod units;
 use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::element::ElementSymbol;
+use chemrust_core::data::lattice::CrystalModel;
+pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 pub use sections::kpoint_settings::*;
@@ -14,54 +16,65 @@ pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
-pub use sections::constraints::{FixAllCell, FixAllIons, FixCom, IonicConstraintsBlock};
+pub use sections::CellEntries;
+pub use sections::CellEssentials;
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug, Clone)]
 pub struct CellDocument {
-    lattice: LatticeParamBlock,
-    ionic_positions: IonicPositionBlock,
-    entries: Option<Vec<CellEntries>>,
+    model_description: CellEssentials,
+    other_entries: Option<Vec<CellEntries>>,
+}
+
+impl CrystalModel for CellDocument {
+    type LatticeData = LatticeParamBlock;
+
+    type AtomData = IonicPositionBlock;
+
+    fn get_cell_parameters(&self) -> &Self::LatticeData {
+        self.model_description().lattice_block()
+    }
+
+    fn get_atom_data(&self) -> &Self::AtomData {
+        self.model_description().ionic_pos_block()
+    }
+
+    fn get_cell_parameters_mut(&mut self) -> &mut Self::LatticeData {
+        self.model_description_mut().lattice_block_mut()
+    }
+
+    fn get_atom_data_mut(&mut self) -> &mut Self::AtomData {
+        self.model_description_mut().ionic_pos_block_mut()
+    }
 }
 
 impl CellDocument {
-    pub fn new(lattice: LatticeParamBlock, ionic_positions: IonicPositionBlock) -> Self {
+    pub fn new(model_description: CellEssentials) -> Self {
         Self {
-            lattice,
-            ionic_positions,
-            entries: None,
+            model_description,
+            other_entries: None,
         }
     }
 
-    pub fn lattice(&self) -> LatticeParamBlock {
-        self.lattice
-    }
-
-    pub fn ionic_positions(&self) -> &IonicPositionBlock {
-        &self.ionic_positions
-    }
     pub fn write_out<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
         fs::write(path, self.to_string())
     }
 
-    pub fn ionic_positions_mut(&mut self) -> &mut IonicPositionBlock {
-        &mut self.ionic_positions
+    pub fn other_entries(&self) -> Option<&Vec<CellEntries>> {
+        self.other_entries.as_ref()
     }
 
-    pub fn entries(&self) -> Option<&Vec<CellEntries>> {
-        self.entries.as_ref()
-    }
-
-    pub fn entries_mut(&mut self) -> &mut Option<Vec<CellEntries>> {
-        &mut self.entries
+    pub fn other_entries_mut(&mut self) -> &mut Option<Vec<CellEntries>> {
+        &mut self.other_entries
     }
 
     pub fn set_entries(&mut self, entries: Option<Vec<CellEntries>>) {
-        self.entries = entries;
+        self.other_entries = entries;
     }
     pub fn get_elements(&self) -> Vec<ElementSymbol> {
         let mut symbols: Vec<ElementSymbol> = self
-            .ionic_positions()
+            .model_description()
+            .ionic_pos_block()
             .positions()
             .iter()
             .map(|pos| pos.symbol())
@@ -70,12 +83,24 @@ impl CellDocument {
         symbols.dedup();
         symbols
     }
+
+    pub fn model_description(&self) -> &CellEssentials {
+        &self.model_description
+    }
+
+    pub fn model_description_mut(&mut self) -> &mut CellEssentials {
+        &mut self.model_description
+    }
+
+    pub fn set_model_description(&mut self, model_description: CellEssentials) {
+        self.model_description = model_description;
+    }
 }
 
 impl Display for CellDocument {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let entries = self
-            .entries()
+            .other_entries()
             .map(|e| {
                 e.iter()
                     .map(|item| format!("{}", item))
@@ -84,47 +109,11 @@ impl Display for CellDocument {
             })
             .unwrap_or_default();
         let content = [
-            format!("{}", self.lattice),
-            format!("{}", self.ionic_positions),
+            format!("{}", self.model_description().lattice_block()),
+            format!("{}", self.model_description().ionic_pos_block()),
             entries,
         ]
         .concat();
         write!(f, "{}", content)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum CellEntries {
-    KpointSettings(KpointSettings),
-    NCKpointSettings(NCKpointSettings),
-    /// This keyword controls whether or not all of the lattice parameters remain fixed during relaxation or molecular dynamics.
-    FixAllCell(FixAllCell),
-    FixAllIons(FixAllIons),
-    /// This keyword controls whether or not the center of mass of the ions remains fixed during relaxation or molecular dynamics.
-    FixCom(FixCom),
-    IonicConstraints(IonicConstraintsBlock),
-    ExtEfield(ExtEFieldBlock),
-    ExtPressure(ExtPressureBlock),
-    SpeciesMass(SpeciesMassBlock),
-    SpeciesPot(SpeciesPotBlock),
-    SpeciesLCAOStates(SpeciesLCAOStatesBlock),
-}
-
-impl Display for CellEntries {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let content = match self {
-            CellEntries::KpointSettings(v) => format!("{v}"),
-            CellEntries::NCKpointSettings(v) => format!("{v}"),
-            CellEntries::FixAllCell(v) => format!("{v}"),
-            CellEntries::FixAllIons(v) => format!("{v}"),
-            CellEntries::FixCom(v) => format!("{v}"),
-            CellEntries::IonicConstraints(v) => format!("{v}"),
-            CellEntries::ExtEfield(v) => format!("{v}"),
-            CellEntries::ExtPressure(v) => format!("{v}"),
-            CellEntries::SpeciesMass(v) => format!("{v}"),
-            CellEntries::SpeciesPot(v) => format!("{v}"),
-            CellEntries::SpeciesLCAOStates(v) => format!("{v}"),
-        };
-        write!(f, "{content}")
     }
 }
