@@ -6,6 +6,7 @@ mod formatting;
 mod keywords;
 mod parsing;
 
+pub use calc_setup::SeedfileGenerator;
 pub use cell_document::{
     units::length_units::*, CellDocument, IonicPosition, IonicPositionBlock, LatticeABC,
     LatticeCart, LatticeParam, LatticeParamBlock,
