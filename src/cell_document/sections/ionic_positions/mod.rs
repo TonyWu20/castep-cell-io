@@ -146,4 +146,24 @@ impl IonicPosition {
         );
         line
     }
+
+    pub fn set_symbol(&mut self, symbol: ElementSymbol) {
+        self.symbol = symbol;
+    }
+
+    pub fn coordinate_mut(&mut self) -> &mut [f64; 3] {
+        &mut self.coordinate
+    }
+
+    pub fn set_coordinate(&mut self, coordinate: [f64; 3]) {
+        self.coordinate = coordinate;
+    }
+
+    pub fn mixture_mut(&mut self) -> &mut Option<Mixture> {
+        &mut self.mixture
+    }
+
+    pub fn set_mixture(&mut self, mixture: Option<Mixture>) {
+        self.mixture = mixture;
+    }
 }
