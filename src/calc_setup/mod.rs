@@ -40,14 +40,14 @@ impl SeedfileGenerator {
             .map(|&elm| ELEMENT_TABLE.get_by_symbol(elm).spin() as u32)
             .sum::<u32>()
     }
-    fn get_cutoff_energy(&self, potentials_loc: &str) -> Result<f64, io::Error> {
+    fn get_cutoff_energy<P: AsRef<Path>>(&self, potentials_loc: P) -> Result<f64, io::Error> {
         Ok(self
             .cell_doc
             .get_elements()
             .iter()
             .map(|&elm| -> Result<f64, io::Error> {
                 let potential_file = ELEMENT_TABLE.get_by_symbol(elm).potential();
-                let potential_path = Path::new(potentials_loc).join(potential_file);
+                let potential_path = Path::new(potentials_loc.as_ref()).join(potential_file);
                 let file = File::open(potential_path)?;
                 let reader = BufReader::new(file);
                 let fine_energy = reader
@@ -113,7 +113,7 @@ impl SeedfileGenerator {
             CastepTask::GeometryOptimization => self.geom_opt_cell(),
         }
     }
-    fn geom_opt_param(&self, potentials_loc: &str) -> CastepParams {
+    fn geom_opt_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         CastepParams::geom_opt(
             self.get_cutoff_energy(potentials_loc)
                 .expect("Failed to get cutoff energy"),
@@ -121,7 +121,7 @@ impl SeedfileGenerator {
             self.use_edft.unwrap_or(false),
         )
     }
-    fn bs_param(&self, potentials_loc: &str) -> CastepParams {
+    fn bs_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         CastepParams::band_structure(
             self.get_cutoff_energy(potentials_loc)
                 .expect("Failed to get cutoff energy"),
@@ -129,7 +129,7 @@ impl SeedfileGenerator {
             self.use_edft.unwrap_or(false),
         )
     }
-    pub fn generate_castep_param(&self, potentials_loc: &str) -> CastepParams {
+    pub fn generate_castep_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         match self.task {
             CastepTask::BandStructure => self.bs_param(potentials_loc),
             CastepTask::GeometryOptimization => self.geom_opt_param(potentials_loc),
