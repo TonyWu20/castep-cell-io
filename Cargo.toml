@@ -15,5 +15,5 @@ keywords = ["chemistry", "castep"]
 [dependencies]
 castep-periodic-table = "0.5.0"
 winnow = "0.6.13"
-chemrust-core = "0.3.1"
+chemrust-core = "0.3.2"
 nalgebra = "0.33.0"
