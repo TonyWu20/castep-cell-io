@@ -6,7 +6,7 @@ pub mod units;
 use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::element::ElementSymbol;
-use chemrust_core::data::lattice::CrystalModel;
+use chemrust_core::data::lattice::{CrystalModel, SymmetryInfo};
 pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
@@ -45,6 +45,23 @@ impl CrystalModel for CellDocument {
 
     fn get_atom_data_mut(&mut self) -> &mut Self::AtomData {
         self.model_description_mut().ionic_pos_block_mut()
+    }
+}
+
+impl SymmetryInfo for CellDocument {
+    fn get_space_group_it_num(&self) -> u8 {
+        if let Some(entries) = &self.other_entries {
+            if let Some(_ops_block) = entries
+                .iter()
+                .find(|entry| matches!(entry, CellEntries::SymmetryOps(_)))
+            {
+                todo!()
+            } else {
+                1_u8
+            }
+        } else {
+            1_u8
+        }
     }
 }
 
