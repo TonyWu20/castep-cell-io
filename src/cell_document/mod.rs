@@ -6,7 +6,8 @@ pub mod units;
 use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::element::ElementSymbol;
-use chemrust_core::data::lattice::{CrystalModel, SymmetryInfo};
+use chemrust_core::data::lattice::CrystalModel;
+use chemrust_core::data::symmetry::SymmetryInfo;
 pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
