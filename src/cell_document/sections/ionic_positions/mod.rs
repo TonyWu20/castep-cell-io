@@ -57,6 +57,10 @@ impl IonicPositionBlock {
     pub fn positions_mut(&mut self) -> &mut Vec<IonicPosition> {
         &mut self.positions
     }
+
+    pub fn set_spin_polarised(&mut self, spin_polarised: bool) {
+        self.spin_polarised = spin_polarised;
+    }
 }
 
 impl BlockDisplay for IonicPositionBlock {

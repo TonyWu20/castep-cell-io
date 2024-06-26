@@ -1,6 +1,6 @@
 [package]
 name = "castep-cell-io"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 author = ["TonyWu20"]
 description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
@@ -15,5 +15,6 @@ keywords = ["chemistry", "castep"]
 [dependencies]
 castep-periodic-table = "0.5.0"
 winnow = "0.6.13"
-chemrust-core = "0.3.0"
-nalgebra = "0.32.6"
+chemrust-core = "0.3.5"
+nalgebra = "0.33.0"
+crystallographic-group = "0.2.0"

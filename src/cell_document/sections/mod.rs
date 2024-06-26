@@ -9,6 +9,7 @@ use nalgebra::{Matrix3, Point3};
 use crate::{IonicPositionBlock, LatticeABC, LatticeParamBlock};
 
 use self::constraints::{FixAllCell, FixAllIons, FixCom, IonicConstraintsBlock};
+use self::symmetry_ops::SymmetryOpsBlock;
 
 use super::{
     ExtEFieldBlock, ExtPressureBlock, KpointSettings, NCKpointSettings, SpeciesLCAOStatesBlock,
@@ -21,6 +22,7 @@ pub mod ionic_positions;
 pub mod kpoint_settings;
 pub mod lattice_parameters;
 pub mod species_characters;
+pub mod symmetry_ops;
 
 #[derive(Debug, Clone)]
 pub struct CellEssentials {
@@ -111,6 +113,7 @@ pub enum CellEntries {
     SpeciesMass(SpeciesMassBlock),
     SpeciesPot(SpeciesPotBlock),
     SpeciesLCAOStates(SpeciesLCAOStatesBlock),
+    SymmetryOps(SymmetryOpsBlock),
 }
 
 impl Display for CellEntries {
@@ -127,6 +130,7 @@ impl Display for CellEntries {
             CellEntries::SpeciesMass(v) => format!("{v}"),
             CellEntries::SpeciesPot(v) => format!("{v}"),
             CellEntries::SpeciesLCAOStates(v) => format!("{v}"),
+            CellEntries::SymmetryOps(v) => format!("{v}"),
         };
         write!(f, "{content}")
     }

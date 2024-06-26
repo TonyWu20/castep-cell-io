@@ -78,6 +78,11 @@ impl<'a> CellParser<'a> {
             );
             let mut cell_doc = CellDocument::new(model_description);
             cell_doc.set_entries(Some(self.other_entries.clone()));
+            // Default to true whether `SPIN` is found in parsing or not.
+            cell_doc
+                .model_description_mut()
+                .ionic_pos_block_mut()
+                .set_spin_polarised(true);
             Ok(cell_doc)
         } else {
             Err(CellParseError::RequiredSectionMissing)
