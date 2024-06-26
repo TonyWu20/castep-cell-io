@@ -51,18 +51,29 @@ impl CrystalModel for CellDocument {
 
 impl SymmetryInfo for CellDocument {
     fn get_space_group_it_num(&self) -> u8 {
-        if let Some(entries) = &self.other_entries {
-            if let Some(_ops_block) = entries
-                .iter()
-                .find(|entry| matches!(entry, CellEntries::SymmetryOps(_)))
-            {
-                todo!()
-            } else {
-                1_u8
-            }
+        if matches!(
+            self.other_entries().and_then(|entries| {
+                entries
+                    .iter()
+                    .find(|entry| matches!(entry, CellEntries::SymmetryOps(_)))
+            }),
+            Some(CellEntries::SymmetryOps(..))
+        ) {
+            todo!()
         } else {
             1_u8
         }
+    }
+
+    fn make_symmetry(&self) -> bool {
+        matches!(
+            self.other_entries().and_then(|entries| {
+                entries
+                    .iter()
+                    .find(|entry| matches!(entry, CellEntries::SymmetryOps(_)))
+            }),
+            Some(CellEntries::SymmetryOps(..))
+        )
     }
 }
 
