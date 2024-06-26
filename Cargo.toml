@@ -15,6 +15,6 @@ keywords = ["chemistry", "castep"]
 [dependencies]
 castep-periodic-table = "0.5.0"
 winnow = "0.6.13"
-chemrust-core = {git = "https://github.com/TonyWu20/chemrust", branch = "refactor"}
+chemrust-core = "0.3.5"
 nalgebra = "0.33.0"
 crystallographic-group = "0.2.0"
