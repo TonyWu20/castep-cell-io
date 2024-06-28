@@ -69,6 +69,7 @@ pub trait CellBuilding {
             CastepTask::GeometryOptimization => Self::geom_opt_cell_template(template_cell),
         }
     }
+<<<<<<< HEAD
 }
 
 pub trait ParamBuilding {
@@ -150,4 +151,52 @@ pub trait ParamBuilding {
             use_edft,
         ))
     }
+||||||| parent of 3b2cc89 (Remove comment)
+    fn geom_opt_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        CastepParams::geom_opt(
+            self.get_cutoff_energy(potentials_loc)
+                .expect("Failed to get cutoff energy"),
+            self.get_total_spin(),
+            self.use_edft.unwrap_or(false),
+        )
+    }
+    fn bs_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        CastepParams::band_structure(
+            self.get_cutoff_energy(potentials_loc)
+                .expect("Failed to get cutoff energy"),
+            self.get_total_spin(),
+            self.use_edft.unwrap_or(false),
+        )
+    }
+    pub fn generate_castep_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        match self.task {
+            CastepTask::BandStructure => self.bs_param(potentials_loc),
+            CastepTask::GeometryOptimization => self.geom_opt_param(potentials_loc),
+        }
+    }
+    // TODO: kptaux
+=======
+    fn geom_opt_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        CastepParams::geom_opt(
+            self.get_cutoff_energy(potentials_loc)
+                .expect("Failed to get cutoff energy"),
+            self.get_total_spin(),
+            self.use_edft.unwrap_or(false),
+        )
+    }
+    fn bs_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        CastepParams::band_structure(
+            self.get_cutoff_energy(potentials_loc)
+                .expect("Failed to get cutoff energy"),
+            self.get_total_spin(),
+            self.use_edft.unwrap_or(false),
+        )
+    }
+    pub fn generate_castep_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
+        match self.task {
+            CastepTask::BandStructure => self.bs_param(potentials_loc),
+            CastepTask::GeometryOptimization => self.geom_opt_param(potentials_loc),
+        }
+    }
+>>>>>>> 3b2cc89 (Remove comment)
 }
