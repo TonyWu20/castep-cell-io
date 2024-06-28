@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 #[derive(Debug)]
 pub enum CellParseError {
+    FileReadingFailure,
     UnexpectedLength,
     UnexpectedValueType,
     Invalid,
@@ -21,6 +22,7 @@ impl Display for CellParseError {
             Self::RequiredSectionMissing => {
                 f.write_str("Missing lattice parameters and/or ionic positions!")
             }
+            Self::FileReadingFailure => f.write_str("Failed to read from file"),
         }
     }
 }
