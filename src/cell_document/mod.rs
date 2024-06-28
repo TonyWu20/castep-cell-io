@@ -5,6 +5,7 @@ pub mod sections;
 pub mod units;
 
 use std::fs::read_to_string;
+use std::path::PathBuf;
 use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::data::ELEMENT_TABLE;
@@ -140,6 +141,16 @@ impl CellDocument {
 
     pub fn set_model_description(&mut self, model_description: CellEssentials) {
         self.model_description = model_description;
+    }
+
+    pub fn get_potential_paths<P: AsRef<Path>>(&self, potentials_loc: P) -> Vec<PathBuf> {
+        self.get_elements()
+            .iter()
+            .map(|&elm| {
+                let potential_file = ELEMENT_TABLE.get_by_symbol(elm).potential();
+                potentials_loc.as_ref().join(potential_file)
+            })
+            .collect()
     }
 }
 
