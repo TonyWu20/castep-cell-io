@@ -135,5 +135,4 @@ impl SeedfileGenerator {
             CastepTask::GeometryOptimization => self.geom_opt_param(potentials_loc),
         }
     }
-    // TODO: kptaux
 }
