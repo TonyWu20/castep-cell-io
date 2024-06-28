@@ -3,6 +3,7 @@ pub mod params;
 mod sections;
 pub mod units;
 
+use std::fs::read_to_string;
 use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::element::ElementSymbol;
@@ -19,6 +20,8 @@ pub use sections::species_characters::{
 
 pub use sections::CellEntries;
 pub use sections::CellEssentials;
+
+use crate::{CellParseError, CellParser};
 
 /// A structure to represent the `.cell` file.
 #[derive(Debug, Clone)]
@@ -83,6 +86,11 @@ impl CellDocument {
             model_description,
             other_entries: None,
         }
+    }
+
+    pub fn parse_from_file<P: AsRef<Path>>(&self, file_path: P) -> Result<Self, CellParseError> {
+        let content = read_to_string(file_path).map_err(|_| CellParseError::FileReadingFailure)?;
+        CellParser::from(&content).parse()
     }
 
     pub fn write_out<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
