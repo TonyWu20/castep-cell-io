@@ -6,6 +6,7 @@ use std::{
 
 use castep_periodic_table::data::ELEMENT_TABLE;
 use castep_periodic_table::element::LookupElement;
+use chemrust_core::data::lattice::CrystalModel;
 
 use crate::{
     cell_document::{
@@ -35,9 +36,10 @@ impl SeedfileGenerator {
     }
     fn get_total_spin(&self) -> u32 {
         self.cell_doc
-            .get_elements()
+            .get_atom_data()
+            .positions()
             .iter()
-            .map(|&elm| ELEMENT_TABLE.get_by_symbol(elm).spin() as u32)
+            .map(|pos| ELEMENT_TABLE.get_by_symbol(pos.symbol()).spin() as u32)
             .sum::<u32>()
     }
     fn get_cutoff_energy<P: AsRef<Path>>(&self, potentials_loc: P) -> Result<f64, io::Error> {
