@@ -96,7 +96,7 @@ impl SeedfileGenerator {
         let elements = self.cell_doc.get_elements();
         let entries = vec![
             CellEntries::KpointSettings(KpointSettings::List(KpointListBlock::default())),
-            CellEntries::NCKpointSettings(NCKpointSettings::List(KpointListBlock::default())),
+            CellEntries::NCKpointSettings(NCKpointSettings::List(KpointListBlock::bs_default())),
             CellEntries::FixAllCell(FixAllCell::new(true)),
             CellEntries::FixCom(FixCom::new(false)),
             CellEntries::IonicConstraints(IonicConstraintsBlock::default()),

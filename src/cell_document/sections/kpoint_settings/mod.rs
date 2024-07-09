@@ -93,6 +93,13 @@ impl KpointListBlock {
     pub fn new(task: KpointTask, kpoint_list: Vec<[f64; 4]>) -> Self {
         Self { task, kpoint_list }
     }
+    pub fn bs_default() -> Self {
+        let block = Self::default();
+        Self {
+            task: KpointTask::Spectral,
+            ..block
+        }
+    }
 }
 
 /// # Example
