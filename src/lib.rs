@@ -13,5 +13,9 @@ pub use cell_document::{
     CellDocument, IonicPosition, IonicPositionBlock, LatticeABC, LatticeCart, LatticeParam,
     LatticeParamBlock,
 };
-pub use keywords::{DocumentSections, KPointKeywords, LatticeBlockType, PositionsKeywords};
+pub use keywords::{
+    DocumentSections, KPointKeywords, KeywordType, LatticeBlockType, PositionsKeywords,
+};
 pub use parsing::{CellParseError, CellParser};
+
+pub use parsing::helpers::{get_block_data, get_field_data, get_keyword};

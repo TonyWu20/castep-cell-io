@@ -35,7 +35,7 @@ pub use keywords::{
     species::{parse_species_lcao_block, parse_species_mass_block, parse_species_pot_block},
 };
 
-fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
+pub fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
     alt((strip_to_block_name, field_name)).parse_next(input)
 }
 

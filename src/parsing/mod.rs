@@ -1,6 +1,6 @@
 mod cell_parser;
 mod error;
-mod helpers;
+pub mod helpers;
 
 pub use error::CellParseError;
 
