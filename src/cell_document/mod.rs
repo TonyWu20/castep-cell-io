@@ -1,4 +1,5 @@
 #[allow(unused_imports)]
+mod chemrust_impl;
 pub mod params;
 mod sections;
 pub mod units;
@@ -17,6 +18,7 @@ pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
+pub use chemrust_impl::to_cell_document;
 pub use sections::CellEntries;
 pub use sections::CellEssentials;
 
