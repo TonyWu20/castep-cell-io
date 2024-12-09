@@ -10,9 +10,9 @@ use castep_periodic_table::element::LookupElement;
 use crate::{
     cell_document::{
         params::{CastepParams, CastepTask},
-        CellEntries, ExtEFieldBlock, ExtPressureBlock, FixAllCell, FixCom, IonicConstraintsBlock,
-        KpointListBlock, KpointQuality, KpointSettings, NCKpointSettings, SpeciesLCAOStatesBlock,
-        SpeciesMassBlock, SpeciesPotBlock,
+        BSKpointPathSpacing, CellEntries, ExtEFieldBlock, ExtPressureBlock, FixAllCell, FixCom,
+        IonicConstraintsBlock, KpointListBlock, KpointMPSpacing, KpointQuality, KpointSettings,
+        NCKpointSettings, SpeciesLCAOStatesBlock, SpeciesMassBlock, SpeciesPotBlock,
     },
     CellDocument,
 };
@@ -75,7 +75,7 @@ impl SeedfileGenerator {
     fn geom_opt_cell(&self) -> CellDocument {
         let elements = self.cell_doc.get_elements();
         let entries = vec![
-            CellEntries::KpointSettings(KpointSettings::List(KpointListBlock::default())),
+            CellEntries::KpointSettings(KpointSettings::MPSpacing(KpointMPSpacing::default())),
             CellEntries::FixAllCell(FixAllCell::new(true)),
             CellEntries::FixCom(FixCom::new(false)),
             CellEntries::IonicConstraints(IonicConstraintsBlock::default()),
@@ -93,8 +93,11 @@ impl SeedfileGenerator {
         let mut bs_cell = self.cell_doc.clone();
         let elements = self.cell_doc.get_elements();
         let entries = vec![
-            CellEntries::KpointSettings(KpointSettings::List(KpointListBlock::default())),
-            CellEntries::NCKpointSettings(NCKpointSettings::List(KpointListBlock::default())),
+            CellEntries::KpointSettings(KpointSettings::MPSpacing(KpointMPSpacing::default())),
+            CellEntries::NCKpointSettings(NCKpointSettings::PathSpacing(BSKpointPathSpacing::new(
+                crate::InvLengthUnit::Ang,
+                0.07,
+            ))),
             CellEntries::FixAllCell(FixAllCell::new(true)),
             CellEntries::FixCom(FixCom::new(false)),
             CellEntries::IonicConstraints(IonicConstraintsBlock::default()),
