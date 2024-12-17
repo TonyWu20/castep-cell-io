@@ -4,15 +4,15 @@ use std::{
     path::Path,
 };
 
-use castep_periodic_table::data::ELEMENT_TABLE;
 use castep_periodic_table::element::LookupElement;
+use castep_periodic_table::{data::ELEMENT_TABLE, element::ElementFamily};
 
 use crate::{
     cell_document::{
         params::{CastepParams, CastepTask},
         BSKpointPathSpacing, CellEntries, ExtEFieldBlock, ExtPressureBlock, FixAllCell, FixCom,
-        IonicConstraintsBlock, KpointListBlock, KpointMPSpacing, KpointQuality, KpointSettings,
-        NCKpointSettings, SpeciesLCAOStatesBlock, SpeciesMassBlock, SpeciesPotBlock,
+        IonicConstraintsBlock, KpointMPSpacing, KpointQuality, KpointSettings, NCKpointSettings,
+        SpeciesLCAOStatesBlock, SpeciesMassBlock, SpeciesPotBlock,
     },
     CellDocument,
 };
@@ -25,14 +25,27 @@ pub struct SeedfileGenerator {
 }
 
 impl SeedfileGenerator {
+    pub fn use_edft(&mut self, use_edft: bool) {
+        self.use_edft = Some(use_edft);
+    }
+
+    pub fn set_kpoint_quality(&mut self, kpoint_quality: KpointQuality) {
+        self.kpoint_quality = Some(kpoint_quality);
+    }
+
     pub fn new(task: CastepTask, cell_doc: CellDocument) -> Self {
+        let use_edft = cell_doc.get_elements().iter().any(|elm| {
+            matches!(elm.family(), ElementFamily::RareEarthLa)
+                || matches!(elm.family(), ElementFamily::RareEarthAc)
+        });
         Self {
             task,
             cell_doc,
-            use_edft: None,
+            use_edft: Some(use_edft),
             kpoint_quality: None,
         }
     }
+
     fn get_total_spin(&self) -> u32 {
         self.cell_doc
             .get_elements()
@@ -40,6 +53,7 @@ impl SeedfileGenerator {
             .map(|&elm| ELEMENT_TABLE.get_by_symbol(elm).spin() as u32)
             .sum::<u32>()
     }
+
     fn get_cutoff_energy<P: AsRef<Path>>(&self, potentials_loc: P) -> Result<f64, io::Error> {
         Ok(self
             .cell_doc
@@ -89,6 +103,7 @@ impl SeedfileGenerator {
         geom_cell.set_entries(Some(entries));
         geom_cell
     }
+
     fn bs_cell(&self) -> CellDocument {
         let mut bs_cell = self.cell_doc.clone();
         let elements = self.cell_doc.get_elements();
@@ -110,12 +125,14 @@ impl SeedfileGenerator {
         bs_cell.set_entries(Some(entries));
         bs_cell
     }
+
     pub fn generate_cell_file(&self) -> CellDocument {
         match self.task {
             CastepTask::BandStructure => self.bs_cell(),
             CastepTask::GeometryOptimization => self.geom_opt_cell(),
         }
     }
+
     fn geom_opt_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         CastepParams::geom_opt(
             self.get_cutoff_energy(potentials_loc)
@@ -124,6 +141,7 @@ impl SeedfileGenerator {
             self.use_edft.unwrap_or(false),
         )
     }
+
     fn bs_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         CastepParams::band_structure(
             self.get_cutoff_energy(potentials_loc)
@@ -132,6 +150,7 @@ impl SeedfileGenerator {
             self.use_edft.unwrap_or(false),
         )
     }
+
     pub fn generate_castep_param<P: AsRef<Path>>(&self, potentials_loc: P) -> CastepParams {
         match self.task {
             CastepTask::BandStructure => self.bs_param(potentials_loc),
