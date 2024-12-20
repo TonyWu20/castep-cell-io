@@ -96,14 +96,13 @@ pub trait ParamBuilding {
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
         potentials_loc: P,
-    ) -> CastepParams {
+    ) -> Result<CastepParams, EnergyCutoffError> {
         {
-            CastepParams::geom_opt(
-                self.cutoff_energy(energy_cutoff, potentials_loc)
-                    .expect("Failed to get cutoff energy"),
+            Ok(CastepParams::geom_opt(
+                self.cutoff_energy(energy_cutoff, potentials_loc)?,
                 self.template_cell().total_spin(),
                 use_edft,
-            )
+            ))
         }
     }
 
@@ -113,13 +112,12 @@ pub trait ParamBuilding {
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
         potentials_loc: P,
-    ) -> CastepParams {
-        CastepParams::band_structure(
-            self.cutoff_energy(energy_cutoff, potentials_loc)
-                .expect("Failed to get cutoff energy"),
+    ) -> Result<CastepParams, EnergyCutoffError> {
+        Ok(CastepParams::band_structure(
+            self.cutoff_energy(energy_cutoff, potentials_loc)?,
             self.template_cell().total_spin(),
             use_edft,
-        )
+        ))
     }
 }
 
