@@ -2,13 +2,12 @@ mod options;
 
 use std::fmt::Display;
 
-use self::options::PopulationParam;
-pub use options::CastepTask;
 use options::{
     BandStructureParamSection, BasisSetParamSection, ElectroMinParamSection,
     ElectronicParamSection, GeneralParamSection, GeomOptParamSection, PopulationAnalysisSection,
-    XcParamSection,
+    PopulationParam, XcParamSection,
 };
+pub use options::{CastepTask, EnergyCutoff};
 
 #[derive(Debug, Clone)]
 pub enum ParamSections {
