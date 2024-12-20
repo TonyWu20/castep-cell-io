@@ -14,10 +14,9 @@ use crate::{
 };
 
 pub trait CellBuilding {
-    fn template_cell(&self) -> &CellDocument;
     #[cfg(feature = "template")]
-    fn geom_opt_cell_template(&self) -> CellDocument {
-        let elements = self.template_cell().get_elements();
+    fn geom_opt_cell_template(template_cell: &CellDocument) -> CellDocument {
+        let elements = template_cell.get_elements();
         let entries = vec![
             CellEntries::KpointSettings(KpointSettings::MPSpacing(KpointMPSpacing::default())),
             CellEntries::FixAllCell(FixAllCell::new(true)),
@@ -29,15 +28,15 @@ pub trait CellBuilding {
             CellEntries::SpeciesPot(SpeciesPotBlock::from_elements(&elements)),
             CellEntries::SpeciesLCAOStates(SpeciesLCAOStatesBlock::from_elememts(&elements)),
         ];
-        let mut geom_cell = self.template_cell().clone();
+        let mut geom_cell = template_cell.clone();
         geom_cell.set_entries(Some(entries));
         geom_cell
     }
 
     #[cfg(feature = "template")]
-    fn bs_cell_template(&self) -> CellDocument {
-        let mut bs_cell = self.template_cell().clone();
-        let elements = self.template_cell().get_elements();
+    fn bs_cell_template(template_cell: &CellDocument) -> CellDocument {
+        let mut bs_cell = template_cell.clone();
+        let elements = template_cell.get_elements();
         let entries = vec![
             CellEntries::KpointSettings(KpointSettings::MPSpacing(KpointMPSpacing::default())),
             CellEntries::NCKpointSettings(NCKpointSettings::PathSpacing(BSKpointPathSpacing::new(
@@ -57,24 +56,22 @@ pub trait CellBuilding {
         bs_cell
     }
 
-    fn build_cell_for_task(&self, castep_task: CastepTask) -> CellDocument {
+    fn build_cell_for_task(template_cell: &CellDocument, castep_task: CastepTask) -> CellDocument {
         #[cfg(feature = "template")]
         match castep_task {
-            CastepTask::BandStructure => self.bs_cell_template(),
-            CastepTask::GeometryOptimization => self.geom_opt_cell_template(),
+            CastepTask::BandStructure => Self::bs_cell_template(template_cell),
+            CastepTask::GeometryOptimization => Self::geom_opt_cell_template(template_cell),
         }
     }
 }
 
 pub trait ParamBuilding {
-    fn template_cell(&self) -> &CellDocument;
     fn cutoff_energy<P: AsRef<Path>>(
-        &self,
+        template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         potentials_loc: P,
     ) -> Result<f64, EnergyCutoffError> {
-        let cutoff_energies = self
-            .template_cell()
+        let cutoff_energies = template_cell
             .get_elements()
             .iter()
             .map(|&elm| {
@@ -95,15 +92,15 @@ pub trait ParamBuilding {
 
     #[cfg(feature = "template")]
     fn geom_opt_param_template<P: AsRef<Path>>(
-        &self,
+        template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
         potentials_loc: P,
     ) -> Result<CastepParams, EnergyCutoffError> {
         {
             Ok(CastepParams::geom_opt(
-                self.cutoff_energy(energy_cutoff, potentials_loc)?,
-                self.template_cell().total_spin(),
+                Self::cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
+                template_cell.total_spin(),
                 use_edft,
             ))
         }
@@ -111,14 +108,14 @@ pub trait ParamBuilding {
 
     #[cfg(feature = "template")]
     fn bs_param_template<P: AsRef<Path>>(
-        &self,
+        template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
         potentials_loc: P,
     ) -> Result<CastepParams, EnergyCutoffError> {
         Ok(CastepParams::band_structure(
-            self.cutoff_energy(energy_cutoff, potentials_loc)?,
-            self.template_cell().total_spin(),
+            Self::cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
+            template_cell.total_spin(),
             use_edft,
         ))
     }
