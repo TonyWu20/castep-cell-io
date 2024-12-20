@@ -7,7 +7,7 @@ use options::{
     ElectronicParamSection, GeneralParamSection, GeomOptParamSection, PopulationAnalysisSection,
     PopulationParam, XcParamSection,
 };
-pub use options::{CastepTask, EnergyCutoff};
+pub use options::{CastepTask, EnergyCutoff, EnergyCutoffError};
 
 #[derive(Debug, Clone)]
 pub enum ParamSections {

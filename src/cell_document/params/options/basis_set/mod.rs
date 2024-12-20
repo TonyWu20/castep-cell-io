@@ -1,17 +1,68 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::Path,
+};
 
 use finite_basis_corr::FiniteBasisCorr;
+use thiserror::Error;
 
 use super::{OptionDisplay, ParamSectionDisplay};
 
 mod finite_basis_corr;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum EnergyCutoff {
     Coarse,
     Medium,
     Fine,
+    #[default]
     Ultrafine,
+}
+
+#[derive(Error, Debug)]
+pub enum EnergyCutoffError {
+    #[error("open potential file failed. {0}")]
+    OpenPotentialFile(#[from] io::Error),
+}
+
+impl EnergyCutoff {
+    pub fn get_cutoff_energy_from_pot<P: AsRef<Path>>(
+        &self,
+        potential_file: P,
+    ) -> Result<f64, EnergyCutoffError> {
+        let file = File::open(potential_file.as_ref())?;
+        let reader = BufReader::new(file);
+        let keyword = match self {
+            EnergyCutoff::Coarse => "COARSE",
+            EnergyCutoff::Medium => "MEDIUM",
+            EnergyCutoff::Fine | EnergyCutoff::Ultrafine => "FINE",
+        };
+        let cutoff_energy = reader
+            .lines()
+            .find(|line| line.as_ref().unwrap().contains(keyword))
+            .map(|line| {
+                // This pattern does not handle `otfg` file
+                // Support in future
+                let num_str = line.as_ref().unwrap().split_whitespace().next().unwrap();
+                num_str.parse::<u32>().expect("Can't parse into `u32`")
+            })
+            .expect("Failed to parse fine energy from pseudopotential file.");
+        let round_bigger_tenth = |num: u32| -> f64 {
+            match num % 10 {
+                0 => num as f64,
+                _ => ((num / 10 + 1) * 10) as f64,
+            }
+        };
+        let multipler = match self {
+            EnergyCutoff::Ultrafine => 1.1,
+            _ => 1.0,
+        };
+        Ok(round_bigger_tenth(
+            (cutoff_energy as f64 * multipler) as u32,
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

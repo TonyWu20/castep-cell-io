@@ -6,9 +6,9 @@ mod formatting;
 mod keywords;
 mod parsing;
 
-pub use calc_setup::SeedfileGenerator;
+pub use calc_setup::{CellBuilding, ParamBuilding};
 pub use cell_document::{
-    params::{CastepParams, CastepParamsBuilder, CastepTask, EnergyCutoff},
+    params::{CastepParams, CastepParamsBuilder, CastepTask, EnergyCutoff, EnergyCutoffError},
     to_cell_document,
     units::length_units::*,
     CellDocument, IonicPosition, IonicPositionBlock, LatticeABC, LatticeCart, LatticeParam,
