@@ -1,7 +1,9 @@
 use std::path::Path;
 
-use castep_periodic_table::data::ELEMENT_TABLE;
-use castep_periodic_table::element::LookupElement;
+use castep_periodic_table::{
+    data::ELEMENT_TABLE,
+    element::{ElementFamily, LookupElement},
+};
 
 use crate::{
     cell_document::{
@@ -105,6 +107,16 @@ pub trait ParamBuilding {
         potentials_loc: P,
     ) -> Result<CastepParams, EnergyCutoffError> {
         {
+            let use_edft = if use_edft {
+                template_cell.get_elements().iter().any(|elm| {
+                    matches!(
+                        elm.family(),
+                        ElementFamily::RareEarthLa | ElementFamily::RareEarthAc
+                    )
+                })
+            } else {
+                false
+            };
             Ok(CastepParams::geom_opt(
                 self.cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
                 template_cell.total_spin(),
@@ -121,6 +133,17 @@ pub trait ParamBuilding {
         use_edft: bool,
         potentials_loc: P,
     ) -> Result<CastepParams, EnergyCutoffError> {
+        let use_edft = if use_edft {
+            template_cell.get_elements().iter().any(|elm| {
+                matches!(
+                    elm.family(),
+                    ElementFamily::RareEarthLa | ElementFamily::RareEarthAc
+                )
+            })
+        } else {
+            false
+        };
+
         Ok(CastepParams::band_structure(
             self.cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
             template_cell.total_spin(),
@@ -128,42 +151,3 @@ pub trait ParamBuilding {
         ))
     }
 }
-
-// pub struct SeedfileGenerator {
-//     task: CastepTask,
-//     cell_doc: CellDocument,
-//     use_edft: Option<bool>,
-//     kpoint_quality: Option<KpointQuality>,
-// }
-
-// impl SeedfileGenerator {
-//     pub fn use_edft(&mut self, use_edft: bool) {
-//         self.use_edft = Some(use_edft);
-//     }
-
-//     pub fn set_kpoint_quality(&mut self, kpoint_quality: KpointQuality) {
-//         self.kpoint_quality = Some(kpoint_quality);
-//     }
-
-//     pub fn new(task: CastepTask, cell_doc: CellDocument) -> Self {
-//         let use_edft = cell_doc.get_elements().iter().any(|elm| {
-//             matches!(elm.family(), ElementFamily::RareEarthLa)
-//                 || matches!(elm.family(), ElementFamily::RareEarthAc)
-//         });
-//         Self {
-//             task,
-//             cell_doc,
-//             use_edft: Some(use_edft),
-//             kpoint_quality: None,
-//         }
-//     }
-
-//     pub fn generate_cell_file(&self) -> CellDocument {
-//         match self.task {
-//             CastepTask::BandStructure => self.bs_cell(),
-//             CastepTask::GeometryOptimization => self.geom_opt_cell(),
-//         }
-//     }
-
-//     // TODO: kptaux
-// }
