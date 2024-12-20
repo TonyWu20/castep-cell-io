@@ -19,3 +19,7 @@ chemrust-core = "0.4.0"
 nalgebra = "0.33.*"
 crystallographic-group = "0.2.0"
 thiserror = "2.0.8"
+
+[features]
+default = ["template"]
+template = []
