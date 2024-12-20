@@ -56,7 +56,11 @@ pub trait CellBuilding {
         bs_cell
     }
 
-    fn build_cell_for_task(template_cell: &CellDocument, castep_task: CastepTask) -> CellDocument {
+    fn build_cell_for_task(
+        &self,
+        template_cell: &CellDocument,
+        castep_task: CastepTask,
+    ) -> CellDocument {
         #[cfg(feature = "template")]
         match castep_task {
             CastepTask::BandStructure => Self::bs_cell_template(template_cell),
@@ -67,6 +71,7 @@ pub trait CellBuilding {
 
 pub trait ParamBuilding {
     fn cutoff_energy<P: AsRef<Path>>(
+        &self,
         template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         potentials_loc: P,
@@ -92,6 +97,7 @@ pub trait ParamBuilding {
 
     #[cfg(feature = "template")]
     fn geom_opt_param_template<P: AsRef<Path>>(
+        &self,
         template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
@@ -99,7 +105,7 @@ pub trait ParamBuilding {
     ) -> Result<CastepParams, EnergyCutoffError> {
         {
             Ok(CastepParams::geom_opt(
-                Self::cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
+                self.cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
                 template_cell.total_spin(),
                 use_edft,
             ))
@@ -108,13 +114,14 @@ pub trait ParamBuilding {
 
     #[cfg(feature = "template")]
     fn bs_param_template<P: AsRef<Path>>(
+        &self,
         template_cell: &CellDocument,
         energy_cutoff: EnergyCutoff,
         use_edft: bool,
         potentials_loc: P,
     ) -> Result<CastepParams, EnergyCutoffError> {
         Ok(CastepParams::band_structure(
-            Self::cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
+            self.cutoff_energy(template_cell, energy_cutoff, potentials_loc)?,
             template_cell.total_spin(),
             use_edft,
         ))
