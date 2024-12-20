@@ -88,7 +88,10 @@ pub trait ParamBuilding {
             .reduce(|prev, next| if next > prev { next } else { prev })
             .expect("Error in comparing the largest cutoff energy"))
     }
-    fn build_param_for_task(&self, castep_task: CastepTask) -> Result<CastepParams, EnergyCutoff>;
+    fn build_param_for_task(
+        &self,
+        castep_task: CastepTask,
+    ) -> Result<CastepParams, EnergyCutoffError>;
 
     #[cfg(feature = "template")]
     fn geom_opt_param_template<P: AsRef<Path>>(
