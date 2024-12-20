@@ -6,6 +6,14 @@ use super::{OptionDisplay, ParamSectionDisplay};
 
 mod finite_basis_corr;
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EnergyCutoff {
+    Coarse,
+    Medium,
+    Fine,
+    Ultrafine,
+}
+
 #[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum BasisSetParam {
