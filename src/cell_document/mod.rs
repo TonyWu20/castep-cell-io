@@ -6,7 +6,8 @@ pub mod units;
 
 use std::{fmt::Display, fs, io::Error, path::Path};
 
-use castep_periodic_table::element::ElementSymbol;
+use castep_periodic_table::data::ELEMENT_TABLE;
+use castep_periodic_table::element::{ElementSymbol, LookupElement};
 use chemrust_core::data::lattice::CrystalModel;
 use chemrust_core::data::symmetry::SymmetryInfo;
 
@@ -114,6 +115,14 @@ impl CellDocument {
         symbols.sort();
         symbols.dedup();
         symbols
+    }
+
+    /// Get total spins of the elements in cell
+    pub fn total_spin(&self) -> u32 {
+        self.get_elements()
+            .iter()
+            .map(|&elm| ELEMENT_TABLE.get_by_symbol(elm).spin() as u32)
+            .sum::<u32>()
     }
 
     pub fn model_description(&self) -> &CellEssentials {

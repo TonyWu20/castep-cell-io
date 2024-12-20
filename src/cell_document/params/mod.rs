@@ -5,7 +5,7 @@ use std::fmt::Display;
 use options::{
     BandStructureParamSection, BasisSetParamSection, ElectroMinParamSection,
     ElectronicParamSection, GeneralParamSection, GeomOptParamSection, PopulationAnalysisSection,
-    PopulationParam, XcParamSection,
+    XcParamSection,
 };
 pub use options::{CastepTask, EnergyCutoff, EnergyCutoffError};
 
@@ -48,42 +48,56 @@ impl CastepParams {
     pub fn builder() -> CastepParamsBuilder {
         CastepParamsBuilder::default()
     }
-    pub fn geom_opt(cutoff_energy: f64, spin_total: u32, use_edft: bool) -> Self {
-        Self::builder()
-            .with_general(GeneralParamSection::default())
-            .with_basis_set(BasisSetParamSection::with_cutoff_energy(cutoff_energy))
-            .with_electro_min(if use_edft {
-                ElectroMinParamSection::with_edft()
-            } else {
-                ElectroMinParamSection::default()
-            })
-            .with_electronic(ElectronicParamSection::with_spin_and_perc_extra_bands(
-                spin_total, 72_f64,
-            ))
-            .with_geom_opt(GeomOptParamSection::default())
-            .with_xc(XcParamSection::default())
-            .with_population(PopulationAnalysisSection::default())
-            .build()
-    }
-    pub fn band_structure(cutoff_energy: f64, spin_total: u32, use_edft: bool) -> Self {
-        Self::builder()
-            .with_general(GeneralParamSection::band_structure())
-            .with_basis_set(BasisSetParamSection::with_cutoff_energy(cutoff_energy))
-            .with_electro_min(if use_edft {
-                ElectroMinParamSection::with_edft()
-            } else {
-                ElectroMinParamSection::default()
-            })
-            .with_electronic(ElectronicParamSection::with_spin_and_perc_extra_bands(
-                spin_total, 72_f64,
-            ))
-            .with_band_structure(BandStructureParamSection::default())
-            .with_xc(XcParamSection::default())
-            .with_population(PopulationAnalysisSection::new(vec![
-                PopulationParam::PDOS_CALCULATE_WEIGHTS(true),
-                PopulationParam::POPN_CALCULATE(false),
-            ]))
-            .build()
+}
+
+#[cfg(feature = "template")]
+pub mod template {
+    use crate::CastepParams;
+
+    use super::options::{
+        BandStructureParamSection, BasisSetParamSection, ElectroMinParamSection,
+        ElectronicParamSection, GeneralParamSection, GeomOptParamSection,
+        PopulationAnalysisSection, PopulationParam, XcParamSection,
+    };
+
+    impl CastepParams {
+        pub fn geom_opt(cutoff_energy: f64, spin_total: u32, use_edft: bool) -> Self {
+            Self::builder()
+                .with_general(GeneralParamSection::default())
+                .with_basis_set(BasisSetParamSection::with_cutoff_energy(cutoff_energy))
+                .with_electro_min(if use_edft {
+                    ElectroMinParamSection::with_edft()
+                } else {
+                    ElectroMinParamSection::default()
+                })
+                .with_electronic(ElectronicParamSection::with_spin_and_perc_extra_bands(
+                    spin_total, 72_f64,
+                ))
+                .with_geom_opt(GeomOptParamSection::default())
+                .with_xc(XcParamSection::default())
+                .with_population(PopulationAnalysisSection::default())
+                .build()
+        }
+        pub fn band_structure(cutoff_energy: f64, spin_total: u32, use_edft: bool) -> Self {
+            Self::builder()
+                .with_general(GeneralParamSection::band_structure())
+                .with_basis_set(BasisSetParamSection::with_cutoff_energy(cutoff_energy))
+                .with_electro_min(if use_edft {
+                    ElectroMinParamSection::with_edft()
+                } else {
+                    ElectroMinParamSection::default()
+                })
+                .with_electronic(ElectronicParamSection::with_spin_and_perc_extra_bands(
+                    spin_total, 72_f64,
+                ))
+                .with_band_structure(BandStructureParamSection::default())
+                .with_xc(XcParamSection::default())
+                .with_population(PopulationAnalysisSection::new(vec![
+                    PopulationParam::PDOS_CALCULATE_WEIGHTS(true),
+                    PopulationParam::POPN_CALCULATE(false),
+                ]))
+                .build()
+        }
     }
 }
 
