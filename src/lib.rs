@@ -8,7 +8,7 @@ mod parsing;
 
 pub use calc_setup::SeedfileGenerator;
 pub use cell_document::{
-    params::{CastepParams, CastepParamsBuilder, CastepTask},
+    params::{CastepParams, CastepParamsBuilder, CastepTask, EnergyCutoff},
     to_cell_document,
     units::length_units::*,
     CellDocument, IonicPosition, IonicPositionBlock, LatticeABC, LatticeCart, LatticeParam,
