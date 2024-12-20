@@ -92,6 +92,7 @@ pub trait ParamBuilding {
     }
     fn build_param_for_task(
         &self,
+        template_cell: &CellDocument,
         castep_task: CastepTask,
     ) -> Result<CastepParams, EnergyCutoffError>;
 
