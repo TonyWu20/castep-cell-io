@@ -6,7 +6,7 @@ use chemrust_core::data::geom::coordinates::CoordData;
 use chemrust_core::data::lattice::{CellConstants, UnitCellParameters};
 use nalgebra::{Matrix3, Point3};
 
-use crate::{IonicPositionBlock, LatticeABC, LatticeParamBlock};
+use crate::cell_document::{IonicPositionBlock, LatticeABC, LatticeParam, LatticeParamBlock};
 
 use self::constraints::{FixAllCell, FixAllIons, FixCom, IonicConstraintsBlock};
 use self::symmetry_ops::SymmetryOpsBlock;
@@ -33,10 +33,10 @@ pub struct CellEssentials {
 impl UnitCellParameters for LatticeParamBlock {
     fn lattice_bases(&self) -> Matrix3<f64> {
         match self.parameter() {
-            crate::LatticeParam::LatticeCart(lat_cart) => {
+            LatticeParam::LatticeCart(lat_cart) => {
                 Matrix3::from_column_slice(&[lat_cart.a(), lat_cart.b(), lat_cart.c()].concat())
             }
-            crate::LatticeParam::LatticeABC(lat_abc) => {
+            LatticeParam::LatticeABC(lat_abc) => {
                 let LatticeABC {
                     a,
                     b,
