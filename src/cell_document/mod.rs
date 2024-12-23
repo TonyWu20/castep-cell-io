@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 mod chemrust_impl;
 pub mod params;
-mod sections;
+pub mod sections;
 pub mod units;
 
 use std::{fmt::Display, fs, io::Error, path::Path};
