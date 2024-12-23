@@ -2,16 +2,17 @@ use chemrust_core::data::atom::CoreAtomData;
 use chemrust_core::data::lattice::CrystalModel;
 use chemrust_core::data::lattice::UnitCellParameters;
 
-use crate::CellDocument;
-use crate::IonicPosition;
-use crate::IonicPositionBlock;
-use crate::LatticeCart;
-use crate::LatticeParam;
-use crate::LatticeParamBlock;
-use crate::LengthUnit;
-use crate::PositionsKeywords::POSITIONS_FRAC;
+use crate::{
+    cell_document::{
+        sections::lattice_parameters::LatticeParam, CellDocument, IonicPosition,
+        IonicPositionBlock, LatticeParamBlock,
+    },
+    LengthUnit,
+    PositionsKeywords::POSITIONS_FRAC,
+};
 
 use super::CellEssentials;
+use super::LatticeCart;
 
 pub fn to_cell_document<T: CrystalModel>(model: T) -> CellDocument {
     let lattice_bases = model.get_cell_parameters().lattice_bases();
