@@ -4,6 +4,8 @@ use castep_periodic_table::{
     data::ELEMENT_TABLE,
     element::{ElementSymbol, LookupElement},
 };
+use chemrust_core::data::atom::CoreAtomData;
+use nalgebra::Matrix3;
 
 use crate::{formatting::BlockDisplay, keywords::PositionsKeywords};
 
@@ -24,6 +26,25 @@ impl Display for IonicPositionBlock {
 }
 
 impl IonicPositionBlock {
+    pub fn from_atom_data<T: CoreAtomData>(atom_data: &T, lattice_bases: &Matrix3<f64>) -> Self {
+        let symbols = atom_data.symbols_repr();
+        let coords = atom_data
+            .coords_repr()
+            .iter()
+            .map(|cd| cd.cart_to_frac(lattice_bases).raw_data().into())
+            .collect::<Vec<[f64; 3]>>();
+        let ionic_positions = symbols
+            .iter()
+            .zip(coords.iter())
+            .map(|(&symbol, &coord)| IonicPosition::new(symbol, coord, None))
+            .collect::<Vec<IonicPosition>>();
+        IonicPositionBlock::new(
+            LengthUnit::Ang,
+            ionic_positions,
+            PositionsKeywords::POSITIONS_FRAC,
+            true,
+        )
+    }
     pub fn new(
         unit: LengthUnit,
         positions: Vec<IonicPosition>,
