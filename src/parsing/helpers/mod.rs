@@ -39,9 +39,9 @@ pub fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
     alt((strip_to_block_name, field_name)).parse_next(input)
 }
 
-pub fn skip_comments_blank_lines<'s>(input: &mut &'s str) -> PResult<Option<&'s str>> {
+pub fn skip_comments_blank_lines(input: &mut &str) -> PResult<()> {
     alt((comment_line, line_ending))
-        .map(|_| Some("skip"))
+        .map(|_| ())
         .parse_next(input)
 }
 
@@ -65,7 +65,7 @@ pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 // TODO! Handle `Misc` case to skip the unwanted data
 pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
     // Skip the possible comments and blank lines between the blocks and field data.
-    repeat(0.., skip_comments_blank_lines).parse_next(input)?;
+    let _skipped: () = repeat(0.., skip_comments_blank_lines).parse_next(input)?;
     let keyword: KeywordType<'_> = get_keyword(input)?;
     let block_keyword_identifiers = (
         assign_lattice_type,

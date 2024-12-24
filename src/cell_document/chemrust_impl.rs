@@ -14,7 +14,7 @@ use crate::{
 use super::CellEssentials;
 use super::LatticeCart;
 
-pub fn to_cell_document<T: CrystalModel>(model: T) -> CellDocument {
+pub fn to_cell_document<T: CrystalModel>(model: &T) -> CellDocument {
     let lattice_bases = model.get_cell_parameters().lattice_bases();
     let (a, b, c) = (
         lattice_bases.column(0).into(),

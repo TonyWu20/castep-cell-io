@@ -8,7 +8,8 @@ use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::data::ELEMENT_TABLE;
 use castep_periodic_table::element::{ElementSymbol, LookupElement};
-use chemrust_core::data::lattice::CrystalModel;
+use chemrust_core::data::atom::CoreAtomData;
+use chemrust_core::data::lattice::{CrystalModel, UnitCellParameters};
 use chemrust_core::data::symmetry::SymmetryInfo;
 
 pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
@@ -32,23 +33,19 @@ pub struct CellDocument {
 }
 
 impl CrystalModel for CellDocument {
-    type LatticeData = LatticeParamBlock;
-
-    type AtomData = IonicPositionBlock;
-
-    fn get_cell_parameters(&self) -> &Self::LatticeData {
+    fn get_cell_parameters(&self) -> &impl UnitCellParameters {
         self.model_description().lattice_block()
     }
 
-    fn get_atom_data(&self) -> &Self::AtomData {
+    fn get_atom_data(&self) -> &impl CoreAtomData {
         self.model_description().ionic_pos_block()
     }
 
-    fn get_cell_parameters_mut(&mut self) -> &mut Self::LatticeData {
+    fn get_cell_parameters_mut(&mut self) -> &mut impl UnitCellParameters {
         self.model_description_mut().lattice_block_mut()
     }
 
-    fn get_atom_data_mut(&mut self) -> &mut Self::AtomData {
+    fn get_atom_data_mut(&mut self) -> &mut impl CoreAtomData {
         self.model_description_mut().ionic_pos_block_mut()
     }
 }
