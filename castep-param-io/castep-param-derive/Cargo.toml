@@ -1,7 +1,9 @@
 [package]
 name = "castep-param-derive"
+description = "Proc macro derives for `castep-param-io`"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 darling = "0.20.10"
