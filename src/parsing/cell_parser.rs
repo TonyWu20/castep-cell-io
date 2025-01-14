@@ -28,7 +28,7 @@ impl<'a, S: AsRef<str>> From<&'a S> for CellParser<'a> {
     }
 }
 
-impl<'a> CellParser<'a> {
+impl CellParser<'_> {
     pub fn parse(&mut self) -> Result<CellDocument, CellParseError> {
         while let Ok(section) = current_sections(&mut self.input) {
             match section {
