@@ -14,11 +14,6 @@ pub struct CellParser<'a> {
     other_entries: Vec<CellEntries>,
 }
 
-pub trait CellParsable {
-    type KeywordType;
-    type ResultType;
-}
-
 #[cfg(test)]
 mod test {
     use std::{fs, path::Path};
