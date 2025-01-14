@@ -1,0 +1,2 @@
+integer = { ("-" | "+") ~ ASCII_DIGIT+ } 
+real = {("-" | "+") ~ ASCII_DIGIT* ~ "." ~ ASCII_DIGIT* | ASCII_DIGIT* ~ "." ~ ASCII_DIGIT*} 
