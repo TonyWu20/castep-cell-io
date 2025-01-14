@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-castep-param-derive = {path = "./castep-param-derive/"}
+castep-param-derive = {path = "./castep-param-derive/", version="0.1"}
 derive_builder = "0.20.2"
 pest = "2.7.15"
 pest-ast = "0.3.5"
