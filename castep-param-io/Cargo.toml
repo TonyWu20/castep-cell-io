@@ -1,6 +1,8 @@
 [package]
 name = "castep-param-io"
 version = "0.1.0"
+description = "crate to read, operate on and write castep `.param` parameter file"
+license = "MIT"
 edition = "2021"
 
 [dependencies]
