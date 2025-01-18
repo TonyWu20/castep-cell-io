@@ -123,11 +123,14 @@ impl CellDocument {
         symbols
     }
 
-    /// Get total spins of the elements in cell
+    /// Get total spins of the species in cell
+    /// Change! Accumulate all spins of species
     pub fn total_spin(&self) -> u32 {
-        self.get_elements()
+        self.model_description()
+            .ionic_pos_block()
+            .positions()
             .iter()
-            .map(|&elm| ELEMENT_TABLE.get_by_symbol(elm).spin() as u32)
+            .map(|&pos| ELEMENT_TABLE.get_by_symbol(pos.symbol()).spin() as u32)
             .sum::<u32>()
     }
 

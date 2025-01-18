@@ -67,6 +67,7 @@ impl CellParser<'_> {
                     }
                 }
                 _ => {
+                    #[cfg(debug_assertions)]
                     println!("{:?}", section)
                 }
             }
