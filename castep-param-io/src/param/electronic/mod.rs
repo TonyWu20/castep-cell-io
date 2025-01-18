@@ -6,7 +6,6 @@ pub use bands_option::*;
 pub use charge::Charge;
 pub use nelectrons::{NDown, NElectrons, NUp};
 pub use spin::Spin;
-pub use spin_polarised::SpinPolarised;
 
 use crate::param::KeywordDisplay;
 
@@ -14,7 +13,6 @@ mod bands_option;
 mod charge;
 mod nelectrons;
 mod spin;
-mod spin_polarised;
 
 #[derive(
     Debug,
@@ -35,7 +33,6 @@ pub struct ElectronicParam {
     pub charge: Option<Charge>,
     #[param_display(display=to_string())]
     pub bands_option: Option<BandsOption>,
-    pub spin_polarised: Option<SpinPolarised>,
     pub nelectrons: Option<NElectrons>,
     pub nup: Option<NUp>,
     pub ndown: Option<NDown>,

@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "castep-param-io"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "castep-param-derive",
  "derive_builder",
