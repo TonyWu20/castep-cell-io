@@ -1,28 +1,33 @@
-use std::fmt::Display;
-
+use castep_param_derive::KeywordDisplay;
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
-
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Default, Hash,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Default,
+    Hash,
+    KeywordDisplay,
 )]
-pub struct SpinPolarised(bool);
+#[keyword_display(field = "SPIN_POLARISED")]
+pub enum SpinPolarised {
+    True,
+    #[default]
+    False,
+}
 
 impl From<bool> for SpinPolarised {
     fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Display for SpinPolarised {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl KeywordDisplay for SpinPolarised {
-    fn field(&self) -> String {
-        "SPIN_POLARISED".to_string()
+        if value {
+            SpinPolarised::True
+        } else {
+            SpinPolarised::False
+        }
     }
 }

@@ -37,7 +37,7 @@ mod nbands {
     use castep_param_derive::KeywordDisplay;
     use serde::{Deserialize, Serialize};
 
-    use crate::param::{electronic::spin_polarised::SpinPolarised, ElectronicParam};
+    use crate::param::{ElectronicParam, SpinPolarised};
 
     use super::extra_bands::ExtraBands;
 

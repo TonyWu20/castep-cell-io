@@ -28,7 +28,6 @@ impl CastepParam {
                             .build()
                             .expect("Error in building extra bands options"),
                     )
-                    .spin_polarised(true)
                     .spin(spin)
                     .build()
                     .expect("Error in building Electronic Parameter keywords"),
