@@ -4,7 +4,7 @@ use castep_periodic_table::{data::ELEMENT_TABLE, element::ElementSymbol, element
 
 use crate::formatting::BlockDisplay;
 
-use super::SpeciesCharacter;
+use super::{SpeciesBlock, SpeciesCharacter, SpeciesEntry};
 
 #[derive(Debug, Clone)]
 pub struct SpeciesLCAOStatesBlock {
@@ -31,6 +31,18 @@ pub struct LCAOBasis {
     num_angular_momentum: u8,
 }
 
+impl SpeciesEntry for LCAOBasis {
+    type Item = u8;
+
+    fn element(&self) -> &ElementSymbol {
+        &self.element
+    }
+
+    fn item(&self) -> &Self::Item {
+        &self.num_angular_momentum
+    }
+}
+
 impl LCAOBasis {
     pub fn new(element: ElementSymbol, num_angular_momentum: u8) -> Self {
         Self {
@@ -46,6 +58,18 @@ impl SpeciesCharacter for LCAOBasis {
     fn from_element(element: ElementSymbol) -> Self::Output {
         let lcao = ELEMENT_TABLE.get_by_symbol(element).lcao();
         LCAOBasis::new(element, lcao)
+    }
+}
+
+impl SpeciesBlock for SpeciesLCAOStatesBlock {
+    type ItemOutput = LCAOBasis;
+
+    fn items(&self) -> &[Self::ItemOutput] {
+        &self.basis_sets
+    }
+
+    fn items_mut(&mut self) -> &mut Vec<Self::ItemOutput> {
+        &mut self.basis_sets
     }
 }
 

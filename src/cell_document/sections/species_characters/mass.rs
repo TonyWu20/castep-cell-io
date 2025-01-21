@@ -7,11 +7,23 @@ use castep_periodic_table::{
 
 use crate::formatting::BlockDisplay;
 
-use super::SpeciesCharacter;
+use super::{SpeciesBlock, SpeciesCharacter, SpeciesEntry};
 
 #[derive(Debug, Clone)]
 pub struct SpeciesMassBlock {
     items: Vec<SpeciesMass>,
+}
+
+impl SpeciesBlock for SpeciesMassBlock {
+    type ItemOutput = SpeciesMass;
+
+    fn items(&self) -> &[Self::ItemOutput] {
+        &self.items
+    }
+
+    fn items_mut(&mut self) -> &mut Vec<Self::ItemOutput> {
+        &mut self.items
+    }
 }
 
 impl SpeciesMassBlock {
@@ -32,6 +44,18 @@ impl SpeciesMassBlock {
 pub struct SpeciesMass {
     element: ElementSymbol,
     mass: f64,
+}
+
+impl SpeciesEntry for SpeciesMass {
+    type Item = f64;
+
+    fn element(&self) -> &ElementSymbol {
+        &self.element
+    }
+
+    fn item(&self) -> &Self::Item {
+        &self.mass
+    }
 }
 
 impl SpeciesMass {

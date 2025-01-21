@@ -4,7 +4,7 @@ use castep_periodic_table::{data::ELEMENT_TABLE, element::ElementSymbol, element
 
 use crate::formatting::BlockDisplay;
 
-use super::SpeciesCharacter;
+use super::{SpeciesBlock, SpeciesCharacter, SpeciesEntry};
 
 #[derive(Debug, Clone)]
 pub struct SpeciesPot {
@@ -12,9 +12,33 @@ pub struct SpeciesPot {
     pot_file: String,
 }
 
+impl SpeciesEntry for SpeciesPot {
+    type Item = String;
+
+    fn element(&self) -> &ElementSymbol {
+        &self.element
+    }
+
+    fn item(&self) -> &Self::Item {
+        &self.pot_file
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SpeciesPotBlock {
     items: Vec<SpeciesPot>,
+}
+
+impl SpeciesBlock for SpeciesPotBlock {
+    type ItemOutput = SpeciesPot;
+
+    fn items(&self) -> &[Self::ItemOutput] {
+        &self.items
+    }
+
+    fn items_mut(&mut self) -> &mut Vec<Self::ItemOutput> {
+        &mut self.items
+    }
 }
 
 impl SpeciesPotBlock {
