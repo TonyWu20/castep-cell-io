@@ -1,0 +1,6 @@
+number = {ASCII_DIGIT+}
+sign = {"-" | "+"}
+integer = @{ ("-" | "+")? ~ number } 
+real = @{("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-"|"+")? ~ number | 
+sign? ~ number ~ ^"e" ~ sign? ~ number| sign{,1} ~ number? ~ "." ~ number
+}

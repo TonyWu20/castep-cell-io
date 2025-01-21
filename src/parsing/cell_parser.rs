@@ -28,7 +28,7 @@ impl<'a, S: AsRef<str>> From<&'a S> for CellParser<'a> {
     }
 }
 
-impl<'a> CellParser<'a> {
+impl CellParser<'_> {
     pub fn parse(&mut self) -> Result<CellDocument, CellParseError> {
         while let Ok(section) = current_sections(&mut self.input) {
             match section {
@@ -46,27 +46,26 @@ impl<'a> CellParser<'a> {
                     let entry = self.parse_species_section(spec_keyword)?;
                     self.other_entries.push(entry);
                 }
-                DocumentSections::Misc(ref misc_keyword) => {
-                    match misc_keyword {
-                        KeywordType::Block(_) => {
-                            get_block_data(&mut self.input)
-                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                        }
-                        KeywordType::Field(field_kw) => {
-                            let field_data = get_field_data(&mut self.input)
-                                .map_err(|_| CellParseError::GetBlockDataFailure)?;
-                            #[cfg(debug_assertions)]
-                            {
-                                println!("{:?}: {}", field_kw, field_data);
-                            }
+                DocumentSections::Misc(ref misc_keyword) => match misc_keyword {
+                    KeywordType::Block(_) => {
+                        get_block_data(&mut self.input)
+                            .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                        dbg!(&self.input);
+                    }
+                    KeywordType::Field(field_kw) => {
+                        let field_data = get_field_data(&mut self.input)
+                            .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                        #[cfg(debug_assertions)]
+                        {
+                            dbg!((field_kw, field_data));
                         }
                     }
-                    #[cfg(debug_assertions)]
-                    {
-                        println!("{:?}", section)
-                    }
+                },
+                DocumentSections::End => {
+                    break;
                 }
                 _ => {
+                    #[cfg(debug_assertions)]
                     println!("{:?}", section)
                 }
             }

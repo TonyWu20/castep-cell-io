@@ -5,7 +5,9 @@ use crate::{
     InvLengthUnit,
 };
 
-use super::{KpointListBlock, KpointMPGrid, KpointMPOffset, KpointMPSpacing, KpointTask};
+use super::{
+    KpointListBlock, KpointMPGrid, KpointMPOffset, KpointMPSpacing, KpointQuality, KpointTask,
+};
 
 impl Default for KpointListBlock {
     fn default() -> Self {
@@ -18,9 +20,10 @@ impl Default for KpointListBlock {
 
 impl Default for KpointMPSpacing {
     fn default() -> Self {
+        let spacing = KpointQuality::Coarse.spacing_value(true);
         Self {
             task: KpointTask::default(),
-            spacing: 0.1,
+            spacing,
             unit: InvLengthUnit::default(),
         }
     }

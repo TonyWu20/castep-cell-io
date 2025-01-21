@@ -1,6 +1,7 @@
 #[allow(unused_imports)]
+mod chemrust_impl;
 pub mod params;
-mod sections;
+pub mod sections;
 pub mod units;
 
 use std::fs::read_to_string;
@@ -9,8 +10,10 @@ use std::{fmt::Display, fs, io::Error, path::Path};
 
 use castep_periodic_table::data::ELEMENT_TABLE;
 use castep_periodic_table::element::{ElementSymbol, LookupElement};
-use chemrust_core::data::lattice::CrystalModel;
+use chemrust_core::data::atom::CoreAtomData;
+use chemrust_core::data::lattice::{CrystalModel, UnitCellParameters};
 use chemrust_core::data::symmetry::SymmetryInfo;
+
 pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
@@ -20,6 +23,7 @@ pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
 
+pub use chemrust_impl::to_cell_document;
 pub use sections::CellEntries;
 pub use sections::CellEssentials;
 
@@ -33,23 +37,19 @@ pub struct CellDocument {
 }
 
 impl CrystalModel for CellDocument {
-    type LatticeData = LatticeParamBlock;
-
-    type AtomData = IonicPositionBlock;
-
-    fn get_cell_parameters(&self) -> &Self::LatticeData {
+    fn get_cell_parameters(&self) -> &impl UnitCellParameters {
         self.model_description().lattice_block()
     }
 
-    fn get_atom_data(&self) -> &Self::AtomData {
+    fn get_atom_data(&self) -> &impl CoreAtomData {
         self.model_description().ionic_pos_block()
     }
 
-    fn get_cell_parameters_mut(&mut self) -> &mut Self::LatticeData {
+    fn get_cell_parameters_mut(&mut self) -> &mut impl UnitCellParameters {
         self.model_description_mut().lattice_block_mut()
     }
 
-    fn get_atom_data_mut(&mut self) -> &mut Self::AtomData {
+    fn get_atom_data_mut(&mut self) -> &mut impl CoreAtomData {
         self.model_description_mut().ionic_pos_block_mut()
     }
 }
@@ -121,6 +121,17 @@ impl CellDocument {
         symbols.sort();
         symbols.dedup();
         symbols
+    }
+
+    /// Get total spins of the species in cell
+    /// Change! Accumulate all spins of species
+    pub fn total_spin(&self) -> u32 {
+        self.model_description()
+            .ionic_pos_block()
+            .positions()
+            .iter()
+            .map(|&pos| ELEMENT_TABLE.get_by_symbol(pos.symbol()).spin() as u32)
+            .sum::<u32>()
     }
 
     pub fn model_description(&self) -> &CellEssentials {

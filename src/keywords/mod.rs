@@ -39,4 +39,5 @@ pub enum DocumentSections<'s> {
     Symmetry,
     Species(SpeciesKeywords),
     Misc(KeywordType<'s>),
+    End,
 }
