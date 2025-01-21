@@ -69,7 +69,7 @@ mod test {
 ";
         let data = get_block_data(&mut input);
         println!("{:?}", data);
-        let mut keyword = "%BLOCK POSITIONS_FRAC # Fractional COOR\n";
+        let mut keyword = "%BLOCK POSITIONS_FRAC\r\n # Fractional COOR\n";
         println!("{:#?}", strip_to_block_name(&mut keyword));
     }
 }

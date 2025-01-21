@@ -23,7 +23,7 @@ mod test {
     #[test]
     fn test_cell_parser() {
         let root = env!("CARGO_MANIFEST_DIR");
-        let path = Path::new(root).join("SAC_GDY_V.cell");
+        let path = Path::new(root).join("FePcCOOH_N1.cell");
         let input = fs::read_to_string(path).unwrap();
         let mut cell_parser = CellParser::from(&input);
         let cell_doc = cell_parser.parse();
