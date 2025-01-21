@@ -1,6 +1,6 @@
 use winnow::{
     ascii::{line_ending, till_line_ending},
-    combinator::{alt, repeat, terminated},
+    combinator::{alt, eof, repeat, repeat_till, terminated},
     error::{ContextError, ErrMode},
     PResult, Parser,
 };
@@ -40,7 +40,7 @@ pub fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
 }
 
 pub fn skip_comments_blank_lines(input: &mut &str) -> PResult<()> {
-    alt((comment_line, line_ending))
+    alt((comment_line, line_ending, eof))
         .map(|_| ())
         .parse_next(input)
 }
@@ -54,7 +54,7 @@ fn comment_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 /// Remove comment contents from the line (all the right to the first '#' or '!')
 /// and move to next line
 pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
-    terminated(till_line_ending, line_ending)
+    terminated(till_line_ending, alt((line_ending, eof.map(|_s| "eof"))))
         .map(|s: &str| {
             let pat = |c| c == '#' || c == '!';
             s.split(pat).next().unwrap().trim()
@@ -64,6 +64,9 @@ pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 
 // TODO! Handle `Misc` case to skip the unwanted data
 pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+    if input.is_empty() {
+        return Ok(DocumentSections::End);
+    }
     // Skip the possible comments and blank lines between the blocks and field data.
     let _skipped: () = repeat(0.., skip_comments_blank_lines).parse_next(input)?;
     let keyword: KeywordType<'_> = get_keyword(input)?;
@@ -89,6 +92,7 @@ pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>
 #[cfg(test)]
 mod test {
     use crate::{
+        get_field_data,
         keywords::DocumentSections,
         parsing::helpers::{block::get_block_data, keywords::lattice::parse_lattice_param},
     };
@@ -226,9 +230,23 @@ FIX_COM : false
                     let positions = parse_ionic_positions(&mut input, pos_type).unwrap();
                     println!("{}", positions);
                 }
+                DocumentSections::Misc(m) => match m {
+                    crate::KeywordType::Block(b) => {
+                        dbg!(b);
+                        let data = get_block_data(&mut input).unwrap();
+                        println!("{:?}", data);
+                    }
+                    crate::KeywordType::Field(f) => {
+                        dbg!(f);
+                        let field_data = get_field_data(&mut input).unwrap();
+                        dbg!(field_data);
+                    }
+                },
+                DocumentSections::End => {
+                    break;
+                }
                 _ => {
-                    let data = get_block_data(&mut input);
-                    println!("{:?}", data);
+                    println!("skipped")
                 }
             }
         }

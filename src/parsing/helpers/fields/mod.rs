@@ -1,10 +1,10 @@
-use winnow::{token::take_until, PResult, Parser};
+use winnow::{token::take_till, PResult, Parser};
 
 use super::{effective_line, KeywordType};
 
 /// When it is "keyword : value"
 pub fn field_name<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
-    take_until(0.., " ")
+    take_till(0.., |c| c == ' ' || c == ':')
         .map(|s: &str| KeywordType::Field(s.trim()))
         .parse_next(input)
 }
@@ -26,7 +26,11 @@ mod test {
 
     #[test]
     fn test_field() {
-        let mut tests = ["KPOINT_MP_GRID 3 4 5\n", "FIX_ALL_COM : true\n"];
+        let mut tests = [
+            "KPOINT_MP_GRID 3 4 5\r\n",
+            "FIX_ALL_COM : true\r\n",
+            "QUANTIZATION_AXIS: 0.0 0.0 1.0",
+        ];
         tests.iter_mut().for_each(|s| {
             let name = field_name(s).unwrap();
             let context = ContextError::<StrContext>::new().add_context(
