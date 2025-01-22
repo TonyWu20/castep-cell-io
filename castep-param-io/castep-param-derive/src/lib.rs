@@ -1,7 +1,7 @@
 use darling::{FromAttributes, FromDeriveInput};
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, DataEnum, DeriveInput, Expr, Ident};
+use syn::{parse_macro_input, DataEnum, DeriveInput, Expr, Ident, Lit};
 
 #[derive(FromAttributes, Default)]
 #[darling(default, attributes(param_display))]
@@ -363,4 +363,77 @@ pub fn derive(input: TokenStream) -> TokenStream {
         #default
     };
     output.into()
+}
+
+#[proc_macro_derive(ParamEnumFromStr)]
+pub fn enum_from_str(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let data = match input.data {
+        syn::Data::Enum(data_enum) => data_enum,
+        _ => unimplemented!(),
+    };
+    let enum_ident = input.ident;
+    let variant_matches = data.variants.iter().map(|v| match &v.fields {
+        syn::Fields::Named(_) => unimplemented!(),
+        syn::Fields::Unnamed(_fields_unnamed) => todo!(),
+        syn::Fields::Unit => {
+            let ident = &v.ident;
+            let binding = ident.to_string().to_lowercase();
+            let matched = binding.as_str();
+            quote! {
+                #matched => Some(#enum_ident::#ident)
+            }
+        }
+    });
+    quote! {
+        impl #enum_ident {
+            fn from_str(input: &str) -> Option<Self> {
+                let lowercase = input.to_lowercase();
+                match lowercase.as_str() {
+                    #(#variant_matches,)*
+                    _ => None
+                }
+            }
+        }
+    }
+    .into()
+}
+
+#[derive(FromDeriveInput)]
+#[darling(attributes(pest_rule))]
+struct BuildFromPairsOpt {
+    rule: Expr,
+    keyword: Lit,
+}
+
+#[proc_macro_derive(BuildFromPairs, attributes(pest_rule))]
+pub fn derive_consume_pairs(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let ident = &input.ident;
+    let opts = BuildFromPairsOpt::from_derive_input(&input).expect("Expect Option");
+    let rule = &opts.rule;
+    let keyword = opts.keyword;
+    quote! {
+
+    impl<'a> crate::parser::ConsumeKVPairs<'a> for #ident {
+        type Item = #ident;
+
+        fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
+            let found_index = pairs
+                .iter()
+                .position(|pair| pair.keyword().as_str().to_uppercase() == #keyword);
+            match found_index {
+                Some(i) => {
+                    let pair = pairs[i];
+                    let kvpair = pair.to_string();
+                    let mut parse = crate::parser::ParamParser::parse(#rule, &kvpair).unwrap();
+                    // let err_message = format!("Incorrect value for {}", #ident.field());
+                    Some(#ident::from_pest(&mut parse).unwrap())
+                }
+                None => None,
+            }
+        }
+    }
+        }
+    .into()
 }

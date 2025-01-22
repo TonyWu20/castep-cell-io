@@ -101,9 +101,9 @@ mod test {
         write_prop.set_formatted_density(Some(true));
         write_prop.set_formatted_elf(Some(true));
         write_prop.set_formatted_potential(Some(false));
-        let target = r#"WRITE_FORMATTED_ELF : TRUE
-WRITE_FORMATTED_DENSITY : TRUE
-WRITE_FORMATTED_POTENTIAL : FALSE"#;
+        let target = r#"WRITE_FORMATTED_ELF : true
+WRITE_FORMATTED_DENSITY : true
+WRITE_FORMATTED_POTENTIAL : false"#;
         assert_eq!(target, write_prop.to_string());
     }
 }

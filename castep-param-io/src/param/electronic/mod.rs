@@ -59,7 +59,6 @@ mod test {
     #[test]
     fn electronic_param() {
         let elec_param = ElectronicParamBuilder::default()
-            .spin_polarised(true)
             .spin(2.0)
             .bands_option(
                 BandsOptionBuilder::default()

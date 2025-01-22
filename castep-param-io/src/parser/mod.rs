@@ -1,47 +1,83 @@
+use std::fmt::Display;
+
 use pest::Span;
 use pest_ast::FromPest;
 use pest_derive::Parser;
+
+pub mod data_type;
+mod general;
 
 #[derive(Parser)]
 #[grammar = "parser/param.pest"]
 pub struct ParamParser;
 
-fn span_into_str(span: Span) -> &str {
-    dbg!(span.as_str())
+pub fn span_into_str(span: Span) -> &str {
+    span.as_str()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, FromPest)]
-#[pest_ast(rule(Rule::real))]
-pub struct Real {
-    #[pest_ast(outer(with(span_into_str), with(str::parse::<f64>), with(Result::unwrap)))]
-    pub value: f64,
+#[derive(Debug, Clone, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::param_file))]
+pub struct ParamFile<'a> {
+    pairs: Vec<KVPair<'a>>,
+}
+
+impl<'a> ParamFile<'a> {
+    pub fn pairs(&self) -> &[KVPair<'a>] {
+        &self.pairs
+    }
+
+    pub fn pairs_mut(&mut self) -> &mut Vec<KVPair<'a>> {
+        &mut self.pairs
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::kv_pair))]
+pub struct KVPair<'a> {
+    #[pest_ast(inner(rule(Rule::keyword)))]
+    keyword: Span<'a>,
+    #[pest_ast(inner(rule(Rule::value)))]
+    value: Span<'a>,
+}
+
+impl<'a> KVPair<'a> {
+    pub fn keyword(&self) -> Span<'a> {
+        self.keyword
+    }
+
+    pub fn value(&self) -> Span<'a> {
+        self.value
+    }
+}
+
+impl Display for KVPair<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} : {}", self.keyword.as_str(), self.value.as_str())
+    }
+}
+
+pub trait ConsumeKVPairs<'a> {
+    type Item;
+    fn find_from_pairs(pairs: &'a [KVPair<'a>]) -> Option<Self::Item>;
 }
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use from_pest::FromPest;
     use pest::Parser;
 
-    use crate::parser::Real;
+    use crate::param::General;
 
-    use super::{ParamParser, Rule};
+    use super::{ParamFile, ParamParser, Rule};
+
     #[test]
-    fn parse_real() {
-        let mut tree = ParamParser::parse(Rule::real, "1.6e-5").unwrap();
-        println!("{:?}", tree);
-        let number = Real::from_pest(&mut tree);
-        match number {
-            Ok(e) => println!("{e:?}"),
-            Err(e) => println!("{e}"),
-        }
-        // let parse = ParamParser::parse(Rule::real, "1e4").unwrap();
-        // parse.into_iter().for_each(|p| println!("{p}"));
-        // let parse = ParamParser::parse(Rule::real, "-1.6e-4");
-        // println!("{:?}", parse);
-        let mut parse = ParamParser::parse(Rule::real, "-0.5").unwrap();
-        dbg!(Real::from_pest(&mut parse).unwrap());
-        // println!("{:?}", parse);
-        // let parse = ParamParser::parse(Rule::real, "-.5");
-        // println!("{:?}", parse);
+    fn test_param() {
+        let param = read_to_string("NP22_single_0.param").unwrap();
+        let mut parse = ParamParser::parse(Rule::param_file, &param).unwrap();
+        let mut parsed_param = ParamFile::from_pest(&mut parse).unwrap();
+        let general_section = General::build_from_parsed(parsed_param.pairs_mut());
+        println!("{}", general_section);
     }
 }

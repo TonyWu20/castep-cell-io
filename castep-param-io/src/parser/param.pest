@@ -1,6 +1,43 @@
-number = {ASCII_DIGIT+}
-sign = {"-" | "+"}
-integer = @{ ("-" | "+")? ~ number } 
-real = @{("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-"|"+")? ~ number | 
-sign? ~ number ~ ^"e" ~ sign? ~ number| sign{,1} ~ number? ~ "." ~ number
+WHITESPACE  = _{ " " | NEWLINE }
+COMMENT     =  { "#" ~ ANY* | "!" ~ ANY* }
+number      =  { ASCII_DIGIT+ }
+sign        =  { "-" | "+" }
+integer     = @{ ("-" | "+")? ~ number }
+pos_integer = @{ ("+")? ~ number }
+real        = @{
+    ("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-" | "+")? ~ number
+  | sign? ~ number ~ ^"e" ~ sign? ~ number
+  | sign{,1} ~ number? ~ "." ~ number
 }
+logical     =  { ^"true" | ^"false" }
+string      =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
+rand_seed   =  { ^"rand_seed" ~ ":" ~ integer }
+param_file  =  { kv_pair* }
+keyword     = @{ (ASCII_ALPHANUMERIC | "_")* }
+value       = @{ logical | real | pos_integer | integer | string }
+kv_pair     =  { keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value }
+
+task            = { ^"task" ~ ":" ~ tasks }
+tasks           = {
+    ^"BandStructure"
+  | ^"GeometryOptimization"
+  | ^"SinglePoint"
+  | ^"MolecularDynamics"
+  | ^"Optics"
+  | ^"Phonon"
+  | ^"Efield"
+  | ^"PhononEfield"
+  | ^"TransitionStateSearch"
+  | ^"MagRes"
+  | ^"Elnes"
+  | ^"ElectronicSpectroscopy"
+  | ^"Autosolvation"
+}
+backup_setting  = { backup_interval | num_backup_iter }
+backup_interval = { ^"BACKUP_INTERVAL" ~ ":" ~ integer }
+num_backup_iter = { ^"NUM_BACKUP_ITER" ~ ":" ~ integer }
+
+calc_stress    = { ^"calculate_stress" ~ ":" ~ logical }
+calc_densdiff  = { ^"calculate_densdiff" ~ ":" ~ logical }
+calc_elf       = { ^"calculate_elf" ~ ":" ~ logical }
+calc_hirshfeld = { ^"calculate_hirshfeld" ~ ":" ~ logical }
