@@ -1,5 +1,6 @@
-WHITESPACE  = _{ " " | NEWLINE }
+WHITESPACE  = _{ " " | NEWLINE | "\t" }
 COMMENT     =  { "#" ~ ANY* | "!" ~ ANY* }
+anything    =  { (ANY | ASCII_DIGIT)* }
 number      =  { ASCII_DIGIT+ }
 sign        =  { "-" | "+" }
 integer     = @{ ("-" | "+")? ~ number }
@@ -10,15 +11,17 @@ real        = @{
   | sign{,1} ~ number? ~ "." ~ number
 }
 logical     =  { ^"true" | ^"false" }
-string      =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
-rand_seed   =  { ^"rand_seed" ~ ":" ~ integer }
-param_file  =  { kv_pair* }
-keyword     = @{ (ASCII_ALPHANUMERIC | "_")* }
-value       = @{ logical | real | pos_integer | integer | string }
-kv_pair     =  { keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value }
+// strict_string =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
+string     =  { (!(NEWLINE | COMMENT) ~ ANY)* }
+rand_seed  =  { ^"rand_seed" ~ ":" ~ integer }
+param_file =  { kv_pair* }
+keyword    = @{ (ASCII_ALPHANUMERIC | "_")* }
+value      = @{ EOI | logical | real | pos_integer | integer | string }
+kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) | stop }
+stop       =  { ^"stop" ~ EOI }
 
-task            = { ^"task" ~ ":" ~ tasks }
-tasks           = {
+task                    = { ^"task" ~ ":" ~ tasks }
+tasks                   = {
     ^"BandStructure"
   | ^"GeometryOptimization"
   | ^"SinglePoint"
@@ -33,6 +36,39 @@ tasks           = {
   | ^"ElectronicSpectroscopy"
   | ^"Autosolvation"
 }
+param_comment           = { ^"comment" ~ ":" ~ anything }
+continue_reuse          = { continuation | reuse }
+continuation            = { ^"continuation" ~ ":" ~ (continuation_default | continuation_file) }
+continuation_default    = { ^"default" }
+continuation_file       = { anything }
+reuse                   = { ^"reuse" ~ ":" ~ (reuse_default | reuse_file) }
+reuse_default           = { ^"default" }
+reuse_file              = { anything }
+charge_unit             = { ^"charge_unit" ~ ":" ~ charge_unit_value }
+charge_unit_value       = { ^"e" | ^"c" }
+checkpoint              = { ^"CHECKPOINT" ~ ":" ~ checkpoint_file }
+checkpoint_file         = { anything }
+data_distribution       = { ^"data_distribution" ~ ":" ~ data_distribution_value }
+data_distribution_value = {
+    ^"Kpoint"
+  | ^"Gvector"
+  | ^"Mixed"
+  | ^"Default"
+}
+iprint                  = { ^"iprint" ~ ":" ~ iprint_value }
+iprint_value            = { "0" | "1" | "2" | "3" }
+opt_strategy            = { ^"opt_strategy" ~ ":" ~ opt_strategy_value }
+opt_strategy_value      = {
+    ^"Speed"
+  | ^"Default"
+  | ^"Memory"
+}
+page_wvfns              = { ^"page_wvfns" ~ ":" ~ page_wvfns_value }
+page_wvfns_value        = { integer }
+print_clock             = { ^"print_clock" ~ ":" ~ logical }
+print_memory_usage      = { ^"print_memory_usage" ~ ":" ~ logical }
+run_time                = { ^"run_time" ~ ":" ~ integer }
+
 backup_setting  = { backup_interval | num_backup_iter }
 backup_interval = { ^"BACKUP_INTERVAL" ~ ":" ~ integer }
 num_backup_iter = { ^"NUM_BACKUP_ITER" ~ ":" ~ integer }
@@ -41,3 +77,23 @@ calc_stress    = { ^"calculate_stress" ~ ":" ~ logical }
 calc_densdiff  = { ^"calculate_densdiff" ~ ":" ~ logical }
 calc_elf       = { ^"calculate_elf" ~ ":" ~ logical }
 calc_hirshfeld = { ^"calculate_hirshfeld" ~ ":" ~ logical }
+
+energy_unit  = { ^"energy_unit" ~ ":" ~ energy_units }
+energy_units = {
+    ^"ha"
+  | ^"mha"
+  | ^"eV"
+  | ^"meV"
+  | ^"ry"
+  | ^"mry"
+  | ^"kj/mol"
+  | ^"kcal/mol"
+  | ^"j"
+  | ^"erg"
+  | ^"hz"
+  | ^"mhz"
+  | ^"ghz"
+  | ^"thz"
+  | ^"cm-1"
+  | ^"k"
+}
