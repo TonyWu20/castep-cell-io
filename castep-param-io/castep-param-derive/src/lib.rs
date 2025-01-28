@@ -354,14 +354,14 @@ pub fn derive_consume_pairs(input: TokenStream) -> TokenStream {
     impl<'a> crate::parser::ConsumeKVPairs<'a> for #ident {
         type Item = #ident;
 
-        fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
-            let found_index = pairs
+        fn find_from_pairs(items: &'a [crate::parser::ParamItems<'a>]) -> Option<Self::Item> {
+            let found_index = items
                 .iter()
                 .position(|pair| pair.keyword().to_uppercase() == #keyword);
             match found_index {
                 Some(i) => {
-                    let pair = pairs[i];
-                    let kvpair = pair.to_string();
+                    let item = items[i];
+                    let kvpair = item.to_string();
                     let mut parse = crate::parser::ParamParser::parse(#rule, &kvpair).unwrap();
                     // let err_message = format!("Incorrect value for {}", #ident.field());
                     Some(#ident::from_pest(&mut parse).unwrap())
@@ -388,7 +388,7 @@ pub fn derive_struct_consume_pairs(input: TokenStream) -> TokenStream {
         f.ident.as_ref().map(|ident| {
             let ty = extract_type_from_option(&f.ty).expect("The type T is wrapped in Option<T>");
             quote! {
-                let #ident = #ty::find_from_pairs(pairs);
+                let #ident = #ty::find_from_pairs(items);
             }
         })
     });
@@ -396,7 +396,7 @@ pub fn derive_struct_consume_pairs(input: TokenStream) -> TokenStream {
         impl<'a> crate::parser::ConsumeKVPairs<'a> for #struct_ident {
             type Item = #struct_ident;
 
-            fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
+            fn find_from_pairs(items: &'a [crate::parser::ParamItems<'a>]) -> Option<Self::Item> {
                 #(#fields_builder)*
                 Some(Self {
                     #(#fields_idents,)*

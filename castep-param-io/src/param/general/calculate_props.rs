@@ -1,11 +1,11 @@
 use crate::{
     param::KeywordDisplay,
-    parser::{data_type::Logical, ConsumeKVPairs, Rule},
+    parser::{data_type::Logical, Rule},
 };
 use from_pest::FromPest;
 use pest::Parser;
 
-use castep_param_derive::{BuildFromPairs, KeywordDisplay, ParamDisplay};
+use castep_param_derive::{BuildFromPairs, KeywordDisplay, ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
 use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
     Default,
     Builder,
     ParamDisplay,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 pub struct CalculateProperties {
@@ -31,23 +32,6 @@ pub struct CalculateProperties {
     pub densdiff: Option<CalculateDensdiff>,
     pub elf: Option<CalculateELF>,
     pub hirshfeld: Option<CalculateHirshfeld>,
-}
-
-impl<'a> ConsumeKVPairs<'a> for CalculateProperties {
-    type Item = Self;
-
-    fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
-        let stress = CalculateStress::find_from_pairs(pairs);
-        let densdiff = CalculateDensdiff::find_from_pairs(pairs);
-        let elf = CalculateELF::find_from_pairs(pairs);
-        let hirshfeld = CalculateHirshfeld::find_from_pairs(pairs);
-        Some(Self {
-            stress,
-            densdiff,
-            elf,
-            hirshfeld,
-        })
-    }
 }
 
 #[derive(
@@ -174,13 +158,13 @@ mod test {
             "calculate_hirshfeld : false",
         ];
         input.iter().for_each(|&l| {
-            let parse = ParamParser::parse(Rule::kv_pair, l);
-            dbg!(parse);
+            let parse = ParamParser::parse(Rule::kv_pair, l).is_ok();
+            assert!(parse);
         });
         let all = input.join("\n");
         let mut parse = ParamParser::parse(Rule::param_file, &all).unwrap();
         dbg!(&parse);
         let file = ParamFile::from_pest(&mut parse);
-        dbg!(file);
+        dbg!(file.is_ok());
     }
 }

@@ -4,8 +4,6 @@ use pest::Span;
 use pest_ast::FromPest;
 use pest_derive::Parser;
 
-use crate::param::Stop;
-
 pub mod data_type;
 mod general;
 
@@ -20,21 +18,12 @@ pub fn span_into_str(span: Span) -> &str {
 #[derive(Debug, Clone, PartialEq, FromPest)]
 #[pest_ast(rule(Rule::param_file))]
 pub struct ParamFile<'a> {
-    pairs: Vec<KVPair<'a>>,
-    stop: Option<Stop>,
+    items: Vec<ParamItems<'a>>,
 }
 
 impl<'a> ParamFile<'a> {
-    pub fn pairs(&self) -> &[KVPair<'a>] {
-        &self.pairs
-    }
-
-    pub fn pairs_mut(&mut self) -> &mut Vec<KVPair<'a>> {
-        &mut self.pairs
-    }
-
-    pub fn stop(&self) -> Option<Stop> {
-        self.stop
+    pub fn items(&self) -> &[ParamItems<'a>] {
+        &self.items
     }
 }
 
@@ -45,6 +34,27 @@ pub struct KVPair<'a> {
     keyword: &'a str,
     #[pest_ast(inner(rule(Rule::value)))]
     value: Span<'a>,
+}
+
+fn span_into_stop(_span: Span<'_>) -> ParamItems<'_> {
+    ParamItems::Stop
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::param_item))]
+pub enum ParamItems<'a> {
+    Pairs(KVPair<'a>),
+    #[pest_ast(inner(rule(Rule::stop), with(span_into_stop)))]
+    Stop,
+}
+
+impl<'a> ParamItems<'a> {
+    pub fn keyword(&self) -> String {
+        match self {
+            ParamItems::Pairs(kvpair) => kvpair.keyword().into(),
+            ParamItems::Stop => "stop".to_string(),
+        }
+    }
 }
 
 impl PartialOrd for KVPair<'_> {
@@ -61,12 +71,6 @@ impl<'a> KVPair<'a> {
     pub fn value(&self) -> Span<'a> {
         self.value
     }
-
-    /// Sort parsed keyword pairs according to the order of fields in `CastepParam`
-    pub fn ordered_copy(&self) -> Self {
-        // Use enumerate to mark the current order with indices.
-        todo!();
-    }
 }
 
 impl Display for KVPair<'_> {
@@ -75,19 +79,18 @@ impl Display for KVPair<'_> {
     }
 }
 
-pub trait ConsumeKVPairs<'a> {
-    type Item;
-    fn find_from_pairs(pairs: &'a [KVPair<'a>]) -> Option<Self::Item>;
+impl Display for ParamItems<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParamItems::Pairs(kvpair) => write!(f, "{}", kvpair),
+            ParamItems::Stop => f.write_str("stop"),
+        }
+    }
 }
 
-pub trait FromParamFile {
-    type Item: Sized;
-    fn build_from_parsed(_parsed_pairs: &[KVPair<'_>]) -> Self::Item {
-        todo!()
-    }
-    fn build_from_file(_file: &ParamFile<'_>) -> Self::Item {
-        unimplemented!()
-    }
+pub trait ConsumeKVPairs<'a> {
+    type Item;
+    fn find_from_pairs(items: &'a [ParamItems<'a>]) -> Option<Self::Item>;
 }
 
 #[cfg(test)]
@@ -97,7 +100,7 @@ mod test {
     use from_pest::FromPest;
     use pest::Parser;
 
-    use crate::{param::General, parser::FromParamFile};
+    use crate::{param::General, parser::ConsumeKVPairs};
 
     use super::{ParamFile, ParamParser, Rule};
 
@@ -107,7 +110,8 @@ mod test {
         let mut parse = ParamParser::parse(Rule::param_file, &param).unwrap();
         dbg!(&parse);
         let parsed_param = ParamFile::from_pest(&mut parse).unwrap();
-        let general_section = General::build_from_file(&parsed_param);
-        println!("{}", general_section);
+        let general_section = General::find_from_pairs(parsed_param.items());
+        println!("{:?}", parsed_param);
+        println!("{}", general_section.unwrap());
     }
 }

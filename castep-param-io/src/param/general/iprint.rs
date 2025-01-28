@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
 use crate::parser::Rule;
-use castep_param_derive::KeywordDisplay;
-use pest::Span;
+use castep_param_derive::{BuildFromPairs, KeywordDisplay};
+use from_pest::FromPest;
+use pest::{Parser, Span};
 use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
@@ -20,9 +21,11 @@ use serde::{Deserialize, Serialize};
     Serialize,
     Deserialize,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field = "IPRINT", direct_display = false)]
 #[pest_ast(rule(Rule::iprint))]
+#[pest_rule(rule=Rule::iprint, keyword="IPRINT")]
 /// This keyword controls the level of verbosity of the output. Possible
 ///  values range from 0, which produces minimal output, to 3,
 /// which corresponds to full debugging output.

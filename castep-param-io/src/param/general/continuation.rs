@@ -31,11 +31,11 @@ pub enum ContinueReuse {
 impl<'a> ConsumeKVPairs<'a> for ContinueReuse {
     type Item = Self;
 
-    fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
-        let cont_id = pairs
+    fn find_from_pairs(items: &'a [crate::parser::ParamItems<'a>]) -> Option<Self::Item> {
+        let cont_id = items
             .iter()
             .position(|p| p.keyword().to_lowercase() == "continuation");
-        let reuse_id = pairs
+        let reuse_id = items
             .iter()
             .position(|p| p.keyword().to_lowercase() == "reuse");
         let to_use = match (cont_id, reuse_id) {
@@ -50,8 +50,7 @@ impl<'a> ConsumeKVPairs<'a> for ContinueReuse {
             }
         };
         to_use.map(|id| {
-            let kvpair = pairs[id].to_string();
-            dbg!(&kvpair);
+            let kvpair = items[id].to_string();
             let mut parse = ParamParser::parse(Rule::continue_reuse, &kvpair).unwrap();
             Self::from_pest(&mut parse).unwrap()
         })

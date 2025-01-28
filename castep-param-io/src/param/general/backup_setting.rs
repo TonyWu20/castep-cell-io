@@ -54,7 +54,7 @@ pub enum BackUpSetting {
 impl<'a> ConsumeKVPairs<'a> for BackUpSetting {
     type Item = BackUpSetting;
 
-    fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
+    fn find_from_pairs(pairs: &'a [crate::parser::ParamItems<'a>]) -> Option<Self::Item> {
         let num_backup_iter_id = pairs
             .iter()
             .position(|p| p.keyword().to_lowercase() == "num_backup_iter");

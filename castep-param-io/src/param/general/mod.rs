@@ -1,5 +1,5 @@
-use super::{KeywordDisplay, ListFields};
-use castep_param_derive::ParamDisplay;
+use super::KeywordDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use serde::{Deserialize, Serialize};
 
 mod backup_setting;
@@ -55,6 +55,7 @@ pub use write_props::*;
     Deserialize,
     Builder,
     ParamDisplay,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 /// Keywords that belong to general category.
@@ -80,34 +81,9 @@ pub struct General {
     pub write_checkpoint: Option<WriteCheckpoint>,
     #[param_display(display=to_string())]
     pub calculate_props: Option<CalculateProperties>, // Default to all false
+    #[param_display(display=to_string())]
     pub write_props: Option<WriteProperties>, // Default to all false
 }
-
-// impl ListFields for General {
-//     fn list_fields() -> Vec<String> {
-//     "task",
-//     "comment",
-//     "continuation",
-//     "reuse",
-//     "backup",
-//     "charge_unit",
-//     #[param_display(use_ref = true)]
-//     "checkpoint",
-//     "data_distribution",
-//     "iprint",
-//     "opt_strategy",
-//     "page_wvfns",
-//     "print_clock",
-//     "print_memory_usage",
-//     "rand_seed",
-//     "run_time",
-//     "stop",
-//     "write_checkpoint",
-//     #[param_display(display=to_string())]
-//     "calculate_props",
-//     "write_props",
-//     }
-// }
 
 #[cfg(test)]
 mod test {

@@ -14,10 +14,11 @@ logical     =  { ^"true" | ^"false" }
 // strict_string =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
 string     =  { (!(NEWLINE | COMMENT) ~ ANY)* }
 rand_seed  =  { ^"rand_seed" ~ ":" ~ integer }
-param_file =  { kv_pair* }
+param_file =  { param_item* }
 keyword    = @{ (ASCII_ALPHANUMERIC | "_")* }
 value      = @{ EOI | logical | real | pos_integer | integer | string }
-kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) | stop }
+kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) }
+param_item =  { kv_pair | stop }
 
 task                     =  { ^"task" ~ ":" ~ tasks }
 tasks                    =  {
@@ -67,7 +68,7 @@ page_wvfns_value         =  { integer }
 print_clock              =  { ^"print_clock" ~ ":" ~ logical }
 print_memory_usage       =  { ^"print_memory_usage" ~ ":" ~ logical }
 run_time                 =  { ^"run_time" ~ ":" ~ integer }
-stop                     =  { ^"stop" ~ EOI }
+stop                     =  { ^"stop" }
 write_checkpoint         =  { ^"write_checkpoint" ~ ":" ~ (write_checkpoint_option | write_checkpoint_value) }
 write_checkpoint_value   =  {
     ^"None"
@@ -87,10 +88,14 @@ backup_setting  = { backup_interval | num_backup_iter }
 backup_interval = { ^"BACKUP_INTERVAL" ~ ":" ~ integer }
 num_backup_iter = { ^"NUM_BACKUP_ITER" ~ ":" ~ integer }
 
-calc_stress    = { ^"calculate_stress" ~ ":" ~ logical }
-calc_densdiff  = { ^"calculate_densdiff" ~ ":" ~ logical }
-calc_elf       = { ^"calculate_elf" ~ ":" ~ logical }
-calc_hirshfeld = { ^"calculate_hirshfeld" ~ ":" ~ logical }
+calc_stress               = { ^"calculate_stress" ~ ":" ~ logical }
+calc_densdiff             = { ^"calculate_densdiff" ~ ":" ~ logical }
+calc_elf                  = { ^"calculate_elf" ~ ":" ~ logical }
+calc_hirshfeld            = { ^"calculate_hirshfeld" ~ ":" ~ logical }
+write_orbitals            = { ^"write_orbitals" ~ ":" ~ logical }
+write_formatted_elf       = { ^"write_formatted_elf" ~ ":" ~ logical }
+write_formatted_density   = { ^"write_formatted_density" ~ ":" ~ logical }
+write_formatted_potential = { ^"write_formatted_potential" ~ ":" ~ logical }
 
 energy_unit  = { ^"energy_unit" ~ ":" ~ energy_units }
 energy_units = {

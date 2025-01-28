@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
-use castep_param_derive::KeywordDisplay;
-use pest::Span;
+use castep_param_derive::{BuildFromPairs, KeywordDisplay};
+use from_pest::FromPest;
+use pest::{Parser, Span};
 use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
@@ -20,9 +21,11 @@ use crate::parser::Rule;
     Deserialize,
     KeywordDisplay,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field = "WRITE_CHECKPOINT")]
 #[pest_ast(rule(Rule::write_checkpoint))]
+#[pest_rule(rule=Rule::write_checkpoint, keyword="WRITE_CHECKPOINT")]
 pub enum WriteCheckpoint {
     Value(WriteCheckpointValue),
     Option(WriteCheckpointOption),
@@ -148,7 +151,7 @@ mod test {
         let binding = write_checkpoint_option.output();
         let mut parse = ParamParser::parse(Rule::write_checkpoint, &binding).unwrap();
         dbg!(&parse);
-        let parsed = WriteCheckpoint::from_pest(&mut parse);
+        let parsed = WriteCheckpoint::from_pest(&mut parse).unwrap();
         dbg!(parsed);
     }
 }
