@@ -1,16 +1,35 @@
+use castep_param_derive::BuildFromPairs;
+use from_pest::FromPest;
+use pest::{Parser, Span};
 use std::fmt::Display;
 
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
+use crate::{param::KeywordDisplay, parser::Rule};
 
 #[derive(
-    Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    FromPest,
+    BuildFromPairs,
 )]
 /// This keyword specifies the units in which frequency will be reported.
 /// # Example
 /// `FREQUENCY_UNIT : hz`
+#[pest_ast(rule(Rule::frequency_unit))]
+#[pest_rule(rule=Rule::frequency_unit,keyword="FREQUENCY_UNIT")]
 pub enum FrequencyUnit {
+    #[pest_ast(inner(rule(Rule::frequency_units), with(from_span)))]
     Hartree,
     Millihartree,
     ElectronVolt,
@@ -28,6 +47,30 @@ pub enum FrequencyUnit {
     #[default]
     Wavenumber,
     Kelvin,
+}
+
+fn from_span(span: Span<'_>) -> FrequencyUnit {
+    let input = span.as_str();
+    match input.to_lowercase().as_str() {
+        "ha" => Some(FrequencyUnit::Hartree),
+        "mha" => Some(FrequencyUnit::Millihartree),
+        "ev" => Some(FrequencyUnit::ElectronVolt),
+        "mev" => Some(FrequencyUnit::MillielectronVolt),
+        "ry" => Some(FrequencyUnit::Rydberg),
+        "mry" => Some(FrequencyUnit::Millirydberg),
+        "kj/mol" => Some(FrequencyUnit::KilojoulesPerMole),
+        "kcal/mol" => Some(FrequencyUnit::KilocaloriesPerMole),
+        "j" => Some(FrequencyUnit::Joules),
+        "erg" => Some(FrequencyUnit::Erg),
+        "hz" => Some(FrequencyUnit::Hertz),
+        "mhz" => Some(FrequencyUnit::Megahertz),
+        "ghz" => Some(FrequencyUnit::Gigahertz),
+        "thz" => Some(FrequencyUnit::Terahertz),
+        "cm-1" => Some(FrequencyUnit::Wavenumber),
+        "k" => Some(FrequencyUnit::Kelvin),
+        _ => None,
+    }
+    .expect("Always correct")
 }
 
 impl Display for FrequencyUnit {

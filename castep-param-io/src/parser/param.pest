@@ -116,3 +116,91 @@ energy_units = {
   | ^"cm-1"
   | ^"k"
 }
+
+force_unit  = { ^"force_unit" ~ ":" ~ force_units }
+force_units = {
+    ^"hartree/bohr"
+  | ^"ev/ang"
+  | ^"n"
+}
+
+force_constant_unit  = { ^"force_constant_unit" ~ ":" ~ force_constant_units }
+force_constant_units = {
+    ^"hartree/bohr**2"
+  | ^"ev/ang**2"
+  | ^"n/m"
+  | ^"dyne/cm"
+}
+
+frequency_unit   = { ^"frequency_unit" ~ ":" ~ frequency_units }
+frequency_units  = {
+    "ha"
+  | "mha"
+  | "ev"
+  | "mev"
+  | "ry"
+  | "mry"
+  | "kj/mol"
+  | "kcal/mol"
+  | "j"
+  | "erg"
+  | "hz"
+  | "mhz"
+  | "ghz"
+  | "thz"
+  | "cm-1"
+  | "k"
+}
+inv_length_unit  = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
+inv_length_units = {
+    "1/"
+  | "1/m"
+  | "1/nm"
+  | "1/ang"
+}
+length_unit      = { ^"length_unit" ~ ":" ~ length_units }
+length_units     = {
+    "bohr"
+  | "a0"
+  | "m"
+  | "cm"
+  | "nm"
+  | "ang"
+}
+mass_unit        = { ^"mass_unit" ~ ":" ~ mass_units }
+mass_units       = {
+    "me"
+  | "amu"
+  | "kg"
+  | "g"
+}
+pressure_unit    = { ^"{pressure_unit}" ~ ":" ~ pressure_units }
+pressure_units   = {
+    "hartree/bohr**3"
+  | "ev/ang**3"
+  | "pa"
+  | "mpa"
+  | "gpa"
+  | "atm"
+  | "bar"
+  | "mbar"
+}
+time_unit        = { ^"{time_unit}" ~ ":" ~ time_units }
+time_units       = {
+    "aut"
+  | "s"
+  | "ms"
+  | "mus"
+  | "ns"
+  | "ps"
+  | "fs"
+}
+velocity_unit    = { ^"{velocity_unit}" ~ ":" ~ velocity_units }
+velocity_units   = {
+    "auv"
+  | "ang/ps"
+  | "ang/fs"
+  | "bohr/ps"
+  | "bohr/fs"
+  | "m/s"
+}
