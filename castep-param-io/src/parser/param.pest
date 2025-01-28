@@ -18,10 +18,9 @@ param_file =  { kv_pair* }
 keyword    = @{ (ASCII_ALPHANUMERIC | "_")* }
 value      = @{ EOI | logical | real | pos_integer | integer | string }
 kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) | stop }
-stop       =  { ^"stop" ~ EOI }
 
-task                    = { ^"task" ~ ":" ~ tasks }
-tasks                   = {
+task                     =  { ^"task" ~ ":" ~ tasks }
+tasks                    =  {
     ^"BandStructure"
   | ^"GeometryOptimization"
   | ^"SinglePoint"
@@ -36,38 +35,53 @@ tasks                   = {
   | ^"ElectronicSpectroscopy"
   | ^"Autosolvation"
 }
-param_comment           = { ^"comment" ~ ":" ~ anything }
-continue_reuse          = { continuation | reuse }
-continuation            = { ^"continuation" ~ ":" ~ (continuation_default | continuation_file) }
-continuation_default    = { ^"default" }
-continuation_file       = { anything }
-reuse                   = { ^"reuse" ~ ":" ~ (reuse_default | reuse_file) }
-reuse_default           = { ^"default" }
-reuse_file              = { anything }
-charge_unit             = { ^"charge_unit" ~ ":" ~ charge_unit_value }
-charge_unit_value       = { ^"e" | ^"c" }
-checkpoint              = { ^"CHECKPOINT" ~ ":" ~ checkpoint_file }
-checkpoint_file         = { anything }
-data_distribution       = { ^"data_distribution" ~ ":" ~ data_distribution_value }
-data_distribution_value = {
+param_comment            =  { ^"comment" ~ ":" ~ anything }
+continue_reuse           =  { continuation | reuse }
+continuation             =  { ^"continuation" ~ ":" ~ (continuation_default | continuation_file) }
+continuation_default     =  { ^"default" }
+continuation_file        =  { anything }
+reuse                    =  { ^"reuse" ~ ":" ~ (reuse_default | reuse_file) }
+reuse_default            =  { ^"default" }
+reuse_file               =  { anything }
+charge_unit              =  { ^"charge_unit" ~ ":" ~ charge_unit_value }
+charge_unit_value        =  { ^"e" | ^"c" }
+checkpoint               =  { ^"CHECKPOINT" ~ ":" ~ checkpoint_file }
+checkpoint_file          =  { anything }
+data_distribution        =  { ^"data_distribution" ~ ":" ~ data_distribution_value }
+data_distribution_value  =  {
     ^"Kpoint"
   | ^"Gvector"
   | ^"Mixed"
   | ^"Default"
 }
-iprint                  = { ^"iprint" ~ ":" ~ iprint_value }
-iprint_value            = { "0" | "1" | "2" | "3" }
-opt_strategy            = { ^"opt_strategy" ~ ":" ~ opt_strategy_value }
-opt_strategy_value      = {
+iprint                   =  { ^"iprint" ~ ":" ~ iprint_value }
+iprint_value             =  { "0" | "1" | "2" | "3" }
+opt_strategy             =  { ^"opt_strategy" ~ ":" ~ opt_strategy_value }
+opt_strategy_value       =  {
     ^"Speed"
   | ^"Default"
   | ^"Memory"
 }
-page_wvfns              = { ^"page_wvfns" ~ ":" ~ page_wvfns_value }
-page_wvfns_value        = { integer }
-print_clock             = { ^"print_clock" ~ ":" ~ logical }
-print_memory_usage      = { ^"print_memory_usage" ~ ":" ~ logical }
-run_time                = { ^"run_time" ~ ":" ~ integer }
+page_wvfns               =  { ^"page_wvfns" ~ ":" ~ page_wvfns_value }
+page_wvfns_value         =  { integer }
+print_clock              =  { ^"print_clock" ~ ":" ~ logical }
+print_memory_usage       =  { ^"print_memory_usage" ~ ":" ~ logical }
+run_time                 =  { ^"run_time" ~ ":" ~ integer }
+stop                     =  { ^"stop" ~ EOI }
+write_checkpoint         =  { ^"write_checkpoint" ~ ":" ~ (write_checkpoint_option | write_checkpoint_value) }
+write_checkpoint_value   =  {
+    ^"None"
+  | ^"Minimal"
+  | ^"Both"
+  | ^"All"
+  | ^"Full"
+}
+write_checkpoint_option  =  { write_checkpoint_options ~ "=" ~ write_checkpoint_value }
+write_checkpoint_options = @{
+    ^"Success"
+  | ^"Failure"
+  | ^"Backup"
+}
 
 backup_setting  = { backup_interval | num_backup_iter }
 backup_interval = { ^"BACKUP_INTERVAL" ~ ":" ~ integer }

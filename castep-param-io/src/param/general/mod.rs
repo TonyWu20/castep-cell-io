@@ -1,4 +1,4 @@
-use super::KeywordDisplay;
+use super::{KeywordDisplay, ListFields};
 use castep_param_derive::ParamDisplay;
 use serde::{Deserialize, Serialize};
 
@@ -82,6 +82,32 @@ pub struct General {
     pub calculate_props: Option<CalculateProperties>, // Default to all false
     pub write_props: Option<WriteProperties>, // Default to all false
 }
+
+// impl ListFields for General {
+//     fn list_fields() -> Vec<String> {
+//     "task",
+//     "comment",
+//     "continuation",
+//     "reuse",
+//     "backup",
+//     "charge_unit",
+//     #[param_display(use_ref = true)]
+//     "checkpoint",
+//     "data_distribution",
+//     "iprint",
+//     "opt_strategy",
+//     "page_wvfns",
+//     "print_clock",
+//     "print_memory_usage",
+//     "rand_seed",
+//     "run_time",
+//     "stop",
+//     "write_checkpoint",
+//     #[param_display(display=to_string())]
+//     "calculate_props",
+//     "write_props",
+//     }
+// }
 
 #[cfg(test)]
 mod test {

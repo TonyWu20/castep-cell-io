@@ -1,15 +1,42 @@
+use from_pest::FromPest;
+use pest::Parser;
 use std::fmt::Display;
 
+use castep_param_derive::BuildFromPairs;
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
+use crate::{
+    param::KeywordDisplay,
+    parser::{span_into_str, Rule},
+};
 #[derive(
-    Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    FromPest,
+    BuildFromPairs,
 )]
 /// This keyword specifies the units in which energies will be reported.
 /// # Example
 /// `ENERGY_UNIT : kcal/mol`
+#[pest_ast(rule(Rule::energy_unit))]
+#[pest_rule(rule=Rule::energy_unit, keyword="ENERGY_UNIT")]
 pub enum EnergyUnit {
+    #[pest_ast(inner(
+        rule(Rule::energy_units),
+        with(span_into_str),
+        with(EnergyUnit::from_str),
+        with(Option::unwrap)
+    ))]
     Hartree,
     Millihartree,
     #[default]
@@ -54,5 +81,29 @@ impl Display for EnergyUnit {
 impl KeywordDisplay for EnergyUnit {
     fn field(&self) -> String {
         "ENERGY_UNIT".to_string()
+    }
+}
+
+impl EnergyUnit {
+    fn from_str(input: &str) -> Option<Self> {
+        match input {
+            "ha" => Some(EnergyUnit::Hartree),
+            "mha" => Some(EnergyUnit::Millihartree),
+            "eV" => Some(EnergyUnit::ElectronVolt),
+            "meV" => Some(EnergyUnit::MillielectronVolt),
+            "ry" => Some(EnergyUnit::Rydberg),
+            "mry" => Some(EnergyUnit::Millirydberg),
+            "kj/mol" => Some(EnergyUnit::KilojoulesPerMole),
+            "kcal/mol" => Some(EnergyUnit::KilocaloriesPerMole),
+            "j" => Some(EnergyUnit::Joules),
+            "erg" => Some(EnergyUnit::Erg),
+            "hz" => Some(EnergyUnit::Hertz),
+            "mhz" => Some(EnergyUnit::Megahertz),
+            "ghz" => Some(EnergyUnit::Gigahertz),
+            "thz" => Some(EnergyUnit::Terahertz),
+            "cm-1" => Some(EnergyUnit::Wavenumber),
+            "k" => Some(EnergyUnit::Kelvin),
+            _ => None,
+        }
     }
 }

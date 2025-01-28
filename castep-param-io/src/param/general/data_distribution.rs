@@ -1,6 +1,10 @@
-
-use castep_param_derive::KeywordDisplay;
+use castep_param_derive::{BuildFromPairs, KeywordDisplay};
+use from_pest::FromPest;
+use pest::{Parser, Span};
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
+
+use crate::parser::Rule;
 
 #[derive(
     Debug,
@@ -15,6 +19,8 @@ use serde::{Deserialize, Serialize};
     PartialOrd,
     Ord,
     KeywordDisplay,
+    FromPest,
+    BuildFromPairs,
 )]
 /// This keyword determines the parallelization strategy used. Available options are:
 /// `Kpoint` - only k-point parallelization will be used (best scalability)
@@ -31,10 +37,25 @@ use serde::{Deserialize, Serialize};
 /// # Example
 /// `DATA_DISTRIBUTION : Gvector`
 #[keyword_display(field = "DATA_DISTRIBUTION")]
+#[pest_ast(rule(Rule::data_distribution))]
+#[pest_rule(rule=Rule::data_distribution, keyword="DATA_DISTRIBUTION")]
 pub enum DataDistribution {
+    #[pest_ast(inner(rule(Rule::data_distribution_value), with(span_into_data_distribution)))]
     Kpoint,
     Gvector,
     Mixed,
     #[default]
     Default,
+}
+
+fn span_into_data_distribution(span: Span<'_>) -> DataDistribution {
+    let value = span.as_str().to_lowercase();
+    let matched = match value.as_str() {
+        "kpoint" => Some(DataDistribution::Kpoint),
+        "gvector" => Some(DataDistribution::Gvector),
+        "mixed" => Some(DataDistribution::Mixed),
+        "default" => Some(DataDistribution::Default),
+        _ => None,
+    };
+    matched.expect("Always correct from parsed result.")
 }

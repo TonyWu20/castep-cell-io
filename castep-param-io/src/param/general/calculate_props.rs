@@ -1,9 +1,11 @@
 use crate::{
     param::KeywordDisplay,
-    parser::{data_type::Logical, Rule},
+    parser::{data_type::Logical, ConsumeKVPairs, Rule},
 };
+use from_pest::FromPest;
+use pest::Parser;
 
-use castep_param_derive::{KeywordDisplay, ParamDisplay};
+use castep_param_derive::{BuildFromPairs, KeywordDisplay, ParamDisplay};
 use derive_builder::Builder;
 use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
@@ -31,6 +33,23 @@ pub struct CalculateProperties {
     pub hirshfeld: Option<CalculateHirshfeld>,
 }
 
+impl<'a> ConsumeKVPairs<'a> for CalculateProperties {
+    type Item = Self;
+
+    fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
+        let stress = CalculateStress::find_from_pairs(pairs);
+        let densdiff = CalculateDensdiff::find_from_pairs(pairs);
+        let elf = CalculateELF::find_from_pairs(pairs);
+        let hirshfeld = CalculateHirshfeld::find_from_pairs(pairs);
+        Some(Self {
+            stress,
+            densdiff,
+            elf,
+            hirshfeld,
+        })
+    }
+}
+
 #[derive(
     Debug,
     Clone,
@@ -45,9 +64,11 @@ pub struct CalculateProperties {
     Default,
     KeywordDisplay,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field="CALCULATE_STRESS",from=bool,value=bool)]
 #[pest_ast(rule(Rule::calc_stress))]
+#[pest_rule(rule=Rule::calc_stress, keyword="CALCULATE_STRESS")]
 pub struct CalculateStress(
     #[pest_ast(inner(rule(Rule::logical), with(Logical::from), with(Logical::into)))] bool,
 );
@@ -65,12 +86,15 @@ pub struct CalculateStress(
     Default,
     KeywordDisplay,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field="CALCULATE_DENSDIFF",from=bool,value=bool)]
 #[pest_ast(rule(Rule::calc_densdiff))]
+#[pest_rule(rule=Rule::calc_densdiff, keyword="CALCULATE_DENSDIFF")]
 pub struct CalculateDensdiff(
     #[pest_ast(inner(rule(Rule::logical), with(Logical::from), with(Logical::into)))] bool,
 );
+
 #[derive(
     Debug,
     Clone,
@@ -85,9 +109,11 @@ pub struct CalculateDensdiff(
     Default,
     KeywordDisplay,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field="CALCULATE_ELF",from=bool,value=bool)]
 #[pest_ast(rule(Rule::calc_elf))]
+#[pest_rule(rule=Rule::calc_elf, keyword="CALCULATE_ELF")]
 pub struct CalculateELF(
     #[pest_ast(inner(rule(Rule::logical), with(Logical::from), with(Logical::into)))] bool,
 );
@@ -106,9 +132,11 @@ pub struct CalculateELF(
     Default,
     KeywordDisplay,
     FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field="CALCULATE_HIRSHFELD", from=bool, value=bool)]
 #[pest_ast(rule(Rule::calc_hirshfeld))]
+#[pest_rule(rule=Rule::calc_hirshfeld, keyword="CALCULATE_HIRSHFELD")]
 pub struct CalculateHirshfeld(
     #[pest_ast(inner(rule(Rule::logical), with(Logical::from), with(Logical::into)))] bool,
 );

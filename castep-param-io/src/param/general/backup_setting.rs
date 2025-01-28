@@ -57,10 +57,10 @@ impl<'a> ConsumeKVPairs<'a> for BackUpSetting {
     fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
         let num_backup_iter_id = pairs
             .iter()
-            .position(|p| p.keyword().as_str().to_lowercase() == "num_backup_iter");
+            .position(|p| p.keyword().to_lowercase() == "num_backup_iter");
         let backup_interval_id = pairs
             .iter()
-            .position(|p| p.keyword().as_str().to_lowercase() == "backup_interval");
+            .position(|p| p.keyword().to_lowercase() == "backup_interval");
         match (num_backup_iter_id, backup_interval_id) {
             (None, None) => None,
             (None, Some(n)) | (Some(n), None) => {

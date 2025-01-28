@@ -1,20 +1,15 @@
-use darling::{FromAttributes, FromDeriveInput};
+use enum_attributes::{data_enum_display_impl, data_enum_field_impl};
 use proc_macro::{self, TokenStream};
 use quote::quote;
-use syn::{parse_macro_input, DataEnum, DeriveInput, Expr, Ident, Lit};
+use strip_option::extract_type_from_option;
+use syn::{parse_macro_input, DeriveInput, Expr, Ident, Lit};
 
-#[derive(FromAttributes, Default)]
-#[darling(default, attributes(param_display))]
-struct ParamFieldOpt {
-    use_ref: Option<bool>,
-    display: Option<Expr>,
-}
+mod enum_attributes;
+mod param_display_impl;
+mod strip_option;
 
-#[derive(FromDeriveInput, Default)]
-#[darling(default, attributes(param_display))]
-struct ParamOpt {
-    use_display: Option<bool>,
-}
+use darling::{FromAttributes, FromDeriveInput};
+use param_display_impl::{ParamFieldOpt, ParamOpt};
 
 #[proc_macro_derive(ParamDisplay, attributes(param_display))]
 pub fn derive_param_display(input: TokenStream) -> TokenStream {
@@ -70,7 +65,7 @@ pub fn derive_param_display(input: TokenStream) -> TokenStream {
 
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(keyword_display))]
-struct Opts {
+pub(crate) struct Opts {
     field: String,
     specified_fields: Option<bool>,
     direct_display: Option<bool>,
@@ -79,65 +74,6 @@ struct Opts {
     value: Option<Ident>,
     borrowed_value: Option<Ident>,
     default_value: Option<Expr>,
-}
-
-#[derive(FromAttributes, Default)]
-#[darling(default, attributes(keyword_display))]
-struct EnumAttrs {
-    field: String,
-    display_format: Option<String>,
-}
-
-fn data_enum_display_impl(data_enum: &DataEnum, struct_ident: &Ident) -> proc_macro2::TokenStream {
-    let variants = data_enum.variants.iter().map(|v| {
-        let name = &v.ident;
-        let opts = EnumAttrs::from_attributes(&v.attrs).expect("Wrong attrs");
-        let display_format = if let Some(s) = opts.display_format {
-            quote!(#s)
-        } else {
-            quote!("{}")
-        };
-        match &v.fields {
-            // Don't expect this in enum
-            syn::Fields::Named(_) => unimplemented!(),
-            syn::Fields::Unnamed(_) => quote! {
-            #struct_ident::#name(t) => write!(f, #display_format, t)},
-            syn::Fields::Unit => quote! {#struct_ident::#name => write!(f, "{:?}", self)},
-        }
-    });
-    quote! {
-        impl std::fmt::Display for #struct_ident {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                match self {
-                    #(#variants,)*
-                }
-            }
-        }
-    }
-}
-
-fn data_enum_field_impl(data_enum: &DataEnum, struct_ident: &Ident) -> proc_macro2::TokenStream {
-    let variants = data_enum.variants.iter().map(|v| {
-        let name = &v.ident;
-        let variant_expr = match v.fields {
-            // Don't expect this in enum
-            syn::Fields::Named(_) => unimplemented!(),
-            syn::Fields::Unnamed(_) => quote! {#struct_ident::#name(_)},
-            syn::Fields::Unit => quote! {#struct_ident::#name},
-        };
-        let opts = EnumAttrs::from_attributes(&v.attrs).expect("Wrong attrs");
-        let field = opts.field;
-        quote! {
-            #variant_expr => #field.to_string()
-        }
-    });
-    quote! {
-        fn field(&self) -> String {
-            match self {
-                #(#variants,)*
-            }
-        }
-    }
 }
 
 #[derive(FromAttributes, Default)]
@@ -421,7 +357,7 @@ pub fn derive_consume_pairs(input: TokenStream) -> TokenStream {
         fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
             let found_index = pairs
                 .iter()
-                .position(|pair| pair.keyword().as_str().to_uppercase() == #keyword);
+                .position(|pair| pair.keyword().to_uppercase() == #keyword);
             match found_index {
                 Some(i) => {
                     let pair = pairs[i];
@@ -435,5 +371,38 @@ pub fn derive_consume_pairs(input: TokenStream) -> TokenStream {
         }
     }
         }
+    .into()
+}
+
+#[proc_macro_derive(StructBuildFromPairs)]
+pub fn derive_struct_consume_pairs(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let struct_ident = &input.ident;
+    let fields = match &input.data {
+        syn::Data::Struct(data_struct) => &data_struct.fields,
+        syn::Data::Enum(_) => unimplemented!(),
+        syn::Data::Union(_) => unimplemented!(),
+    };
+    let fields_idents = fields.iter().filter_map(|f| f.ident.as_ref());
+    let fields_builder = fields.iter().filter_map(|f| {
+        f.ident.as_ref().map(|ident| {
+            let ty = extract_type_from_option(&f.ty).expect("The type T is wrapped in Option<T>");
+            quote! {
+                let #ident = #ty::find_from_pairs(pairs);
+            }
+        })
+    });
+    quote! {
+        impl<'a> crate::parser::ConsumeKVPairs<'a> for #struct_ident {
+            type Item = #struct_ident;
+
+            fn find_from_pairs(pairs: &'a [crate::parser::KVPair<'a>]) -> Option<Self::Item> {
+                #(#fields_builder)*
+                Some(Self {
+                    #(#fields_idents,)*
+                })
+            }
+        }
+    }
     .into()
 }
