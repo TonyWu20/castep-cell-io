@@ -29,7 +29,7 @@ use crate::{param::KeywordDisplay, parser::Rule};
 #[pest_ast(rule(Rule::velocity_unit))]
 #[pest_rule(rule=Rule::velocity_unit,keyword="VELOCITY_UNIT")]
 pub enum VelocityUnit {
-    #[pest_ast(inner(rule(Rule::velocity_unit), with(from_span)))]
+    #[pest_ast(inner(rule(Rule::velocity_units), with(from_span)))]
     AtomicUnitOfVelocity,
     #[default]
     AngPerPs,

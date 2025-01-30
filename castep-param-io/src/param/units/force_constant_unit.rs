@@ -66,3 +66,21 @@ impl KeywordDisplay for ForceConstantUnit {
         "FORCE_CONSTANT_UNIT".to_string()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use from_pest::FromPest;
+    use pest::Parser;
+
+    use crate::parser::{ParamParser, Rule};
+
+    use super::ForceConstantUnit;
+
+    #[test]
+    fn force_constant_unit_parse() {
+        let input = "force_constant_unit : hartree/bohr**2";
+        let mut parse = ParamParser::parse(Rule::force_constant_unit, input).unwrap();
+        let unit = ForceConstantUnit::from_pest(&mut parse).unwrap();
+        dbg!(unit);
+    }
+}

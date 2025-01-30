@@ -28,7 +28,7 @@ use crate::{param::KeywordDisplay, parser::Rule};
 #[pest_ast(rule(Rule::pressure_unit))]
 #[pest_rule(rule=Rule::pressure_unit,keyword="PRESSURE_UNIT")]
 pub enum PressureUnit {
-    #[pest_ast(inner(rule(Rule::pressure_unit), with(from_span)))]
+    #[pest_ast(inner(rule(Rule::pressure_units), with(from_span)))]
     HartreePerBohr3,
     ElectronVoltsPerAng3,
     Pascal,

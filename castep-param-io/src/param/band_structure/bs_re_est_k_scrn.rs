@@ -1,5 +1,11 @@
-use castep_param_derive::KeywordDisplay;
+use castep_param_derive::{BuildFromPairs, KeywordDisplay};
+use from_pest::FromPest;
+use pest::Parser;
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
+
+use crate::parser::data_type::Logical;
+use crate::parser::Rule;
 
 /// This keyword determines whether or not to update the estimate of the
 /// Thomas-Fermi screening length in the screened exchange formalism before
@@ -23,10 +29,15 @@ use serde::{Deserialize, Serialize};
     Hash,
     KeywordDisplay,
     Default,
+    FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field="BS_RE_EST_K_SCRN", from=bool, value=bool)]
-pub struct BSReEstKScrn(bool);
-
+#[pest_ast(rule(Rule::bs_re_est_k_scrn))]
+#[pest_rule(rule=Rule::bs_re_est_k_scrn,keyword="BS_RE_EST_K_SCRN")]
+pub struct BSReEstKScrn(
+    #[pest_ast(inner(rule(Rule::logical), with(Logical::from), with(Logical::into)))] bool,
+);
 #[cfg(test)]
 mod test {
     use crate::param::KeywordDisplay;

@@ -9,6 +9,7 @@ real        = @{
     ("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-" | "+")? ~ number
   | sign? ~ number ~ ^"e" ~ sign? ~ number
   | sign{,1} ~ number? ~ "." ~ number
+  | number
 }
 logical     =  { ^"true" | ^"false" }
 // strict_string =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
@@ -132,75 +133,128 @@ force_constant_units = {
   | ^"dyne/cm"
 }
 
-frequency_unit   = { ^"frequency_unit" ~ ":" ~ frequency_units }
-frequency_units  = {
-    "ha"
-  | "mha"
-  | "ev"
-  | "mev"
-  | "ry"
-  | "mry"
-  | "kj/mol"
-  | "kcal/mol"
-  | "j"
-  | "erg"
-  | "hz"
-  | "mhz"
-  | "ghz"
+frequency_unit          = { ^"frequency_unit" ~ ":" ~ frequency_units }
+frequency_units         = {
+    ^"ha"
+  | ^"mha"
+  | ^"ev"
+  | ^"mev"
+  | ^"ry"
+  | ^"mry"
+  | ^"kj/mol"
+  | ^"kcal/mol"
+  | ^"j"
+  | ^"erg"
+  | ^"hz"
+  | ^"mhz"
+  | ^"ghz"
   | "thz"
-  | "cm-1"
-  | "k"
+  | ^"cm-1"
+  | ^"k"
 }
-inv_length_unit  = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
-inv_length_units = {
-    "1/"
-  | "1/m"
-  | "1/nm"
-  | "1/ang"
+inv_length_unit         = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
+inv_length_units        = {
+    ^"1/"
+  | ^"1/m"
+  | ^"1/nm"
+  | ^"1/ang"
 }
-length_unit      = { ^"length_unit" ~ ":" ~ length_units }
-length_units     = {
-    "bohr"
-  | "a0"
-  | "m"
-  | "cm"
-  | "nm"
-  | "ang"
+length_unit             = { ^"length_unit" ~ ":" ~ length_units }
+length_units            = {
+    ^"bohr"
+  | ^"a0"
+  | ^"m"
+  | ^"cm"
+  | ^"nm"
+  | ^"ang"
 }
-mass_unit        = { ^"mass_unit" ~ ":" ~ mass_units }
-mass_units       = {
-    "me"
-  | "amu"
-  | "kg"
-  | "g"
+mass_unit               = { ^"mass_unit" ~ ":" ~ mass_units }
+mass_units              = {
+    ^"me"
+  | ^"amu"
+  | ^"kg"
+  | ^"g"
 }
-pressure_unit    = { ^"{pressure_unit}" ~ ":" ~ pressure_units }
-pressure_units   = {
-    "hartree/bohr**3"
-  | "ev/ang**3"
-  | "pa"
-  | "mpa"
-  | "gpa"
-  | "atm"
-  | "bar"
-  | "mbar"
+pressure_unit           = { ^"pressure_unit" ~ ":" ~ pressure_units }
+pressure_units          = {
+    ^"hartree/bohr**3"
+  | ^"ev/ang**3"
+  | ^"pa"
+  | ^"mpa"
+  | ^"gpa"
+  | ^"atm"
+  | ^"bar"
+  | ^"mbar"
 }
-time_unit        = { ^"{time_unit}" ~ ":" ~ time_units }
-time_units       = {
-    "aut"
-  | "s"
-  | "ms"
-  | "mus"
-  | "ns"
-  | "ps"
-  | "fs"
+time_unit               = { ^"time_unit" ~ ":" ~ time_units }
+time_units              = {
+    ^"aut"
+  | ^"s"
+  | ^"ms"
+  | ^"mus"
+  | ^"ns"
+  | ^"ps"
+  | ^"fs"
 }
-velocity_unit    = { ^"{velocity_unit}" ~ ":" ~ velocity_units }
-velocity_units   = {
-    "auv"
-  | "ang/ps"
-  | "ang/fs"
-  | "bohr/ps"
-  | "bohr/fs"
-  | "m/s"
+velocity_unit           = { ^"velocity_unit" ~ ":" ~ velocity_units }
+velocity_units          = {
+    ^"auv"
+  | ^"ang/ps"
+  | ^"ang/fs"
+  | ^"bohr/ps"
+  | ^"bohr/fs"
+  | ^"m/s"
 }
+volume_unit             = { ^"volume_unit" ~ ":" ~ volume_units }
+volume_units            = {
+    ^"bohr**3"
+  | ^"m**3"
+  | ^"cm**3"
+  | ^"nm**3"
+  | ^"ang**3"
+}
+pspot_beta_phi_type     = { ^"pspot_beta_phi_type" ~ ":" ~ pspot_beta_phi_types }
+pspot_beta_phi_types    = {
+    ^"reciprocal"
+  | ^"real"
+}
+pspot_nonlocal_type     = { ^"pspot_nonlocal_type" ~ ":" ~ pspot_nonlocal_types }
+pspot_nonlocal_types    = {
+    ^"reciprocal"
+  | ^"real"
+}
+relativistic_treatment  = { ^"relativistic_treatment" ~ ":" ~ relativistic_treatments }
+relativistic_treatments = {
+    ^"schroedinger"
+  | ^"zora"
+  | ^"koelling-harmon"
+  | ^"dirac"
+}
+bs_eigenvalue_tol       = { ^"bs_eigenvalue_tol" ~ ":" ~ real ~ bs_eigenvalue_tol_unit }
+bs_eigenvalue_tol_unit  = { energy_units? }
+bs_max_cg_steps         = { ^"bs_max_cg_steps" ~ ":" ~ pos_integer }
+bs_max_iter             = { ^"bs_max_iter" ~ ":" ~ pos_integer }
+bs_nbands               = { ^"bs_nbands" ~ ":" ~ pos_integer }
+bs_re_est_k_scrn        = { ^"bs_re_est_k_scrn" ~ ":" ~ logical }
+bs_extra_bands          = { bs_nextra_bands | bs_perc_extra_bands }
+bs_nextra_bands         = { ^"bs_nextra_bands" ~ ":" ~ pos_integer }
+bs_perc_extra_bands     = { ^"bs_perc_extra_bands" ~ ":" ~ real }
+bs_xc_functional        = { ^"bs_xc_functional" ~ ":" ~ bs_xc_functionals }
+bs_xc_functionals       = {
+    ^"SHF-LDA"
+  | ^"HF-LDA"
+  | ^"lda"
+  | ^"pw91"
+  | ^"pbe"
+  | ^"rpbe"
+  | ^"wc"
+  | ^"pbesol"
+  | ^"hf"
+  | ^"shf"
+  | ^"pbe0"
+  | ^"b3lyp"
+  | ^"hse03"
+  | ^"hse06"
+  | ^"rscan"
+}
+bs_write_eigenvalues = {^"bs_write_eigenvalues" ~ ":" ~ logical}

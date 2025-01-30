@@ -1,15 +1,14 @@
 use from_pest::FromPest;
 use pest::Parser;
+use pest::Span;
 use std::fmt::Display;
 
 use castep_param_derive::BuildFromPairs;
 use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    param::KeywordDisplay,
-    parser::{span_into_str, Rule},
-};
+use crate::{param::KeywordDisplay, parser::Rule};
+
 #[derive(
     Debug,
     Clone,
@@ -33,8 +32,7 @@ use crate::{
 pub enum EnergyUnit {
     #[pest_ast(inner(
         rule(Rule::energy_units),
-        with(span_into_str),
-        with(EnergyUnit::from_str),
+        with(EnergyUnit::from_span),
         with(Option::unwrap)
     ))]
     Hartree,
@@ -55,6 +53,32 @@ pub enum EnergyUnit {
     Wavenumber,
     Kelvin,
 }
+
+impl EnergyUnit {
+    pub fn from_span(span: Span<'_>) -> Option<EnergyUnit> {
+        let input = span.as_str();
+        match input.to_lowercase().as_str() {
+            "ha" => Some(EnergyUnit::Hartree),
+            "mha" => Some(EnergyUnit::Millihartree),
+            "ev" => Some(EnergyUnit::ElectronVolt),
+            "mev" => Some(EnergyUnit::MillielectronVolt),
+            "ry" => Some(EnergyUnit::Rydberg),
+            "mry" => Some(EnergyUnit::Millirydberg),
+            "kj/mol" => Some(EnergyUnit::KilojoulesPerMole),
+            "kcal/mol" => Some(EnergyUnit::KilocaloriesPerMole),
+            "j" => Some(EnergyUnit::Joules),
+            "erg" => Some(EnergyUnit::Erg),
+            "hz" => Some(EnergyUnit::Hertz),
+            "mhz" => Some(EnergyUnit::Megahertz),
+            "ghz" => Some(EnergyUnit::Gigahertz),
+            "thz" => Some(EnergyUnit::Terahertz),
+            "cm-1" => Some(EnergyUnit::Wavenumber),
+            "k" => Some(EnergyUnit::Kelvin),
+            _ => None,
+        }
+    }
+}
+
 impl Display for EnergyUnit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -81,29 +105,5 @@ impl Display for EnergyUnit {
 impl KeywordDisplay for EnergyUnit {
     fn field(&self) -> String {
         "ENERGY_UNIT".to_string()
-    }
-}
-
-impl EnergyUnit {
-    fn from_str(input: &str) -> Option<Self> {
-        match input {
-            "ha" => Some(EnergyUnit::Hartree),
-            "mha" => Some(EnergyUnit::Millihartree),
-            "eV" => Some(EnergyUnit::ElectronVolt),
-            "meV" => Some(EnergyUnit::MillielectronVolt),
-            "ry" => Some(EnergyUnit::Rydberg),
-            "mry" => Some(EnergyUnit::Millirydberg),
-            "kj/mol" => Some(EnergyUnit::KilojoulesPerMole),
-            "kcal/mol" => Some(EnergyUnit::KilocaloriesPerMole),
-            "j" => Some(EnergyUnit::Joules),
-            "erg" => Some(EnergyUnit::Erg),
-            "hz" => Some(EnergyUnit::Hertz),
-            "mhz" => Some(EnergyUnit::Megahertz),
-            "ghz" => Some(EnergyUnit::Gigahertz),
-            "thz" => Some(EnergyUnit::Terahertz),
-            "cm-1" => Some(EnergyUnit::Wavenumber),
-            "k" => Some(EnergyUnit::Kelvin),
-            _ => None,
-        }
     }
 }

@@ -29,7 +29,7 @@ use crate::{param::KeywordDisplay, parser::Rule};
 #[pest_ast(rule(Rule::time_unit))]
 #[pest_rule(rule=Rule::time_unit,keyword="TIME_UNIT")]
 pub enum TimeUnit {
-    #[pest_ast(inner(rule(Rule::time_unit), with(from_span)))]
+    #[pest_ast(inner(rule(Rule::time_units), with(from_span)))]
     AtomicUnitOfTime,
     Second,
     Millisecond,

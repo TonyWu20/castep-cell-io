@@ -1,5 +1,5 @@
 use crate::param::KeywordDisplay;
-use castep_param_derive::ParamDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +32,7 @@ pub use bs_xc_functional::BSXcFunctional;
     Default,
     Serialize,
     Deserialize,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 pub struct BandStructure {

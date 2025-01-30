@@ -1,20 +1,25 @@
+use pest::Span;
 use pest_ast::FromPest;
 
-use crate::parser::{span_into_str, Rule};
+use crate::parser::Rule;
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, FromPest)]
+#[derive(Debug, Clone, Copy, PartialEq, FromPest)]
 #[pest_ast(rule(Rule::real))]
-pub struct Real(
-    #[pest_ast(outer(with(span_into_str), with(str::parse::<f64>), with(Result::unwrap)))] pub f64,
-);
+pub struct Real<'a>(#[pest_ast(outer())] pub Span<'a>);
 
-impl std::ops::Deref for Real {
-    type Target = f64;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl<'a> Real<'a> {
+    pub fn from_span(span: Span<'a>) -> Self {
+        Real(span)
     }
 }
+
+impl<'a> From<Real<'a>> for f64 {
+    fn from(value: Real<'a>) -> Self {
+        let value = value.0.as_str();
+        value.parse::<f64>().expect("Should be real number")
+    }
+}
+
 #[cfg(test)]
 mod test {
     use from_pest::FromPest;
