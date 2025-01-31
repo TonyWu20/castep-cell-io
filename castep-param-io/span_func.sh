@@ -1,8 +1,9 @@
 #! /bin/bash
-printf "%s\n" "Type:"
-type="$(</dev/stdin)"
+type=$1
+file=$2
+line=$3
 printf "%s\n" "To convert:"
-input="$(</dev/stdin)"
+input="$(<./paste)"
 match=$(echo "$input" | sd '\s+(.*\:\:.*) =>.*(".*").*' '$2 => Some($1),\n')
 template="
 fn from_span(span: Span<'_>) -> $type {
@@ -15,4 +16,5 @@ fn from_span(span: Span<'_>) -> $type {
 "
 formatted=$(printf "%s" "$template" | rustfmt)
 printf "%s" "$formatted" | bat -l rust
-printf "\n%s\n" "$formatted" | pbcopy
+paste=$(printf "%s\n" "$formatted" | sd '\n' '\\n')
+gsed -i -e "${line}a ${paste}" "${file}"
