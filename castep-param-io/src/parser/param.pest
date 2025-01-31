@@ -17,7 +17,7 @@ string     =  { (!(NEWLINE | COMMENT) ~ ANY)* }
 rand_seed  =  { ^"rand_seed" ~ ":" ~ integer }
 param_file =  { param_item* }
 keyword    = @{ (ASCII_ALPHANUMERIC | "_")* }
-value      = @{ EOI | logical | real | pos_integer | integer | string }
+value      = @{ string }
 kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) }
 param_item =  { kv_pair | stop }
 
@@ -133,8 +133,8 @@ force_constant_units = {
   | ^"dyne/cm"
 }
 
-frequency_unit          = { ^"frequency_unit" ~ ":" ~ frequency_units }
-frequency_units         = {
+frequency_unit             = { ^"frequency_unit" ~ ":" ~ frequency_units }
+frequency_units            = {
     ^"ha"
   | ^"mha"
   | ^"ev"
@@ -152,15 +152,15 @@ frequency_units         = {
   | ^"cm-1"
   | ^"k"
 }
-inv_length_unit         = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
-inv_length_units        = {
+inv_length_unit            = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
+inv_length_units           = {
     ^"1/"
   | ^"1/m"
   | ^"1/nm"
   | ^"1/ang"
 }
-length_unit             = { ^"length_unit" ~ ":" ~ length_units }
-length_units            = {
+length_unit                = { ^"length_unit" ~ ":" ~ length_units }
+length_units               = {
     ^"bohr"
   | ^"a0"
   | ^"m"
@@ -168,15 +168,15 @@ length_units            = {
   | ^"nm"
   | ^"ang"
 }
-mass_unit               = { ^"mass_unit" ~ ":" ~ mass_units }
-mass_units              = {
+mass_unit                  = { ^"mass_unit" ~ ":" ~ mass_units }
+mass_units                 = {
     ^"me"
   | ^"amu"
   | ^"kg"
   | ^"g"
 }
-pressure_unit           = { ^"pressure_unit" ~ ":" ~ pressure_units }
-pressure_units          = {
+pressure_unit              = { ^"pressure_unit" ~ ":" ~ pressure_units }
+pressure_units             = {
     ^"hartree/bohr**3"
   | ^"ev/ang**3"
   | ^"pa"
@@ -186,8 +186,8 @@ pressure_units          = {
   | ^"bar"
   | ^"mbar"
 }
-time_unit               = { ^"time_unit" ~ ":" ~ time_units }
-time_units              = {
+time_unit                  = { ^"time_unit" ~ ":" ~ time_units }
+time_units                 = {
     ^"aut"
   | ^"s"
   | ^"ms"
@@ -196,8 +196,8 @@ time_units              = {
   | ^"ps"
   | ^"fs"
 }
-velocity_unit           = { ^"velocity_unit" ~ ":" ~ velocity_units }
-velocity_units          = {
+velocity_unit              = { ^"velocity_unit" ~ ":" ~ velocity_units }
+velocity_units             = {
     ^"auv"
   | ^"ang/ps"
   | ^"ang/fs"
@@ -205,42 +205,42 @@ velocity_units          = {
   | ^"bohr/fs"
   | ^"m/s"
 }
-volume_unit             = { ^"volume_unit" ~ ":" ~ volume_units }
-volume_units            = {
+volume_unit                = { ^"volume_unit" ~ ":" ~ volume_units }
+volume_units               = {
     ^"bohr**3"
   | ^"m**3"
   | ^"cm**3"
   | ^"nm**3"
   | ^"ang**3"
 }
-pspot_beta_phi_type     = { ^"pspot_beta_phi_type" ~ ":" ~ pspot_beta_phi_types }
-pspot_beta_phi_types    = {
+pspot_beta_phi_type        = { ^"pspot_beta_phi_type" ~ ":" ~ pspot_beta_phi_types }
+pspot_beta_phi_types       = {
     ^"reciprocal"
   | ^"real"
 }
-pspot_nonlocal_type     = { ^"pspot_nonlocal_type" ~ ":" ~ pspot_nonlocal_types }
-pspot_nonlocal_types    = {
+pspot_nonlocal_type        = { ^"pspot_nonlocal_type" ~ ":" ~ pspot_nonlocal_types }
+pspot_nonlocal_types       = {
     ^"reciprocal"
   | ^"real"
 }
-relativistic_treatment  = { ^"relativistic_treatment" ~ ":" ~ relativistic_treatments }
-relativistic_treatments = {
+relativistic_treatment     = { ^"relativistic_treatment" ~ ":" ~ relativistic_treatments }
+relativistic_treatments    = {
     ^"schroedinger"
   | ^"zora"
   | ^"koelling-harmon"
   | ^"dirac"
 }
-bs_eigenvalue_tol       = { ^"bs_eigenvalue_tol" ~ ":" ~ real ~ bs_eigenvalue_tol_unit }
-bs_eigenvalue_tol_unit  = { energy_units? }
-bs_max_cg_steps         = { ^"bs_max_cg_steps" ~ ":" ~ pos_integer }
-bs_max_iter             = { ^"bs_max_iter" ~ ":" ~ pos_integer }
-bs_nbands               = { ^"bs_nbands" ~ ":" ~ pos_integer }
-bs_re_est_k_scrn        = { ^"bs_re_est_k_scrn" ~ ":" ~ logical }
-bs_extra_bands          = { bs_nextra_bands | bs_perc_extra_bands }
-bs_nextra_bands         = { ^"bs_nextra_bands" ~ ":" ~ pos_integer }
-bs_perc_extra_bands     = { ^"bs_perc_extra_bands" ~ ":" ~ real }
-bs_xc_functional        = { ^"bs_xc_functional" ~ ":" ~ bs_xc_functionals }
-bs_xc_functionals       = {
+bs_eigenvalue_tol          = { ^"bs_eigenvalue_tol" ~ ":" ~ real ~ bs_eigenvalue_tol_unit }
+bs_eigenvalue_tol_unit     = { energy_units? }
+bs_max_cg_steps            = { ^"bs_max_cg_steps" ~ ":" ~ pos_integer }
+bs_max_iter                = { ^"bs_max_iter" ~ ":" ~ pos_integer }
+bs_nbands                  = { ^"bs_nbands" ~ ":" ~ pos_integer }
+bs_re_est_k_scrn           = { ^"bs_re_est_k_scrn" ~ ":" ~ logical }
+bs_extra_bands             = { bs_nextra_bands | bs_perc_extra_bands }
+bs_nextra_bands            = { ^"bs_nextra_bands" ~ ":" ~ pos_integer }
+bs_perc_extra_bands        = { ^"bs_perc_extra_bands" ~ ":" ~ real }
+bs_xc_functional           = { ^"bs_xc_functional" ~ ":" ~ bs_xc_functionals }
+bs_xc_functionals          = {
     ^"SHF-LDA"
   | ^"HF-LDA"
   | ^"lda"
@@ -257,4 +257,37 @@ bs_xc_functionals       = {
   | ^"hse06"
   | ^"rscan"
 }
-bs_write_eigenvalues = {^"bs_write_eigenvalues" ~ ":" ~ logical}
+bs_write_eigenvalues       = { ^"bs_write_eigenvalues" ~ ":" ~ logical }
+basis_de_dloge             = { ^"basis_de_dloge" ~ ":" ~ real }
+basis_precision            = { ^"basis_precision" ~ ":" ~ basis_precisions }
+basis_precisions           = {
+    ^"Coarse"
+  | ^"Medium"
+  | ^"Fine"
+  | ^"Precise"
+  | ^"Extreme"
+}
+cut_off_energy             = { ^"cut_off_energy" ~ ":" ~ real }
+fine_gmax                  = { ^"fine_gmax" ~ ":" ~ real ~ fine_gmax_unit }
+fine_gmax_unit             = { inv_length_units? }
+fine_grid_scale            = { ^"fine_grid_scale" ~ ":" ~ real }
+finite_basis_corr          = { ^"finite_basis_corr" ~ ":" ~ finite_basis_corrs }
+finite_basis_corrs         = {
+    ^"0"
+  | ^"1"
+  | ^"2"
+}
+finite_basis_npoints       = { ^"finite_basis_npoints" ~ ":" ~ pos_integer }
+fixed_npw                  = { ^"fixed_npw" ~ ":" ~ logical }
+grid_scale                 = { ^"grid_scale" ~ ":" ~ real }
+finite_basis_spacing       = { ^"finite_basis_spacing" ~ ":" ~ real ~ finite_basis_spacing_units }
+finite_basis_spacing_units = { energy_units? }
+charge                     = { ^"charge" ~ ":" ~ real }
+nbands                     = { ^"nbands" ~ ":" ~ pos_integer }
+extra_bands                = { nextra_bands | perc_extra_bands }
+nextra_bands               = { ^"nextra_bands" ~ ":" ~ pos_integer }
+perc_extra_bands           = { ^"perc_extra_bands" ~ ":" ~ real }
+nelectrons                 = { ^"nelectrons" ~ ":" ~ real }
+nup                        = { ^"nup" ~ ":" ~ real }
+ndown                      = { ^"ndown" ~ ":" ~ real }
+spin                       = { ^"spin" ~ ":" ~ real }

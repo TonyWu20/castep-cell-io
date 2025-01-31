@@ -13,14 +13,11 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     PartialEq,
     PartialOrd,
-    Default,
     KeywordDisplay,
     FromPest,
     BuildFromPairs,
 )]
-#[keyword_display(from=f64, value=f64, field="BASIS_DE_DLOGE")]
-#[pest_ast(rule(Rule::basis_de_dloge))]
-#[pest_rule(rule=Rule::basis_de_dloge,keyword="BASIS_DE_DLOGE")]
-pub struct BasisDeDloge(
-    #[pest_ast(inner(rule(Rule::real), with(Real::from_span), with(f64::from)))] f64,
-);
+#[keyword_display(field="NDOWN", from=f64, value=f64)]
+#[pest_ast(rule(Rule::ndown))]
+#[pest_rule(rule=Rule::ndown,keyword="NDOWN")]
+pub struct NDown(#[pest_ast(inner(rule(Rule::real), with(Real::from_span), with(f64::from)))] f64);

@@ -30,7 +30,11 @@ use crate::parser::Rule;
 #[pest_ast(rule(Rule::inv_length_unit))]
 #[pest_rule(rule=Rule::inv_length_unit,keyword="INV_LENGTH_UNIT")]
 pub enum InvLengthUnit {
-    #[pest_ast(inner(rule(Rule::inv_length_units), with(from_span)))]
+    #[pest_ast(inner(
+        rule(Rule::inv_length_units),
+        with(InvLengthUnit::from_span),
+        with(Option::unwrap)
+    ))]
     Bohr,
     Meter,
     Nanometer,
@@ -38,16 +42,17 @@ pub enum InvLengthUnit {
     Ang,
 }
 
-fn from_span(span: Span<'_>) -> InvLengthUnit {
-    let input = span.as_str();
-    match input.to_lowercase().as_str() {
-        "1/" => Some(InvLengthUnit::Bohr),
-        "1/m" => Some(InvLengthUnit::Meter),
-        "1/nm" => Some(InvLengthUnit::Nanometer),
-        "1/ang" => Some(InvLengthUnit::Ang),
-        _ => None,
+impl InvLengthUnit {
+    pub fn from_span(span: Span<'_>) -> Option<InvLengthUnit> {
+        let input = span.as_str();
+        match input.to_lowercase().as_str() {
+            "1/" => Some(InvLengthUnit::Bohr),
+            "1/m" => Some(InvLengthUnit::Meter),
+            "1/nm" => Some(InvLengthUnit::Nanometer),
+            "1/ang" => Some(InvLengthUnit::Ang),
+            _ => None,
+        }
     }
-    .expect("Always correct")
 }
 
 impl Display for InvLengthUnit {

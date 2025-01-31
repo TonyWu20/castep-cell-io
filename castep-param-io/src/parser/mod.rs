@@ -48,7 +48,7 @@ pub enum ParamItems<'a> {
     Stop,
 }
 
-impl<'a> ParamItems<'a> {
+impl ParamItems<'_> {
     pub fn keyword(&self) -> String {
         match self {
             ParamItems::Pairs(kvpair) => kvpair.keyword().into(),
