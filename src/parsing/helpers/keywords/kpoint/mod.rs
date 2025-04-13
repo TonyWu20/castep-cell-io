@@ -1,4 +1,4 @@
-use winnow::{combinator::alt, PResult, Parser};
+use winnow::{combinator::alt, ModalResult, Parser};
 
 use crate::keywords::DocumentSections;
 
@@ -16,7 +16,7 @@ use assignments::{
 pub use block_parsers::{parse_bs_kpoint_list, parse_bs_kpoint_path, parse_kpoint_list};
 pub use field_parsers::{parse_kpoint_mp_grid_field, parse_kpoint_mp_spacing_field};
 
-pub fn assign_kpoint_block_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_block_type<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((
         assign_kpoint_list_block,
         assign_bs_kpoint_list_block,
@@ -25,7 +25,7 @@ pub fn assign_kpoint_block_type<'s>(input: &mut &'s str) -> PResult<DocumentSect
     .parse_next(input)
 }
 
-pub fn assign_kpoint_field_settings<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_field_settings<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((
         assign_kpoint_mp_grid_field,
         assign_kpoint_mp_spacing_field,

@@ -1,8 +1,8 @@
 use winnow::{
     ascii::{line_ending, till_line_ending},
-    combinator::{alt, eof, repeat, repeat_till, terminated},
+    combinator::{alt, eof, repeat, terminated},
     error::{ContextError, ErrMode},
-    PResult, Parser,
+    ModalResult, Parser,
 };
 
 use crate::keywords::{DocumentSections, KeywordType};
@@ -35,17 +35,17 @@ pub use keywords::{
     species::{parse_species_lcao_block, parse_species_mass_block, parse_species_pot_block},
 };
 
-pub fn get_keyword<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
+pub fn get_keyword<'s>(input: &mut &'s str) -> ModalResult<KeywordType<'s>> {
     alt((strip_to_block_name, field_name)).parse_next(input)
 }
 
-pub fn skip_comments_blank_lines(input: &mut &str) -> PResult<()> {
+pub fn skip_comments_blank_lines(input: &mut &str) -> ModalResult<()> {
     alt((comment_line, line_ending, eof))
         .map(|_| ())
         .parse_next(input)
 }
 
-fn comment_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
+fn comment_line<'s>(input: &mut &'s str) -> ModalResult<&'s str> {
     (alt(('#', '!')), till_line_ending, line_ending)
         .map(|(_, comment, _)| comment)
         .parse_next(input)
@@ -53,7 +53,7 @@ fn comment_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 
 /// Remove comment contents from the line (all the right to the first '#' or '!')
 /// and move to next line
-pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
+pub fn effective_line<'s>(input: &mut &'s str) -> ModalResult<&'s str> {
     terminated(till_line_ending, alt((line_ending, eof.map(|_s| "eof"))))
         .map(|s: &str| {
             let pat = |c| c == '#' || c == '!';
@@ -63,7 +63,7 @@ pub fn effective_line<'s>(input: &mut &'s str) -> PResult<&'s str> {
 }
 
 // TODO! Handle `Misc` case to skip the unwanted data
-pub fn current_sections<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn current_sections<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     if input.is_empty() {
         return Ok(DocumentSections::End);
     }

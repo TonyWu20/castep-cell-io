@@ -1,14 +1,14 @@
-use winnow::{ascii::Caseless, combinator::alt, PResult, Parser};
+use winnow::{ascii::Caseless, combinator::alt, ModalResult, Parser};
 
 use crate::keywords::{DocumentSections, KPointKeywords};
 
-pub fn assign_kpoint_list_block<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_list_block<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((Caseless("kpoint_list"), Caseless("kpoints_list")))
         .map(|_| DocumentSections::KPoint(KPointKeywords::KPOINT_LIST))
         .parse_next(input)
 }
 
-pub fn assign_bs_kpoint_list_block<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_bs_kpoint_list_block<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((
         Caseless("bs_kpoint_list"),
         Caseless("bs_kpoints_list"),
@@ -19,13 +19,13 @@ pub fn assign_bs_kpoint_list_block<'s>(input: &mut &'s str) -> PResult<DocumentS
     .parse_next(input)
 }
 
-pub fn assign_kpoint_mp_grid_field<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_mp_grid_field<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((Caseless("kpoint_mp_grid"), Caseless("kpoints_mp_grid")))
         .map(|_| DocumentSections::KPoint(KPointKeywords::KPOINT_MP_GRID))
         .parse_next(input)
 }
 
-pub fn assign_kpoint_mp_spacing_field<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_mp_spacing_field<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((
         Caseless("kpoint_mp_spacing"),
         Caseless("kpoints_mp_spacing"),
@@ -34,7 +34,7 @@ pub fn assign_kpoint_mp_spacing_field<'s>(input: &mut &'s str) -> PResult<Docume
     .parse_next(input)
 }
 
-pub fn assign_kpoint_mp_offset_field<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_kpoint_mp_offset_field<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((Caseless("kpoint_mp_offset"), Caseless("kpoints_mp_offset")))
         .map(|_| DocumentSections::KPoint(KPointKeywords::KPOINT_MP_OFFSET))
         .parse_next(input)
@@ -42,7 +42,7 @@ pub fn assign_kpoint_mp_offset_field<'s>(input: &mut &'s str) -> PResult<Documen
 
 pub fn assign_kpoint_bs_path_spacing_field<'s>(
     input: &mut &'s str,
-) -> PResult<DocumentSections<'s>> {
+) -> ModalResult<DocumentSections<'s>> {
     alt((
         Caseless("bs_kpoint_path_spacing"),
         Caseless("spectral_kpoint_path_spacing"),
@@ -53,7 +53,7 @@ pub fn assign_kpoint_bs_path_spacing_field<'s>(
     .parse_next(input)
 }
 
-pub fn assign_bs_kpoint_path_block<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_bs_kpoint_path_block<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((Caseless("bs_kpoint_path"), Caseless("spectral_kpoint_path")))
         .map(|_| DocumentSections::KPoint(KPointKeywords::SPECTRAL_KPOINT_PATH))
         .parse_next(input)

@@ -4,7 +4,7 @@ use castep_periodic_table::element::ElementSymbol;
 use winnow::{
     ascii::{alpha1, digit1, space0, Caseless},
     combinator::{alt, preceded},
-    PResult, Parser,
+    ModalResult, Parser,
 };
 
 use crate::keywords::{DocumentSections, SpeciesKeywords};
@@ -17,7 +17,7 @@ pub use lcao_states::parse_species_lcao_block;
 pub use mass::parse_species_mass_block;
 pub use potentials::parse_species_pot_block;
 
-pub fn assign_species_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_species_type<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     let assignment = |tag_name: &'s str, keyword: SpeciesKeywords| {
         Caseless(tag_name).map(move |_| DocumentSections::Species(keyword))
     };
@@ -29,7 +29,7 @@ pub fn assign_species_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<
     .parse_next(input)
 }
 
-fn parse_element(input: &mut &str) -> PResult<ElementSymbol> {
+fn parse_element(input: &mut &str) -> ModalResult<ElementSymbol> {
     alt((preceded(space0, alpha1), preceded(space0, digit1)))
         .map(|s| {
             ElementSymbol::from_str(s).expect("Error in input element symbol or atomic number")

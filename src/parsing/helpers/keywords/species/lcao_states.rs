@@ -1,7 +1,7 @@
 use winnow::{
     ascii::{digit1, space1},
     combinator::preceded,
-    PResult, Parser,
+    ModalResult, Parser,
 };
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
 
 use super::parse_element;
 
-fn parse_line_of_lcao(input: &mut &str) -> PResult<LCAOBasis> {
+fn parse_line_of_lcao(input: &mut &str) -> ModalResult<LCAOBasis> {
     let element = parse_element(input)?;
     let lcao_states = preceded(space1, digit1)
         .map(|v: &str| v.parse::<u8>().expect("Fail to parse `u8`"))
@@ -28,7 +28,7 @@ pub fn parse_species_lcao_block(
         .lines()
         .filter(|s| !s.is_empty())
         .map(|mut s| parse_line_of_lcao(&mut s))
-        .collect::<PResult<Vec<LCAOBasis>>>()
+        .collect::<ModalResult<Vec<LCAOBasis>>>()
         .map_err(|_| CellParseError::Invalid)?;
     Ok(SpeciesLCAOStatesBlock::new(lcao_items))
 }
