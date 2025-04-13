@@ -1,47 +1,117 @@
+use std::fmt::Display;
+
 use pest::Span;
 use pest_ast::FromPest;
 use pest_derive::Parser;
+
+pub mod data_type;
+mod general;
 
 #[derive(Parser)]
 #[grammar = "parser/param.pest"]
 pub struct ParamParser;
 
-fn span_into_str(span: Span) -> &str {
-    dbg!(span.as_str())
+pub fn span_into_str(span: Span) -> &str {
+    span.as_str()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, FromPest)]
-#[pest_ast(rule(Rule::real))]
-pub struct Real {
-    #[pest_ast(outer(with(span_into_str), with(str::parse::<f64>), with(Result::unwrap)))]
-    pub value: f64,
+#[derive(Debug, Clone, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::param_file))]
+pub struct ParamFile<'a> {
+    items: Vec<ParamItems<'a>>,
+}
+
+impl<'a> ParamFile<'a> {
+    pub fn items(&self) -> &[ParamItems<'a>] {
+        &self.items
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::kv_pair))]
+pub struct KVPair<'a> {
+    #[pest_ast(inner(rule(Rule::keyword), with(span_into_str)))]
+    keyword: &'a str,
+    #[pest_ast(inner(rule(Rule::value)))]
+    value: Span<'a>,
+}
+
+fn span_into_stop(_span: Span<'_>) -> ParamItems<'_> {
+    ParamItems::Stop
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, FromPest)]
+#[pest_ast(rule(Rule::param_item))]
+pub enum ParamItems<'a> {
+    Pairs(KVPair<'a>),
+    #[pest_ast(inner(rule(Rule::stop), with(span_into_stop)))]
+    Stop,
+}
+
+impl ParamItems<'_> {
+    pub fn keyword(&self) -> String {
+        match self {
+            ParamItems::Pairs(kvpair) => kvpair.keyword().into(),
+            ParamItems::Stop => "stop".to_string(),
+        }
+    }
+}
+
+impl PartialOrd for KVPair<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.keyword.partial_cmp(other.keyword)
+    }
+}
+
+impl<'a> KVPair<'a> {
+    pub fn keyword(&self) -> &str {
+        self.keyword
+    }
+
+    pub fn value(&self) -> Span<'a> {
+        self.value
+    }
+}
+
+impl Display for KVPair<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} : {}", self.keyword, self.value.as_str())
+    }
+}
+
+impl Display for ParamItems<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParamItems::Pairs(kvpair) => write!(f, "{}", kvpair),
+            ParamItems::Stop => f.write_str("stop"),
+        }
+    }
+}
+
+pub trait ConsumeKVPairs<'a> {
+    type Item;
+    fn find_from_pairs(items: &'a [ParamItems<'a>]) -> Option<Self::Item>;
 }
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use from_pest::FromPest;
     use pest::Parser;
 
-    use crate::parser::Real;
+    use crate::{param::General, parser::ConsumeKVPairs};
 
-    use super::{ParamParser, Rule};
+    use super::{ParamFile, ParamParser, Rule};
+
     #[test]
-    fn parse_real() {
-        let mut tree = ParamParser::parse(Rule::real, "1.6e-5").unwrap();
-        println!("{:?}", tree);
-        let number = Real::from_pest(&mut tree);
-        match number {
-            Ok(e) => println!("{e:?}"),
-            Err(e) => println!("{e}"),
-        }
-        // let parse = ParamParser::parse(Rule::real, "1e4").unwrap();
-        // parse.into_iter().for_each(|p| println!("{p}"));
-        // let parse = ParamParser::parse(Rule::real, "-1.6e-4");
-        // println!("{:?}", parse);
-        let mut parse = ParamParser::parse(Rule::real, "-0.5").unwrap();
-        dbg!(Real::from_pest(&mut parse).unwrap());
-        // println!("{:?}", parse);
-        // let parse = ParamParser::parse(Rule::real, "-.5");
-        // println!("{:?}", parse);
+    fn test_param() {
+        let param = read_to_string("NP22_single_0.param").unwrap();
+        let mut parse = ParamParser::parse(Rule::param_file, &param).unwrap();
+        dbg!(&parse);
+        let parsed_param = ParamFile::from_pest(&mut parse).unwrap();
+        let general_section = General::find_from_pairs(parsed_param.items());
+        println!("{:?}", parsed_param);
+        println!("{}", general_section.unwrap());
     }
 }

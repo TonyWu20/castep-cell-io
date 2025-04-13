@@ -1,4 +1,4 @@
-use castep_param_derive::ParamDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +25,7 @@ mod spin;
     ParamDisplay,
     PartialEq,
     PartialOrd,
+    StructBuildFromPairs,
 )]
 #[non_exhaustive]
 #[builder(setter(into, strip_option), default)]
@@ -59,7 +60,6 @@ mod test {
     #[test]
     fn electronic_param() {
         let elec_param = ElectronicParamBuilder::default()
-            .spin_polarised(true)
             .spin(2.0)
             .bands_option(
                 BandsOptionBuilder::default()

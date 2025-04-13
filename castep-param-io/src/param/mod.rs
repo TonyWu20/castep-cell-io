@@ -57,3 +57,7 @@ pub trait KeywordDisplay: Display {
         format!("{} : {}", self.field(), self)
     }
 }
+
+pub trait ListFields {
+    fn list_fields() -> Vec<String>;
+}

@@ -1,6 +1,293 @@
-number = {ASCII_DIGIT+}
-sign = {"-" | "+"}
-integer = @{ ("-" | "+")? ~ number } 
-real = @{("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-"|"+")? ~ number | 
-sign? ~ number ~ ^"e" ~ sign? ~ number| sign{,1} ~ number? ~ "." ~ number
+WHITESPACE  = _{ " " | NEWLINE | "\t" }
+COMMENT     =  { "#" ~ ANY* | "!" ~ ANY* }
+anything    =  { (ANY | ASCII_DIGIT)* }
+number      =  { ASCII_DIGIT+ }
+sign        =  { "-" | "+" }
+integer     = @{ ("-" | "+")? ~ number }
+pos_integer = @{ ("+")? ~ number }
+real        = @{
+    ("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-" | "+")? ~ number
+  | sign? ~ number ~ ^"e" ~ sign? ~ number
+  | sign{,1} ~ number? ~ "." ~ number
+  | number
 }
+logical     =  { ^"true" | ^"false" }
+// strict_string =  { (!(NEWLINE | number | sign | COMMENT) ~ ANY)* }
+string     =  { (!(NEWLINE | COMMENT) ~ ANY)* }
+rand_seed  =  { ^"rand_seed" ~ ":" ~ integer }
+param_file =  { param_item* }
+keyword    = @{ (ASCII_ALPHANUMERIC | "_")* }
+value      = @{ string }
+kv_pair    =  { (keyword ~ WHITESPACE* ~ ":" ~ WHITESPACE* ~ value) }
+param_item =  { kv_pair | stop }
+
+task                     =  { ^"task" ~ ":" ~ tasks }
+tasks                    =  {
+    ^"BandStructure"
+  | ^"GeometryOptimization"
+  | ^"SinglePoint"
+  | ^"MolecularDynamics"
+  | ^"Optics"
+  | ^"Phonon"
+  | ^"Efield"
+  | ^"PhononEfield"
+  | ^"TransitionStateSearch"
+  | ^"MagRes"
+  | ^"Elnes"
+  | ^"ElectronicSpectroscopy"
+  | ^"Autosolvation"
+}
+param_comment            =  { ^"comment" ~ ":" ~ anything }
+continue_reuse           =  { continuation | reuse }
+continuation             =  { ^"continuation" ~ ":" ~ (continuation_default | continuation_file) }
+continuation_default     =  { ^"default" }
+continuation_file        =  { anything }
+reuse                    =  { ^"reuse" ~ ":" ~ (reuse_default | reuse_file) }
+reuse_default            =  { ^"default" }
+reuse_file               =  { anything }
+charge_unit              =  { ^"charge_unit" ~ ":" ~ charge_unit_value }
+charge_unit_value        =  { ^"e" | ^"c" }
+checkpoint               =  { ^"CHECKPOINT" ~ ":" ~ checkpoint_file }
+checkpoint_file          =  { anything }
+data_distribution        =  { ^"data_distribution" ~ ":" ~ data_distribution_value }
+data_distribution_value  =  {
+    ^"Kpoint"
+  | ^"Gvector"
+  | ^"Mixed"
+  | ^"Default"
+}
+iprint                   =  { ^"iprint" ~ ":" ~ iprint_value }
+iprint_value             =  { "0" | "1" | "2" | "3" }
+opt_strategy             =  { ^"opt_strategy" ~ ":" ~ opt_strategy_value }
+opt_strategy_value       =  {
+    ^"Speed"
+  | ^"Default"
+  | ^"Memory"
+}
+page_wvfns               =  { ^"page_wvfns" ~ ":" ~ page_wvfns_value }
+page_wvfns_value         =  { integer }
+print_clock              =  { ^"print_clock" ~ ":" ~ logical }
+print_memory_usage       =  { ^"print_memory_usage" ~ ":" ~ logical }
+run_time                 =  { ^"run_time" ~ ":" ~ integer }
+stop                     =  { ^"stop" }
+write_checkpoint         =  { ^"write_checkpoint" ~ ":" ~ (write_checkpoint_option | write_checkpoint_value) }
+write_checkpoint_value   =  {
+    ^"None"
+  | ^"Minimal"
+  | ^"Both"
+  | ^"All"
+  | ^"Full"
+}
+write_checkpoint_option  =  { write_checkpoint_options ~ "=" ~ write_checkpoint_value }
+write_checkpoint_options = @{
+    ^"Success"
+  | ^"Failure"
+  | ^"Backup"
+}
+
+backup_setting  = { backup_interval | num_backup_iter }
+backup_interval = { ^"BACKUP_INTERVAL" ~ ":" ~ integer }
+num_backup_iter = { ^"NUM_BACKUP_ITER" ~ ":" ~ integer }
+
+calc_stress               = { ^"calculate_stress" ~ ":" ~ logical }
+calc_densdiff             = { ^"calculate_densdiff" ~ ":" ~ logical }
+calc_elf                  = { ^"calculate_elf" ~ ":" ~ logical }
+calc_hirshfeld            = { ^"calculate_hirshfeld" ~ ":" ~ logical }
+write_orbitals            = { ^"write_orbitals" ~ ":" ~ logical }
+write_formatted_elf       = { ^"write_formatted_elf" ~ ":" ~ logical }
+write_formatted_density   = { ^"write_formatted_density" ~ ":" ~ logical }
+write_formatted_potential = { ^"write_formatted_potential" ~ ":" ~ logical }
+
+energy_unit  = { ^"energy_unit" ~ ":" ~ energy_units }
+energy_units = {
+    ^"ha"
+  | ^"mha"
+  | ^"eV"
+  | ^"meV"
+  | ^"ry"
+  | ^"mry"
+  | ^"kj/mol"
+  | ^"kcal/mol"
+  | ^"j"
+  | ^"erg"
+  | ^"hz"
+  | ^"mhz"
+  | ^"ghz"
+  | ^"thz"
+  | ^"cm-1"
+  | ^"k"
+}
+
+force_unit  = { ^"force_unit" ~ ":" ~ force_units }
+force_units = {
+    ^"hartree/bohr"
+  | ^"ev/ang"
+  | ^"n"
+}
+
+force_constant_unit  = { ^"force_constant_unit" ~ ":" ~ force_constant_units }
+force_constant_units = {
+    ^"hartree/bohr**2"
+  | ^"ev/ang**2"
+  | ^"n/m"
+  | ^"dyne/cm"
+}
+
+frequency_unit             = { ^"frequency_unit" ~ ":" ~ frequency_units }
+frequency_units            = {
+    ^"ha"
+  | ^"mha"
+  | ^"ev"
+  | ^"mev"
+  | ^"ry"
+  | ^"mry"
+  | ^"kj/mol"
+  | ^"kcal/mol"
+  | ^"j"
+  | ^"erg"
+  | ^"hz"
+  | ^"mhz"
+  | ^"ghz"
+  | "thz"
+  | ^"cm-1"
+  | ^"k"
+}
+inv_length_unit            = { ^"inv_length_unit" ~ ":" ~ inv_length_units }
+inv_length_units           = {
+    ^"1/"
+  | ^"1/m"
+  | ^"1/nm"
+  | ^"1/ang"
+}
+length_unit                = { ^"length_unit" ~ ":" ~ length_units }
+length_units               = {
+    ^"bohr"
+  | ^"a0"
+  | ^"m"
+  | ^"cm"
+  | ^"nm"
+  | ^"ang"
+}
+mass_unit                  = { ^"mass_unit" ~ ":" ~ mass_units }
+mass_units                 = {
+    ^"me"
+  | ^"amu"
+  | ^"kg"
+  | ^"g"
+}
+pressure_unit              = { ^"pressure_unit" ~ ":" ~ pressure_units }
+pressure_units             = {
+    ^"hartree/bohr**3"
+  | ^"ev/ang**3"
+  | ^"pa"
+  | ^"mpa"
+  | ^"gpa"
+  | ^"atm"
+  | ^"bar"
+  | ^"mbar"
+}
+time_unit                  = { ^"time_unit" ~ ":" ~ time_units }
+time_units                 = {
+    ^"aut"
+  | ^"s"
+  | ^"ms"
+  | ^"mus"
+  | ^"ns"
+  | ^"ps"
+  | ^"fs"
+}
+velocity_unit              = { ^"velocity_unit" ~ ":" ~ velocity_units }
+velocity_units             = {
+    ^"auv"
+  | ^"ang/ps"
+  | ^"ang/fs"
+  | ^"bohr/ps"
+  | ^"bohr/fs"
+  | ^"m/s"
+}
+volume_unit                = { ^"volume_unit" ~ ":" ~ volume_units }
+volume_units               = {
+    ^"bohr**3"
+  | ^"m**3"
+  | ^"cm**3"
+  | ^"nm**3"
+  | ^"ang**3"
+}
+pspot_beta_phi_type        = { ^"pspot_beta_phi_type" ~ ":" ~ pspot_beta_phi_types }
+pspot_beta_phi_types       = {
+    ^"reciprocal"
+  | ^"real"
+}
+pspot_nonlocal_type        = { ^"pspot_nonlocal_type" ~ ":" ~ pspot_nonlocal_types }
+pspot_nonlocal_types       = {
+    ^"reciprocal"
+  | ^"real"
+}
+relativistic_treatment     = { ^"relativistic_treatment" ~ ":" ~ relativistic_treatments }
+relativistic_treatments    = {
+    ^"schroedinger"
+  | ^"zora"
+  | ^"koelling-harmon"
+  | ^"dirac"
+}
+bs_eigenvalue_tol          = { ^"bs_eigenvalue_tol" ~ ":" ~ real ~ bs_eigenvalue_tol_unit }
+bs_eigenvalue_tol_unit     = { energy_units? }
+bs_max_cg_steps            = { ^"bs_max_cg_steps" ~ ":" ~ pos_integer }
+bs_max_iter                = { ^"bs_max_iter" ~ ":" ~ pos_integer }
+bs_nbands                  = { ^"bs_nbands" ~ ":" ~ pos_integer }
+bs_re_est_k_scrn           = { ^"bs_re_est_k_scrn" ~ ":" ~ logical }
+bs_extra_bands             = { bs_nextra_bands | bs_perc_extra_bands }
+bs_nextra_bands            = { ^"bs_nextra_bands" ~ ":" ~ pos_integer }
+bs_perc_extra_bands        = { ^"bs_perc_extra_bands" ~ ":" ~ real }
+bs_xc_functional           = { ^"bs_xc_functional" ~ ":" ~ bs_xc_functionals }
+bs_xc_functionals          = {
+    ^"SHF-LDA"
+  | ^"HF-LDA"
+  | ^"lda"
+  | ^"pw91"
+  | ^"pbe"
+  | ^"rpbe"
+  | ^"wc"
+  | ^"pbesol"
+  | ^"hf"
+  | ^"shf"
+  | ^"pbe0"
+  | ^"b3lyp"
+  | ^"hse03"
+  | ^"hse06"
+  | ^"rscan"
+}
+bs_write_eigenvalues       = { ^"bs_write_eigenvalues" ~ ":" ~ logical }
+basis_de_dloge             = { ^"basis_de_dloge" ~ ":" ~ real }
+basis_precision            = { ^"basis_precision" ~ ":" ~ basis_precisions }
+basis_precisions           = {
+    ^"Coarse"
+  | ^"Medium"
+  | ^"Fine"
+  | ^"Precise"
+  | ^"Extreme"
+}
+cut_off_energy             = { ^"cut_off_energy" ~ ":" ~ real }
+fine_gmax                  = { ^"fine_gmax" ~ ":" ~ real ~ fine_gmax_unit }
+fine_gmax_unit             = { inv_length_units? }
+fine_grid_scale            = { ^"fine_grid_scale" ~ ":" ~ real }
+finite_basis_corr          = { ^"finite_basis_corr" ~ ":" ~ finite_basis_corrs }
+finite_basis_corrs         = {
+    ^"0"
+  | ^"1"
+  | ^"2"
+}
+finite_basis_npoints       = { ^"finite_basis_npoints" ~ ":" ~ pos_integer }
+fixed_npw                  = { ^"fixed_npw" ~ ":" ~ logical }
+grid_scale                 = { ^"grid_scale" ~ ":" ~ real }
+finite_basis_spacing       = { ^"finite_basis_spacing" ~ ":" ~ real ~ finite_basis_spacing_units }
+finite_basis_spacing_units = { energy_units? }
+charge                     = { ^"charge" ~ ":" ~ real }
+nbands                     = { ^"nbands" ~ ":" ~ pos_integer }
+extra_bands                = { nextra_bands | perc_extra_bands }
+nextra_bands               = { ^"nextra_bands" ~ ":" ~ pos_integer }
+perc_extra_bands           = { ^"perc_extra_bands" ~ ":" ~ real }
+nelectrons                 = { ^"nelectrons" ~ ":" ~ real }
+nup                        = { ^"nup" ~ ":" ~ real }
+ndown                      = { ^"ndown" ~ ":" ~ real }
+spin                       = { ^"spin" ~ ":" ~ real }

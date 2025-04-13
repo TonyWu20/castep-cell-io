@@ -8,7 +8,7 @@ use winnow::{
     combinator::{alt, preceded},
     error::{ContextError, StrContext},
     token::take_till,
-    PResult, Parser,
+    ModalResult, Parser,
 };
 
 use crate::cell_document::units::ParsableUnit;
@@ -21,19 +21,19 @@ use crate::{
     parsing::CellParseError,
 };
 
-fn assign_positions_frac<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+fn assign_positions_frac<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     Caseless("positions_frac")
         .map(|_| DocumentSections::IonicPositions(PositionsKeywords::POSITIONS_FRAC))
         .parse_next(input)
 }
 
-fn assign_positions_abs<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+fn assign_positions_abs<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     Caseless("positions_abs")
         .map(|_| DocumentSections::IonicPositions(PositionsKeywords::POSITIONS_ABS))
         .parse_next(input)
 }
 
-fn parse_mixture(input: &mut &str) -> PResult<Mixture> {
+fn parse_mixture(input: &mut &str) -> ModalResult<Mixture> {
     preceded(space1, Caseless("mixture")).parse_next(input)?;
     take_till(0.., AsChar::is_dec_digit).parse_next(input)?;
     if let Ok((id, _, val)) =
@@ -48,11 +48,11 @@ fn parse_mixture(input: &mut &str) -> PResult<Mixture> {
     }
 }
 
-pub fn assign_positions_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_positions_type<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((assign_positions_frac, assign_positions_abs)).parse_next(input)
 }
 
-fn parse_line_of_position(input: &mut &str) -> PResult<IonicPosition> {
+fn parse_line_of_position(input: &mut &str) -> ModalResult<IonicPosition> {
     let symbol = preceded(space0, alt((alpha1, digit1)))
         .map(|s| {
             ElementSymbol::from_str(s).map_err(|_| ErrMode::Cut(ContextError::<StrContext>::new()))

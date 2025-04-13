@@ -1,15 +1,40 @@
+use from_pest::FromPest;
+use pest::Parser;
+use pest::Span;
 use std::fmt::Display;
 
+use castep_param_derive::BuildFromPairs;
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
+use crate::{param::KeywordDisplay, parser::Rule};
+
 #[derive(
-    Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    FromPest,
+    BuildFromPairs,
 )]
 /// This keyword specifies the units in which energies will be reported.
 /// # Example
 /// `ENERGY_UNIT : kcal/mol`
+#[pest_ast(rule(Rule::energy_unit))]
+#[pest_rule(rule=Rule::energy_unit, keyword="ENERGY_UNIT")]
 pub enum EnergyUnit {
+    #[pest_ast(inner(
+        rule(Rule::energy_units),
+        with(EnergyUnit::from_span),
+        with(Option::unwrap)
+    ))]
     Hartree,
     Millihartree,
     #[default]
@@ -28,6 +53,32 @@ pub enum EnergyUnit {
     Wavenumber,
     Kelvin,
 }
+
+impl EnergyUnit {
+    pub fn from_span(span: Span<'_>) -> Option<EnergyUnit> {
+        let input = span.as_str();
+        match input.to_lowercase().as_str() {
+            "ha" => Some(EnergyUnit::Hartree),
+            "mha" => Some(EnergyUnit::Millihartree),
+            "ev" => Some(EnergyUnit::ElectronVolt),
+            "mev" => Some(EnergyUnit::MillielectronVolt),
+            "ry" => Some(EnergyUnit::Rydberg),
+            "mry" => Some(EnergyUnit::Millirydberg),
+            "kj/mol" => Some(EnergyUnit::KilojoulesPerMole),
+            "kcal/mol" => Some(EnergyUnit::KilocaloriesPerMole),
+            "j" => Some(EnergyUnit::Joules),
+            "erg" => Some(EnergyUnit::Erg),
+            "hz" => Some(EnergyUnit::Hertz),
+            "mhz" => Some(EnergyUnit::Megahertz),
+            "ghz" => Some(EnergyUnit::Gigahertz),
+            "thz" => Some(EnergyUnit::Terahertz),
+            "cm-1" => Some(EnergyUnit::Wavenumber),
+            "k" => Some(EnergyUnit::Kelvin),
+            _ => None,
+        }
+    }
+}
+
 impl Display for EnergyUnit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -1,5 +1,5 @@
 pub mod param;
-// pub mod parser;
+pub mod parser;
 
 #[cfg(test)]
 mod tests {

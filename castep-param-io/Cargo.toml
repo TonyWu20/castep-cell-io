@@ -8,8 +8,9 @@ edition = "2021"
 [dependencies]
 castep-param-derive = {path = "./castep-param-derive/", version="0.1"}
 derive_builder = "0.20.2"
+from-pest = "0.3.3"
 pest = "2.7.15"
-pest-ast = "0.3.5"
+pest-ast = {git = "https://github.com/TonyWu20/ast.git"}
 pest_derive = "2.7.15"
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.11"

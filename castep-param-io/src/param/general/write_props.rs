@@ -1,9 +1,14 @@
-use std::fmt::Display;
-
+use castep_param_derive::{BuildFromPairs, KeywordDisplay, ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
+use from_pest::FromPest;
+use pest::Parser;
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
+use crate::{
+    param::KeywordDisplay,
+    parser::{data_type::Logical, Rule},
+};
 
 #[derive(
     Debug,
@@ -18,79 +23,182 @@ use crate::param::KeywordDisplay;
     Deserialize,
     Default,
     Builder,
+    ParamDisplay,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 pub struct WriteProperties {
-    pub orbitals: Option<bool>,
-    pub formatted_elf: Option<bool>,
-    pub formatted_density: Option<bool>,
-    pub formatted_potential: Option<bool>,
+    pub orbitals: Option<WriteOrbitals>,
+    pub formatted_elf: Option<WriteFormattedELF>,
+    pub formatted_density: Option<WriteFormattedDensity>,
+    pub formatted_potential: Option<WriteFormattedPotential>,
 }
 
-impl WriteProperties {
-    pub fn orbitals(&self) -> Option<bool> {
-        self.orbitals
-    }
-
-    pub fn set_orbitals(&mut self, orbitals: Option<bool>) {
-        self.orbitals = orbitals;
-    }
-
-    pub fn formatted_elf(&self) -> Option<bool> {
-        self.formatted_elf
-    }
-
-    pub fn set_formatted_elf(&mut self, formatted_elf: Option<bool>) {
-        self.formatted_elf = formatted_elf;
-    }
-
-    pub fn formatted_density(&self) -> Option<bool> {
-        self.formatted_density
-    }
-
-    pub fn set_formatted_density(&mut self, formatted_density: Option<bool>) {
-        self.formatted_density = formatted_density;
-    }
-
-    pub fn formatted_potential(&self) -> Option<bool> {
-        self.formatted_potential
-    }
-
-    pub fn set_formatted_potential(&mut self, formatted_potential: Option<bool>) {
-        self.formatted_potential = formatted_potential;
-    }
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    KeywordDisplay,
+    BuildFromPairs,
+    FromPest,
+)]
+#[keyword_display(field = "WRITE_ORBITALS")]
+#[pest_ast(rule(Rule::write_orbitals))]
+#[pest_rule(rule=Rule::write_orbitals, keyword="WRITE_ORBITALS")]
+pub enum WriteOrbitals {
+    #[pest_ast(inner(
+        rule(Rule::logical),
+        with(Logical::from),
+        with(bool::from),
+        with(WriteOrbitals::from)
+    ))]
+    True,
+    #[default]
+    False,
 }
 
-impl Display for WriteProperties {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output = [
-            self.orbitals().map(|b| format!("WRITE_ORBITALS : {}", b)),
-            self.formatted_elf
-                .map(|b| format!("WRITE_FORMATTED_ELF : {}", b)),
-            self.formatted_density
-                .map(|b| format!("WRITE_FORMATTED_DENSITY : {}", b)),
-            self.formatted_potential
-                .map(|b| format!("WRITE_FORMATTED_POTENTIAL : {}", b)),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<String>>()
-        .join("\n");
-        write!(f, "{}", output)
+impl From<bool> for WriteOrbitals {
+    fn from(value: bool) -> Self {
+        if value {
+            Self::True
+        } else {
+            Self::False
+        }
     }
 }
 
-impl KeywordDisplay for WriteProperties {
-    fn field(&self) -> String {
-        String::new()
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    KeywordDisplay,
+    FromPest,
+    BuildFromPairs,
+)]
+#[keyword_display(field = "WRITE_FORMATTED_ELF")]
+#[pest_ast(rule(Rule::write_formatted_elf))]
+#[pest_rule(rule=Rule::write_formatted_elf, keyword="WRITE_FORMATTED_ELF")]
+pub enum WriteFormattedELF {
+    #[pest_ast(inner(
+        rule(Rule::logical),
+        with(Logical::from),
+        with(bool::from),
+        with(WriteFormattedELF::from)
+    ))]
+    True,
+    #[default]
+    False,
+}
+
+impl From<bool> for WriteFormattedELF {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Self::True,
+            false => Self::False,
+        }
     }
-    fn output(&self) -> String {
-        self.to_string()
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    KeywordDisplay,
+    FromPest,
+    BuildFromPairs,
+)]
+#[keyword_display(field = "WRITE_FORMATTED_DENSITY")]
+#[pest_ast(rule(Rule::write_formatted_density))]
+#[pest_rule(rule=Rule::write_formatted_density, keyword="WRITE_FORMATTED_DENSITY")]
+pub enum WriteFormattedDensity {
+    #[pest_ast(inner(
+        rule(Rule::logical),
+        with(Logical::from),
+        with(bool::from),
+        with(WriteFormattedDensity::from)
+    ))]
+    True,
+    #[default]
+    False,
+}
+
+impl From<bool> for WriteFormattedDensity {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Self::True,
+            false => Self::False,
+        }
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Default,
+    KeywordDisplay,
+    FromPest,
+    BuildFromPairs,
+)]
+#[keyword_display(field = "WRITE_FORMATTED_POTENTIAL")]
+#[pest_ast(rule(Rule::write_formatted_potential))]
+#[pest_rule(rule=Rule::write_formatted_potential, keyword="WRITE_FORMATTED_POTENTIAL")]
+pub enum WriteFormattedPotential {
+    #[pest_ast(inner(
+        rule(Rule::logical),
+        with(Logical::from),
+        with(bool::from),
+        with(WriteFormattedPotential::from)
+    ))]
+    True,
+    #[default]
+    False,
+}
+
+impl From<bool> for WriteFormattedPotential {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Self::True,
+            false => Self::False,
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::param::{WriteFormattedDensity, WriteFormattedELF, WriteFormattedPotential};
+
     use super::WriteProperties;
 
     #[test]
@@ -98,12 +206,12 @@ mod test {
         let write_prop = WriteProperties::default();
         assert_eq!("", write_prop.to_string());
         let mut write_prop = WriteProperties::default();
-        write_prop.set_formatted_density(Some(true));
-        write_prop.set_formatted_elf(Some(true));
-        write_prop.set_formatted_potential(Some(false));
-        let target = r#"WRITE_FORMATTED_ELF : TRUE
-WRITE_FORMATTED_DENSITY : TRUE
-WRITE_FORMATTED_POTENTIAL : FALSE"#;
+        write_prop.formatted_density = Some(WriteFormattedDensity::True);
+        write_prop.formatted_elf = Some(WriteFormattedELF::True);
+        write_prop.formatted_potential = Some(WriteFormattedPotential::False);
+        let target = r#"WRITE_FORMATTED_ELF : true
+WRITE_FORMATTED_DENSITY : true
+WRITE_FORMATTED_POTENTIAL : false"#;
         assert_eq!(target, write_prop.to_string());
     }
 }

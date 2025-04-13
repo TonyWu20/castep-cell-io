@@ -9,6 +9,7 @@ pub use cell_document::{
     params::{CastepParams, CastepParamsBuilder, CastepTask, EnergyCutoff, EnergyCutoffError},
     to_cell_document,
     units::length_units::*,
+    CellDocument,
 };
 pub use keywords::{
     DocumentSections, KPointKeywords, KeywordType, LatticeBlockType, PositionsKeywords,

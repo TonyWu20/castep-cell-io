@@ -1,5 +1,5 @@
 use super::KeywordDisplay;
-use castep_param_derive::ParamDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
 
 pub use energy_unit::EnergyUnit;
@@ -41,6 +41,7 @@ mod volume_unit;
     Hash,
     Builder,
     ParamDisplay,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 pub struct Units {

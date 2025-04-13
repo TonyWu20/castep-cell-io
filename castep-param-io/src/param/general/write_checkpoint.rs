@@ -1,13 +1,31 @@
 use std::fmt::Display;
 
-use castep_param_derive::KeywordDisplay;
+use castep_param_derive::{BuildFromPairs, KeywordDisplay};
+use from_pest::FromPest;
+use pest::{Parser, Span};
+use pest_ast::FromPest;
 use serde::{Deserialize, Serialize};
 
+use crate::parser::Rule;
 
 #[derive(
-    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, KeywordDisplay,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    KeywordDisplay,
+    FromPest,
+    BuildFromPairs,
 )]
 #[keyword_display(field = "WRITE_CHECKPOINT")]
+#[pest_ast(rule(Rule::write_checkpoint))]
+#[pest_rule(rule=Rule::write_checkpoint, keyword="WRITE_CHECKPOINT")]
 pub enum WriteCheckpoint {
     Value(WriteCheckpointValue),
     Option(WriteCheckpointOption),
@@ -32,10 +50,22 @@ impl From<WriteCheckpointOption> for WriteCheckpoint {
 }
 
 #[derive(
-    Debug, Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Hash,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    FromPest,
 )]
-
+#[pest_ast(rule(Rule::write_checkpoint_value))]
 pub enum WriteCheckpointValue {
+    #[pest_ast(outer(with(span_into_write_checkpoint_value)))]
     None,
     Minimal,
     Both,
@@ -44,24 +74,42 @@ pub enum WriteCheckpointValue {
     Full,
 }
 
+fn span_into_write_checkpoint_value(span: Span<'_>) -> WriteCheckpointValue {
+    let value = span.as_str().to_lowercase();
+    match value.as_str() {
+        "none" => Some(WriteCheckpointValue::None),
+        "minimal" => Some(WriteCheckpointValue::Minimal),
+        "both" => Some(WriteCheckpointValue::Both),
+        "all" => Some(WriteCheckpointValue::All),
+        "full" => Some(WriteCheckpointValue::Full),
+        _ => None,
+    }
+    .expect("Always correct from parsed result.")
+}
+
 impl Display for WriteCheckpointValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WriteCheckpointValue::None => f.write_str("NONE"),
-            WriteCheckpointValue::Minimal => f.write_str("MINIMAL"),
-            WriteCheckpointValue::Both => f.write_str("bOTH"),
-            WriteCheckpointValue::All => f.write_str("ALL"),
-            WriteCheckpointValue::Full => f.write_str("fULL"),
+            WriteCheckpointValue::None => f.write_str("None"),
+            WriteCheckpointValue::Minimal => f.write_str("Minimal"),
+            WriteCheckpointValue::Both => f.write_str("Both"),
+            WriteCheckpointValue::All => f.write_str("All"),
+            WriteCheckpointValue::Full => f.write_str("Full"),
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, FromPest,
+)]
+#[pest_ast(rule(Rule::write_checkpoint_option))]
 pub enum WriteCheckpointOption {
     Success(WriteCheckpointValue),
     Failure(WriteCheckpointValue),
     Backup(WriteCheckpointValue),
 }
+
+// fn span_into_write_checkpoint_option(span:Span<'_>) -> WriteCheckpointOption
 
 impl Default for WriteCheckpointOption {
     fn default() -> Self {
@@ -81,18 +129,29 @@ impl Display for WriteCheckpointOption {
 
 #[cfg(test)]
 mod test {
-    use crate::param::{general::write_checkpoint::WriteCheckpointOption, KeywordDisplay};
+    use from_pest::FromPest;
+    use pest::Parser;
+
+    use crate::{
+        param::{general::write_checkpoint::WriteCheckpointOption, KeywordDisplay},
+        parser::{ParamParser, Rule},
+    };
 
     use super::WriteCheckpoint;
 
     #[test]
     fn write_checkpoint() {
         let write_checkpoint = WriteCheckpoint::default();
-        assert_eq!("WRITE_CHECKPOINT : ALL", write_checkpoint.output());
+        assert_eq!("WRITE_CHECKPOINT : All", write_checkpoint.output());
         let write_checkpoint_option = WriteCheckpoint::Option(WriteCheckpointOption::default());
         assert_eq!(
-            "WRITE_CHECKPOINT : BACKUP=MINIMAL",
+            "WRITE_CHECKPOINT : BACKUP=Minimal",
             write_checkpoint_option.output()
         );
+        let binding = write_checkpoint_option.output();
+        let mut parse = ParamParser::parse(Rule::write_checkpoint, &binding).unwrap();
+        dbg!(&parse);
+        let parsed = WriteCheckpoint::from_pest(&mut parse).unwrap();
+        dbg!(parsed);
     }
 }

@@ -1,16 +1,35 @@
+use castep_param_derive::BuildFromPairs;
+use from_pest::FromPest;
+use pest::{Parser, Span};
+use pest_ast::FromPest;
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::param::KeywordDisplay;
+use crate::{param::KeywordDisplay, parser::Rule};
 
 #[derive(
-    Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    FromPest,
+    BuildFromPairs,
 )]
 /// This keyword specifies the units in which lengths will be reported.
 /// # Example
 /// `LENGTH_UNIT : bohr`
+#[pest_ast(rule(Rule::length_unit))]
+#[pest_rule(rule=Rule::length_unit,keyword="LENGTH_UNIT")]
 pub enum LengthUnit {
+    #[pest_ast(inner(rule(Rule::length_units), with(from_span)))]
     Bohr,
     BohrA0,
     Meter,
@@ -18,6 +37,20 @@ pub enum LengthUnit {
     Nanometer,
     #[default]
     Ang,
+}
+
+fn from_span(span: Span<'_>) -> LengthUnit {
+    let input = span.as_str();
+    match input.to_lowercase().as_str() {
+        "bohr" => Some(LengthUnit::Bohr),
+        "a0" => Some(LengthUnit::BohrA0),
+        "m" => Some(LengthUnit::Meter),
+        "cm" => Some(LengthUnit::Centimeter),
+        "nm" => Some(LengthUnit::Nanometer),
+        "ang" => Some(LengthUnit::Ang),
+        _ => None,
+    }
+    .expect("Always correct")
 }
 
 impl Display for LengthUnit {

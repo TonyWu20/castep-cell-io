@@ -1,4 +1,4 @@
-use winnow::{ascii::Caseless, combinator::alt, PResult, Parser};
+use winnow::{ascii::Caseless, combinator::alt, ModalResult, Parser};
 
 use crate::{
     cell_document::{
@@ -9,19 +9,19 @@ use crate::{
     LengthUnit,
 };
 
-fn assign_lattice_cart<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+fn assign_lattice_cart<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     Caseless("lattice_cart")
         .map(|_| DocumentSections::CellLatticeVectors(LatticeBlockType::LATTICE_CART))
         .parse_next(input)
 }
 
-fn assign_lattice_abc<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+fn assign_lattice_abc<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     Caseless("lattice_abc")
         .map(|_| DocumentSections::CellLatticeVectors(LatticeBlockType::LATTICE_ABC))
         .parse_next(input)
 }
 
-pub fn assign_lattice_type<'s>(input: &mut &'s str) -> PResult<DocumentSections<'s>> {
+pub fn assign_lattice_type<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
     alt((assign_lattice_abc, assign_lattice_cart)).parse_next(input)
 }
 

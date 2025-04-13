@@ -1,5 +1,5 @@
 use super::KeywordDisplay;
-use castep_param_derive::ParamDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use serde::{Deserialize, Serialize};
 
 mod backup_setting;
@@ -55,6 +55,7 @@ pub use write_props::*;
     Deserialize,
     Builder,
     ParamDisplay,
+    StructBuildFromPairs,
 )]
 #[builder(setter(into, strip_option), default)]
 /// Keywords that belong to general category.
@@ -80,6 +81,7 @@ pub struct General {
     pub write_checkpoint: Option<WriteCheckpoint>,
     #[param_display(display=to_string())]
     pub calculate_props: Option<CalculateProperties>, // Default to all false
+    #[param_display(display=to_string())]
     pub write_props: Option<WriteProperties>, // Default to all false
 }
 

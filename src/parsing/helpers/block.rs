@@ -2,25 +2,25 @@ use winnow::{
     ascii::{line_ending, space1, till_line_ending, Caseless},
     combinator::{alt, eof, preceded, repeat_till, terminated},
     token::take_until,
-    PResult, Parser,
+    ModalResult, Parser,
 };
 
 use super::{effective_line, KeywordType};
 
 /// Go to block name
 /// essential for matching the next data is block type or field type.
-pub fn strip_to_block_name<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
+pub fn strip_to_block_name<'s>(input: &mut &'s str) -> ModalResult<KeywordType<'s>> {
     preceded(terminated(Caseless("%block"), space1), effective_line)
         .map(KeywordType::Block)
         .parse_next(input)
 }
 /// Get contents in block
-fn contents_in_block<'s>(input: &mut &'s str) -> PResult<&'s str> {
+fn contents_in_block<'s>(input: &mut &'s str) -> ModalResult<&'s str> {
     take_until(0.., '%').parse_next(input)
 }
 
 /// Move out of the block ending line
-fn end_of_block<'s>(input: &mut &'s str) -> PResult<(&'s str, &'s str)> {
+fn end_of_block<'s>(input: &mut &'s str) -> ModalResult<(&'s str, &'s str)> {
     // Only move out of this line.
     // The remaining blank lines are handled by higher level parsers.
     (till_line_ending, alt((line_ending, eof))).parse_next(input)
@@ -30,7 +30,7 @@ fn end_of_block<'s>(input: &mut &'s str) -> PResult<(&'s str, &'s str)> {
 /// is directly the lines for data and the ending line of the block
 /// Returns the lines and throw away the ending to move out of the
 /// block in `input`
-pub fn get_block_data(input: &mut &str) -> PResult<String> {
+pub fn get_block_data(input: &mut &str) -> ModalResult<String> {
     terminated(contents_in_block, end_of_block)
         .map(|s: &str| {
             if s.is_empty() {

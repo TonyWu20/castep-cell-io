@@ -50,6 +50,7 @@ impl CellParser<'_> {
                     KeywordType::Block(_) => {
                         get_block_data(&mut self.input)
                             .map_err(|_| CellParseError::GetBlockDataFailure)?;
+                        #[cfg(debug_assertions)]
                         dbg!(&self.input);
                     }
                     KeywordType::Field(field_kw) => {

@@ -1,3 +1,4 @@
+use castep_param_derive::StructBuildFromPairs;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -25,6 +26,7 @@ mod relativistic_treatment;
     Ord,
     Builder,
     Default,
+    StructBuildFromPairs,
 )]
 #[builder(
     setter(into, strip_option),

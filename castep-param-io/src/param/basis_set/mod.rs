@@ -1,4 +1,4 @@
-use castep_param_derive::ParamDisplay;
+use castep_param_derive::{ParamDisplay, StructBuildFromPairs};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
@@ -37,6 +37,7 @@ use super::KeywordDisplay;
     ParamDisplay,
     PartialEq,
     PartialOrd,
+    StructBuildFromPairs,
 )]
 #[builder(
     setter(into, strip_option),

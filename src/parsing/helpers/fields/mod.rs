@@ -1,15 +1,15 @@
-use winnow::{token::take_till, PResult, Parser};
+use winnow::{token::take_till, ModalResult, Parser};
 
 use super::{effective_line, KeywordType};
 
 /// When it is "keyword : value"
-pub fn field_name<'s>(input: &mut &'s str) -> PResult<KeywordType<'s>> {
+pub fn field_name<'s>(input: &mut &'s str) -> ModalResult<KeywordType<'s>> {
     take_till(0.., |c| c == ' ' || c == ':')
         .map(|s: &str| KeywordType::Field(s.trim()))
         .parse_next(input)
 }
 
-pub fn get_field_data(input: &mut &str) -> PResult<String> {
+pub fn get_field_data(input: &mut &str) -> ModalResult<String> {
     effective_line
         .map(|s| s.replace(':', "").trim_start().to_string())
         .parse_next(input)
