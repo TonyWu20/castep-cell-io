@@ -64,7 +64,7 @@ pub fn effective_line<'s>(input: &mut &'s str) -> ModalResult<&'s str> {
 
 // TODO! Handle `Misc` case to skip the unwanted data
 pub fn current_sections<'s>(input: &mut &'s str) -> ModalResult<DocumentSections<'s>> {
-    if input.is_empty() {
+    if input.is_empty() || ["\n", "\r\n"].contains(input) {
         return Ok(DocumentSections::End);
     }
     // Skip the possible comments and blank lines between the blocks and field data.
