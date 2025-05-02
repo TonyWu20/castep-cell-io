@@ -1,0 +1,24 @@
+WHITESPACE = _{ " " | NEWLINE | "\t" }
+COMMENT    = _{ "#" ~ (!(NEWLINE | "%") ~ ANY)* | "!" ~ (!(NEWLINE | "%") ~ ANY)* }
+// number     =  { ASCII_DIGIT+ }
+// sign       =  { "-" | "+" }
+// integer     = @{ ("-" | "+")? ~ number }
+// pos_integer = @{ ("+")? ~ number }
+// real        = @{
+// ("-" | "+")? ~ number? ~ "." ~ number ~ ^"e" ~ ("-" | "+")? ~ number
+// | sign? ~ number ~ ^"e" ~ sign? ~ number
+// | sign{,1} ~ number? ~ "." ~ number
+// | number
+// }
+// logical     =  { ^"true" | ^"false" }
+string      =  { (!(NEWLINE | COMMENT | "%" | single_keywords) ~ ANY)+ }
+block       =  { block_start ~ #block_values = (COMMENT | block_line)* ~ block_end }
+block_start =  { ^"%block" ~ PUSH(#block_name = keywords) ~ COMMENT? ~ NEWLINE? }
+block_line  = ${ !^"%endblock" ~ (WHITESPACE* ~ string)+ ~ WHITESPACE* ~ COMMENT? }
+block_end   =  { ^"%endblock" ~ POP ~ COMMENT? ~ NEWLINE? }
+
+kv_pair         =  { #keyword = keywords ~ ":" ~ #value = (WHITESPACE* ~ string)+ ~ COMMENT? }
+keywords        = ${ (ASCII_ALPHANUMERIC | "_")* ~ COMMENT? }
+single_keywords = ${ ^"SYMMETRY_GENERATE" ~ COMMENT? }
+
+cell_doc = _{ SOI ~ (block | kv_pair | single_keywords)* }
