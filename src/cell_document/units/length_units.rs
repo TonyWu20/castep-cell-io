@@ -4,7 +4,7 @@ use crate::CellParseError;
 
 use super::ParsableUnit;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LengthUnit {
     Bohr,
     Meter,
@@ -28,7 +28,7 @@ impl Display for LengthUnit {
 
 impl ParsableUnit for LengthUnit {
     fn parse_from_str(input: &str) -> Result<Self, CellParseError> {
-        match input {
+        match input.to_lowercase().as_str() {
             "bohr" => Ok(LengthUnit::Bohr),
             "a0" => Ok(LengthUnit::Bohr),
             "m" => Ok(LengthUnit::Meter),
