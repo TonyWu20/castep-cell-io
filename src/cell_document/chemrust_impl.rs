@@ -15,18 +15,15 @@ use super::CellEssentials;
 use super::LatticeCart;
 
 pub fn to_cell_document<T: CrystalModel>(model: &T) -> CellDocument {
-    let lattice_param_block = LatticeParamBlock::from(model.get_cell_parameters());
-    let ionic_pos_block = IonicPositionBlock::from_atom_data(
-        model.get_atom_data(),
-        &model.get_cell_parameters().lattice_bases(),
-    );
+    let lattice_param_block = LatticeParamBlock::from(model);
+    let ionic_pos_block = IonicPositionBlock::from_crystal_model(model, &model.lattice_bases());
     let model_description = CellEssentials::new(lattice_param_block, ionic_pos_block);
     CellDocument::new(model_description)
 }
 
 impl<T> From<&T> for LatticeParamBlock
 where
-    T: UnitCellParameters,
+    T: CrystalModel,
 {
     fn from(value: &T) -> Self {
         let lattice_bases = value.lattice_bases();

@@ -9,6 +9,8 @@ pub enum CellParseError {
     GetBlockDataFailure,
     GetFieldDataFailure,
     RequiredSectionMissing,
+    /// (expected: String, curr: String)
+    UnexpectedBlockType((String, String)),
 }
 
 impl Display for CellParseError {
@@ -23,6 +25,13 @@ impl Display for CellParseError {
                 f.write_str("Missing lattice parameters and/or ionic positions!")
             }
             Self::FileReadingFailure => f.write_str("Failed to read from file"),
+            Self::UnexpectedBlockType((expected, curr)) => {
+                write!(
+                    f,
+                    "wrong block name: expect {} but curr: {}",
+                    expected, curr
+                )
+            }
         }
     }
 }

@@ -127,6 +127,12 @@ pub mod hubbard_u {
         pub fn set_settings(&mut self, settings: Vec<HubbardUItem>) {
             self.settings = settings;
         }
+        pub fn filter_item_mut<F: FnMut(&&mut HubbardUItem) -> bool>(
+            &mut self,
+            item_condition: F,
+        ) -> std::iter::Filter<std::slice::IterMut<'_, HubbardUItem>, F> {
+            self.settings_mut().iter_mut().filter(item_condition)
+        }
     }
 
     impl BlockIO for HubbardUBlock {
@@ -217,8 +223,12 @@ pub mod hubbard_u {
                 })
                 .collect::<Vec<HubbardUItem>>();
             values.iter().for_each(|item| println!("{item}"));
-            let hubbard_u_block = HubbardUBlock::new(values);
-            println!("{}", hubbard_u_block.to_block(1).to_string());
+            let mut hubbard_u_block = HubbardUBlock::new(values);
+            println!("{}", hubbard_u_block.to_block(1));
+            hubbard_u_block
+                .filter_item_mut(|item| item.element() == ElementSymbol::U)
+                .for_each(|item| item.set_u_value(3.2));
+            println!("{}", hubbard_u_block.to_block(1));
         }
     }
 }

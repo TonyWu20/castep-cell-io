@@ -18,7 +18,9 @@ pub use sections::constraints::{FixAllCell, FixCom, IonicConstraintsBlock};
 pub use sections::external_fields::{ExtEFieldBlock, ExtPressureBlock};
 pub use sections::ionic_positions::{IonicPosition, IonicPositionBlock, Mixture};
 pub use sections::kpoint_settings::*;
-pub use sections::lattice_parameters::{LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock};
+pub use sections::lattice_parameters::{
+    lattice_cart_block, LatticeABC, LatticeCart, LatticeParam, LatticeParamBlock,
+};
 pub use sections::species_characters::{
     LCAOBasis, SpeciesLCAOStatesBlock, SpeciesMass, SpeciesMassBlock, SpeciesPot, SpeciesPotBlock,
 };
@@ -36,23 +38,31 @@ pub struct CellDocument {
     other_entries: Option<Vec<CellEntries>>,
 }
 
-impl CrystalModel for CellDocument {
-    fn get_cell_parameters(&self) -> &impl UnitCellParameters {
-        self.model_description().lattice_block()
+impl CoreAtomData for CellDocument {
+    fn indices_repr(&self) -> Vec<usize> {
+        <CellEssentials as CoreAtomData>::indices_repr(&self.model_description)
     }
 
-    fn get_atom_data(&self) -> &impl CoreAtomData {
-        self.model_description().ionic_pos_block()
+    fn symbols_repr(&self) -> Vec<ElementSymbol> {
+        <CellEssentials as CoreAtomData>::symbols_repr(&self.model_description)
     }
 
-    fn get_cell_parameters_mut(&mut self) -> &mut impl UnitCellParameters {
-        self.model_description_mut().lattice_block_mut()
+    fn coords_repr(&self) -> Vec<chemrust_core::data::geom::coordinates::CoordData> {
+        <CellEssentials as CoreAtomData>::coords_repr(&self.model_description)
     }
 
-    fn get_atom_data_mut(&mut self) -> &mut impl CoreAtomData {
-        self.model_description_mut().ionic_pos_block_mut()
+    fn labels_repr(&self) -> Vec<Option<String>> {
+        <CellEssentials as CoreAtomData>::labels_repr(&self.model_description)
     }
 }
+
+impl UnitCellParameters for CellDocument {
+    fn lattice_bases(&self) -> nalgebra::Matrix3<f64> {
+        <CellEssentials as UnitCellParameters>::lattice_bases(&self.model_description)
+    }
+}
+
+impl CrystalModel for CellDocument {}
 
 impl SymmetryInfo for CellDocument {
     fn get_space_group_it_num(&self) -> u8 {

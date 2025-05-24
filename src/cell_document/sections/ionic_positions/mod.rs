@@ -4,7 +4,7 @@ use castep_periodic_table::{
     data::ELEMENT_TABLE,
     element::{ElementSymbol, LookupElement},
 };
-use chemrust_core::data::atom::CoreAtomData;
+use chemrust_core::data::{atom::CoreAtomData, lattice::CrystalModel};
 use nalgebra::Matrix3;
 
 use crate::{formatting::BlockDisplay, keywords::PositionsKeywords};
@@ -26,7 +26,10 @@ impl Display for IonicPositionBlock {
 }
 
 impl IonicPositionBlock {
-    pub fn from_atom_data<T: CoreAtomData>(atom_data: &T, lattice_bases: &Matrix3<f64>) -> Self {
+    pub fn from_crystal_model<T: CrystalModel>(
+        atom_data: &T,
+        lattice_bases: &Matrix3<f64>,
+    ) -> Self {
         let symbols = atom_data.symbols_repr();
         let coords = atom_data
             .coords_repr()

@@ -1,6 +1,6 @@
 [package]
 name = "castep-cell-io"
-version = "0.2.16"
+version = "0.2.17"
 edition = "2021"
 author = ["TonyWu20"]
 description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
@@ -15,7 +15,7 @@ keywords = ["chemistry", "castep"]
 [dependencies]
 castep-periodic-table = "0.5.2"
 winnow = "0.7.6"
-chemrust-core = "0.5.0"
+chemrust-core = {git = "https://github.com/TonyWu20/chemrust", branch = "refactor"}
 nalgebra = "0.33.*"
 crystallographic-group = "0.3.1"
 thiserror = "2.0.8"
@@ -24,6 +24,7 @@ from-pest = "0.3.3"
 pest_derive = {version="2.8.0", features = ["grammar-extras"]}
 pest-ast = { git = "https://github.com/TonyWu20/ast.git", version = "0.3.5" }
 tree-sitter-pest = "0.0.2"
+derive_builder = "0.20.2"
 
 [features]
 default = ["template"]

@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use crate::{cell_document::units::Degrees, formatting::BlockDisplay, LengthUnit};
 
+pub mod lattice_cart_block;
+
 #[derive(Debug, Clone, Copy)]
 pub struct LatticeParamBlock {
     unit: LengthUnit,

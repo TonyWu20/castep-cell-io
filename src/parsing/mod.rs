@@ -14,35 +14,29 @@ pub struct CellParser<'a> {
     other_entries: Vec<CellEntries>,
 }
 
+mod pest_parser;
+
+pub use pest_parser::*;
+
 #[cfg(test)]
 mod test {
     use std::{collections::HashMap, fs, path::Path};
 
     use pest::Parser;
-    use pest_derive::Parser;
 
-    use super::CellParser;
+    use crate::cell_document::lattice_cart_block;
+    use crate::parsing::pest_parser::{cell_doc_map, ordered_param_doc, Rule};
+    use crate::parsing::ParsedCellDoc;
 
-    #[derive(Debug, Parser)]
-    #[grammar = "src/parsing/cell.pest"]
-    struct CELLParser;
+    use super::pest_parser::{CELLObject, CELLParser};
 
-    #[derive(Debug)]
-    struct Block<'a> {
-        name: &'a str,
-        values: Vec<&'a str>,
-    }
+    use super::{BlockIO, CellParser};
 
-    #[derive(Debug)]
-    struct KeywordValue<'a> {
-        name: &'a str,
-        value: &'a str,
-    }
-
-    #[derive(Debug)]
-    enum CELLObject<'a> {
-        Block(Block<'a>),
-        KeywordValue(KeywordValue<'a>),
+    /// Fe 1 d: 0.500000000
+    struct HubbardUEditor {
+        index: usize,
+        d: f64,
+        expr: String,
     }
 
     #[test]
@@ -147,53 +141,43 @@ SYMMETRY_GENERATE
       Fe       1       d: 0.500000000000000
 %ENDBLOCK HUBBARD_U
 
+%BLOCK HUBBARD_ALPHA
+      Fe       1       d: 0.500000000000000
+%ENDBLOCK HUBBARD_ALPHA
+
 QUANTIZATION_AXIS :    0.0000    0.0000    1.0000
 
 
 "#;
         let cell = CELLParser::parse(Rule::cell_doc, block).expect("unsuccessful parse");
-        let cell_doc: HashMap<&str, CELLObject> =
-            HashMap::from_iter(cell.into_iter().map(|pair| match pair.as_rule() {
-                Rule::block => {
-                    let inner_rules = pair.into_inner();
-                    let block_name = inner_rules
-                        .find_first_tagged("block_name")
-                        .unwrap()
-                        .as_str();
-                    let block_lines = inner_rules
-                        .find_tagged("block_values")
-                        .flat_map(|lines| lines.into_inner().map(|pair| pair.as_str()))
-                        .collect::<Vec<&str>>();
-                    (
-                        block_name,
-                        CELLObject::Block(Block {
-                            name: block_name,
-                            values: block_lines,
-                        }),
-                    )
-                }
-                Rule::kv_pair => {
-                    let mut inner_rules = pair.into_inner();
-                    let name = inner_rules.next().unwrap().as_str();
-                    let value = inner_rules.next().unwrap().as_str();
-                    (name, CELLObject::KeywordValue(KeywordValue { name, value }))
-                }
-                Rule::single_keywords => {
-                    let name = pair.as_str();
-                    let value = "true";
-                    (name, CELLObject::KeywordValue(KeywordValue { name, value }))
-                }
-                _ => unreachable!(),
-            }));
-        cell_doc.keys().for_each(|key| println!("{key}"));
+        dbg!(&cell);
+        let mut cell_doc: ParsedCellDoc = cell_doc_map(cell);
+        cell_doc
+            .get_mut("LATTICE_CART")
+            .map(|obj| {
+                *obj = obj
+                    .as_block()
+                    .map(|block| {
+                        let order = block.order();
+                        let mut lattice_cart =
+                            lattice_cart_block::LatticeCart::from_block(block).unwrap();
+                        lattice_cart.set_b([0.0, 7.969_867_637_928_44, 0.0]);
+                        CELLObject::Block(lattice_cart.to_block(order))
+                    })
+                    .unwrap();
+            })
+            .unwrap();
+        println!("{}", cell_doc.get("LATTICE_CART").unwrap());
     }
     #[test]
     fn test_kv_pair() {
-        let kv_pair = "FIX_COM : false";
+        let kv_pair = r#"FIX_COM : false
+"#;
         let single_keyword = "SYMMETRY_GENERATE";
         let kv = CELLParser::parse(Rule::kv_pair, kv_pair).expect("unsuccessful parse");
         dbg!(kv);
-        let single = CELLParser::parse(Rule::kv_pair, single_keyword).expect("unsuccessful parse");
+        let single =
+            CELLParser::parse(Rule::single_keywords, single_keyword).expect("unsuccessful parse");
         dbg!(single);
     }
     #[test]
@@ -201,5 +185,47 @@ QUANTIZATION_AXIS :    0.0000    0.0000    1.0000
         let comment = "# COMMENT";
         let comm = CELLParser::parse(Rule::COMMENT, comment).expect("unsuccessful parse");
         dbg!(comm);
+    }
+    #[test]
+    fn test_param() {
+        let param_text = r#"task : SinglePoint
+        
+comment : CASTEP calculation from Materials Studio
+xc_functional : PBE
+spin_polarized : true
+spin :        4
+opt_strategy : Speed
+page_wvfns :        0
+cut_off_energy :      330.000000000000000
+grid_scale :        2.000000000000000
+fine_grid_scale :        3.000000000000000
+finite_basis_corr :        0
+elec_energy_tol :   5.000000000000000e-007
+max_scf_cycles :     6000
+fix_occupancy : false
+metals_method : dm
+mixing_scheme : Pulay
+mix_charge_amp :        0.500000000000000
+mix_spin_amp :        2.000000000000000
+mix_charge_gmax :        1.500000000000000
+mix_spin_gmax :        1.500000000000000
+mix_history_length :       20
+nextra_bands :       39
+smearing_width :        0.100000000000000
+spin_fix :        6
+num_dump_cycles : 0
+calculate_ELF : false
+calculate_stress : false
+popn_calculate : true
+calculate_hirshfeld : true
+calculate_densdiff : false
+popn_bond_cutoff :        3.000000000000000
+pdos_calculate_weights : true
+"#;
+        let param = CELLParser::parse(Rule::cell_doc, param_text).unwrap();
+        dbg!(&param);
+        let param_doc: ParsedCellDoc = cell_doc_map(param);
+        let ordered_param = ordered_param_doc(&param_doc);
+        println!("{}", ordered_param)
     }
 }

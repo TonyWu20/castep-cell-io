@@ -18,6 +18,7 @@ use super::{
 
 pub mod constraints;
 pub mod external_fields;
+pub mod hubbard;
 pub mod ionic_positions;
 pub mod kpoint_settings;
 pub mod lattice_parameters;
@@ -28,6 +29,30 @@ pub mod symmetry_ops;
 pub struct CellEssentials {
     lattice_block: LatticeParamBlock,
     ionic_pos_block: IonicPositionBlock,
+}
+
+impl UnitCellParameters for CellEssentials {
+    fn lattice_bases(&self) -> Matrix3<f64> {
+        <LatticeParamBlock as UnitCellParameters>::lattice_bases(&self.lattice_block)
+    }
+}
+
+impl CoreAtomData for CellEssentials {
+    fn indices_repr(&self) -> Vec<usize> {
+        <IonicPositionBlock as CoreAtomData>::indices_repr(&self.ionic_pos_block)
+    }
+
+    fn symbols_repr(&self) -> Vec<ElementSymbol> {
+        <IonicPositionBlock as CoreAtomData>::symbols_repr(&self.ionic_pos_block)
+    }
+
+    fn coords_repr(&self) -> Vec<CoordData> {
+        <IonicPositionBlock as CoreAtomData>::coords_repr(&self.ionic_pos_block)
+    }
+
+    fn labels_repr(&self) -> Vec<Option<String>> {
+        <IonicPositionBlock as CoreAtomData>::labels_repr(&self.ionic_pos_block)
+    }
 }
 
 impl UnitCellParameters for LatticeParamBlock {
