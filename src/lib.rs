@@ -18,4 +18,9 @@ pub use parsing::{CellParseError, CellParser};
 
 pub use parsing::helpers::{get_block_data, get_field_data, get_keyword};
 
-pub use parsing::{Block, BlockBuilder, BlockBuilderError, BlockIO, CELLObject, CELLParser, Rule};
+pub use parsing::{
+    Block, BlockBuilder, BlockBuilderError, BlockIO, CELLObject, CELLParser, KeywordValue, Rule,
+    SingleKeyword,
+};
+
+pub use pest::Parser;
