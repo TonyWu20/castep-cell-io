@@ -1,5 +1,6 @@
 mod cell;
 mod primitive;
+pub use cell::{from_str, from_tokens};
 #[cfg(test)]
 mod de_test {
 

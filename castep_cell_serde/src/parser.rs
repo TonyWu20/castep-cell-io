@@ -97,7 +97,7 @@ fn caseless_check_block<'src, 'a>(
             if !x.eq_ignore_ascii_case(to_check) {
                 emitter.emit(Rich::custom(
                     e.span(),
-                    format!("{} is not a valid block identifier {}", x, to_check,),
+                    format!("{x} is not a valid block identifier {to_check}"),
                 ))
             }
         })
@@ -120,10 +120,7 @@ fn block<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<'sr
             if blk != endblock {
                 emitter.emit(Rich::custom(
                     e.span(),
-                    format!(
-                        "{} is inconsistent with parsed endblock name {}",
-                        blk, endblock
-                    ),
+                    format!("{blk} is inconsistent with parsed endblock name {endblock}"),
                 ))
             }
             Cell::Block(blk, lines)

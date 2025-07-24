@@ -36,6 +36,7 @@
                 "rust-analyzer"
               ])
               stdenv
+              fish
             ];
           };
         }

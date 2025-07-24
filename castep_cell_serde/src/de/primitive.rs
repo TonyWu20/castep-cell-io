@@ -67,7 +67,7 @@ impl<'a, 'de> SeqAccess<'de> for ArraySeqAccess<'a, 'de> {
             },
             other => Err(Error::UnexpectedType(
                 "array".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -100,7 +100,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Int(i) => visitor.visit_i8(*i as i8),
             other => Err(Error::UnexpectedType(
                 "i8".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -113,7 +113,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Int(i) => visitor.visit_i16(*i as i16),
             other => Err(Error::UnexpectedType(
                 "i16".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -126,7 +126,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Int(i) => visitor.visit_i32(*i),
             other => Err(Error::UnexpectedType(
                 "i32".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -146,7 +146,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::UInt(u) => visitor.visit_u8(*u as u8),
             other => Err(Error::UnexpectedType(
                 "u8".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -159,7 +159,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::UInt(u) => visitor.visit_u16(*u as u16),
             other => Err(Error::UnexpectedType(
                 "u16".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -172,7 +172,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::UInt(u) => visitor.visit_u32(*u),
             other => Err(Error::UnexpectedType(
                 "u32".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -192,7 +192,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Float(f) => visitor.visit_f32(*f as f32),
             other => Err(Error::UnexpectedType(
                 "i8".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -256,7 +256,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Array(arr) => visitor.visit_seq(ArrayIterSeqAccess::new(arr)),
             other => Err(Error::UnexpectedType(
                 "array".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }
@@ -279,7 +279,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             }
             other => Err(Error::UnexpectedType(
                 "array for tuple".to_string(),
-                format!("{:?}", other),
+                format!("{other:?}"),
             )),
         }
     }

@@ -1,6 +1,6 @@
 [package]
-name = "castep-cell-io"
-version = "0.3.0"
+name = "castep_cell_serde"
+version = "0.1.0"
 edition = "2024"
 authors = ["TonyWu20"]
 description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
@@ -19,11 +19,3 @@ derive_builder = "0.20.2"
 serde = { version = "1.0.219", features = ["derive"] }
 anyhow = "1.0.98"
 ariadne = { version = "0.5.1", features = ["auto-color"] }
-
-[features]
-default = []
-positions = []
-lattice = []
-# default = ["template"]
-# TS = []
-# template = []

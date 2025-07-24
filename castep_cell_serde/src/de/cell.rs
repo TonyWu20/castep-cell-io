@@ -10,6 +10,7 @@ use crate::{Cell, CellValue, error::Error, parse_cell_file};
 
 use super::primitive::CellValueDeserializer;
 
+/// Deserialize struct from `&str` of a `.cell` file
 pub fn from_str<T>(input: &str) -> Result<T, Error>
 where
     T: DeserializeOwned,
