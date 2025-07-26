@@ -11,6 +11,7 @@ pub enum Error {
     /// expected: {0}, got {1}
     UnexpectedType(String, String),
     #[error("key {0} not found")]
+    /// key {0} not found
     KeyNotFound(String),
 }
 

@@ -57,6 +57,14 @@ impl<'a> Serialize for CellValue<'a> {
                 };
                 serializer.serialize_str(&format!("{s:>str_len$}"))
             }
+            CellValue::String(s) => {
+                let str_len = match s.len() {
+                    x if x < 6 => 6,
+                    x if (4..20).contains(&x) => 20,
+                    x => x + 2,
+                };
+                serializer.serialize_str(&format!("{s:>str_len$}"))
+            }
             CellValue::UInt(u) => serializer.serialize_u32(*u),
             CellValue::Int(i) => serializer.serialize_i32(*i),
             CellValue::Float(f) => serializer.serialize_f64(*f),

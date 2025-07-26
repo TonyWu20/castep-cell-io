@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use serde::{
     Deserializer,
-    de::{DeserializeOwned, MapAccess, SeqAccess, value::StrDeserializer},
+    de::{
+        DeserializeOwned, EnumAccess, MapAccess, SeqAccess, VariantAccess, value::StrDeserializer,
+    },
     forward_to_deserialize_any,
 };
 
@@ -121,6 +123,76 @@ impl<'a, 'de> CellFileMapAccess<'a, 'de> {
     }
 }
 
+struct CellFileEnumAccess<'a, 'de> {
+    enum_name: &'static str,
+    de: &'a mut CellFileDeserializer<'de>,
+}
+
+impl<'a, 'de> CellFileEnumAccess<'a, 'de> {
+    fn new(enum_name: &'static str, de: &'a mut CellFileDeserializer<'de>) -> Self {
+        Self { enum_name, de }
+    }
+}
+
+impl<'a, 'de> EnumAccess<'de> for CellFileEnumAccess<'a, 'de> {
+    type Error = Error;
+
+    type Variant = Self;
+
+    fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant), Self::Error>
+    where
+        V: serde::de::DeserializeSeed<'de>,
+    {
+        match self.de.entries.get(self.enum_name) {
+            Some(item) => match item {
+                Cell::KeyValue(_, cell_value) => {
+                    let val = seed.deserialize(&mut CellValueDeserializer::new(cell_value))?;
+                    Ok((val, self))
+                }
+                Cell::Block(_, _cell_values) => Err(Error::UnexpectedType(
+                    "KeyValue".to_string(),
+                    "Block".to_string(),
+                )),
+                Cell::Flag(_) => Err(Error::UnexpectedType("KeyValue".into(), "Flag".into())),
+            },
+            None => Err(Error::KeyNotFound(self.enum_name.to_string())),
+        }
+    }
+}
+
+impl<'a, 'de> VariantAccess<'de> for CellFileEnumAccess<'a, 'de> {
+    type Error = Error;
+
+    fn unit_variant(self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn newtype_variant_seed<T>(self, _seed: T) -> Result<T::Value, Self::Error>
+    where
+        T: serde::de::DeserializeSeed<'de>,
+    {
+        todo!()
+    }
+
+    fn tuple_variant<V>(self, _len: usize, _visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        todo!()
+    }
+
+    fn struct_variant<V>(
+        self,
+        _fields: &'static [&'static str],
+        _visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        todo!()
+    }
+}
+
 impl<'a, 'de> MapAccess<'de> for CellFileMapAccess<'a, 'de> {
     type Error = Error;
 
@@ -185,9 +257,21 @@ impl<'de, 'a: 'de> Deserializer<'de> for &'a mut CellFileDeserializer<'de> {
         visitor.visit_map(CellFileMapAccess::new(&mut *self, fields))
     }
 
+    fn deserialize_enum<V>(
+        self,
+        name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        visitor.visit_enum(CellFileEnumAccess::new(name, self))
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 u8 u16 u32 u64
-        f32 f64 char str string bytes byte_buf unit unit_struct enum identifier
+        f32 f64 char str string bytes byte_buf unit_struct unit identifier
         newtype_struct ignored_any option map seq tuple tuple_struct
     }
 }

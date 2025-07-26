@@ -1,4 +1,8 @@
-use serde::{Deserializer, de::SeqAccess, forward_to_deserialize_any};
+use serde::{
+    Deserializer,
+    de::{EnumAccess, SeqAccess, VariantAccess, value::StrDeserializer},
+    forward_to_deserialize_any,
+};
 
 use crate::{CellValue, error::Error};
 
@@ -38,38 +42,68 @@ impl<'a, 'de> SeqAccess<'de> for ArrayIterSeqAccess<'a, 'de> {
     }
 }
 
-struct ArraySeqAccess<'a, 'de> {
-    inner: &'a mut CellValueDeserializer<'a, 'de>,
-    curr_idx: usize,
+struct EnumAcc<'a, 'de: 'a> {
+    de: &'a mut CellValueDeserializer<'a, 'de>,
 }
 
-impl<'a, 'de> ArraySeqAccess<'a, 'de> {
-    fn new(inner: &'a mut CellValueDeserializer<'a, 'de>) -> Self {
-        Self { inner, curr_idx: 0 }
+impl<'a, 'de: 'a> EnumAcc<'a, 'de> {
+    fn new(de: &'a mut CellValueDeserializer<'a, 'de>) -> Self {
+        Self { de }
     }
 }
 
-impl<'a, 'de> SeqAccess<'de> for ArraySeqAccess<'a, 'de> {
+impl<'a, 'de> EnumAccess<'de> for EnumAcc<'a, 'de> {
     type Error = Error;
 
-    fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>, Self::Error>
+    type Variant = Self;
+
+    fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant), Self::Error>
     where
-        T: serde::de::DeserializeSeed<'de>,
+        V: serde::de::DeserializeSeed<'de>,
     {
-        match self.inner.value {
-            CellValue::Array(cell_values) => match cell_values.get(self.curr_idx) {
-                Some(item) => {
-                    self.curr_idx += 1;
-                    seed.deserialize(&mut CellValueDeserializer::new(item))
-                        .map(Some)
-                }
-                None => Ok(None),
-            },
+        match self.de.value {
+            CellValue::Str(s) => {
+                let val = seed.deserialize(StrDeserializer::new(s))?;
+                Ok((val, self))
+            }
             other => Err(Error::UnexpectedType(
-                "array".to_string(),
+                "CellValue::Str".to_string(),
                 format!("{other:?}"),
             )),
         }
+    }
+}
+
+impl<'a, 'de> VariantAccess<'de> for EnumAcc<'a, 'de> {
+    type Error = Error;
+
+    fn unit_variant(self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn newtype_variant_seed<T>(self, _seed: T) -> Result<T::Value, Self::Error>
+    where
+        T: serde::de::DeserializeSeed<'de>,
+    {
+        todo!()
+    }
+
+    fn tuple_variant<V>(self, _len: usize, _visitorr: V) -> Result<V::Value, Self::Error>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        todo!()
+    }
+
+    fn struct_variant<V>(
+        self,
+        _fields: &'static [&'static str],
+        _visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        todo!()
     }
 }
 
@@ -83,6 +117,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
             CellValue::Null => visitor.visit_unit(),
             CellValue::Bool(b) => visitor.visit_bool(*b),
             CellValue::Str(s) => visitor.visit_borrowed_str(s),
+            CellValue::String(s) => visitor.visit_str(s),
             CellValue::UInt(u) => visitor.visit_u32(*u),
             CellValue::Int(i) => visitor.visit_i32(*i),
             CellValue::Float(f) => visitor.visit_f64(*f),
@@ -244,7 +279,6 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
     where
         V: serde::de::Visitor<'de>,
     {
-        println!("name");
         visitor.visit_newtype_struct(self)
     }
 
@@ -319,19 +353,25 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
         self,
         _name: &'static str,
         _variants: &'static [&'static str],
-        _visitor: V,
+        visitor: V,
     ) -> Result<V::Value, Self::Error>
     where
         V: serde::de::Visitor<'de>,
     {
-        todo!()
+        visitor.visit_enum(EnumAcc::new(self))
     }
 
-    fn deserialize_identifier<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
+    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value, Self::Error>
     where
         V: serde::de::Visitor<'de>,
     {
-        todo!()
+        match self.value {
+            CellValue::Str(s) => visitor.visit_str(s),
+            other => Err(Error::UnexpectedType(
+                "CellValue::Str".to_string(),
+                format!("{other:?}"),
+            )),
+        }
     }
 
     fn deserialize_ignored_any<V>(self, _visitor: V) -> Result<V::Value, Self::Error>
