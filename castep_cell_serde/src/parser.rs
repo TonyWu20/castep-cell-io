@@ -41,15 +41,28 @@ fn cell_primitives<'src>()
                 .unwrap()
         });
     let word = none_of(" %!#\r\n\n").repeated().at_least(1).to_slice();
-    let boolean = word.validate(|word: &'src str, e, emitter| {
-        if !word.eq_ignore_ascii_case("true") && !word.eq_ignore_ascii_case("false") {
-            emitter.emit(Rich::custom(
-                e.span(),
-                format!("{word} is not a valid boolean value"),
-            ))
-        }
-        word.eq_ignore_ascii_case("true")
-    });
+    let boolean = choice((
+        one_of("trueTRUE")
+            .repeated()
+            .exactly(4)
+            .collect::<String>()
+            .validate(|word, e, emitter| {
+                if !word.eq_ignore_ascii_case("true") {
+                    emitter.emit(Rich::custom(e.span(), "Not a valid 'true'"));
+                }
+                true
+            }),
+        one_of("falseFALSE")
+            .repeated()
+            .exactly(5)
+            .collect::<String>()
+            .validate(|word, e, emitter| {
+                if !word.eq_ignore_ascii_case("false") {
+                    emitter.emit(Rich::custom(e.span(), "Not a valid 'false'"));
+                }
+                false
+            }),
+    ));
     let comment = just('#')
         .or(just('!'))
         .then_ignore(
