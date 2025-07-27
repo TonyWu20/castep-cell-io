@@ -200,15 +200,26 @@ impl<'a, 'de> MapAccess<'de> for CellFileMapAccess<'a, 'de> {
     where
         K: serde::de::DeserializeSeed<'de>,
     {
-        match self.field_entrys_iter.next().and_then(|key| {
-            self.inner.entries.get(key).map(|_| {
+        // This can handles multiple `field` from using `#[serde(alias)]`?
+        match self
+            .field_entrys_iter
+            .find(|&key| self.inner.entries.contains_key(key))
+        {
+            Some(key) => {
                 self.current_item = Some(key);
                 seed.deserialize(StrDeserializer::new(key)).map(Some)
-            })
-        }) {
-            Some(k) => k,
+            }
             None => Ok(None),
         }
+        // match self.field_entrys_iter.next().and_then(|key| {
+        //     self.inner.entries.get(key).map(|_| {
+        //         self.current_item = Some(key);
+        //         seed.deserialize(StrDeserializer::new(key)).map(Some)
+        //     })
+        // }) {
+        //     Some(k) => k,
+        //     None => Ok(None),
+        // }
     }
 
     fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value, Self::Error>
