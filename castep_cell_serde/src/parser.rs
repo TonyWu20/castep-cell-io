@@ -40,8 +40,16 @@ fn cell_primitives<'src>()
                 .or_else(|_| s.parse::<f64>().map(CellValue::Float))
                 .unwrap()
         });
-    let boolean = choice((just("true").to(true), just("false").to(false)));
     let word = none_of(" %!#\r\n\n").repeated().at_least(1).to_slice();
+    let boolean = word.validate(|word: &'src str, e, emitter| {
+        if !word.eq_ignore_ascii_case("true") && !word.eq_ignore_ascii_case("false") {
+            emitter.emit(Rich::custom(
+                e.span(),
+                format!("{word} is not a valid boolean value"),
+            ))
+        }
+        word.eq_ignore_ascii_case("true")
+    });
     let comment = just('#')
         .or(just('!'))
         .then_ignore(
