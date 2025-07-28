@@ -11,7 +11,7 @@ pub use parser::rich_error;
 pub use ser::to_string;
 
 // Intermediate representation for parsed data
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Cell<'a> {
     KeyValue(&'a str, CellValue<'a>),
     Block(&'a str, Vec<CellValue<'a>>),
@@ -40,7 +40,7 @@ pub trait ToCellFile {
     fn to_cell_file(&self) -> Vec<Cell>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum CellValue<'a> {
     Null,
     Bool(bool),
