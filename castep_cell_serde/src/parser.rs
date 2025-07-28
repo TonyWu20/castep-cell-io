@@ -49,12 +49,29 @@ fn cell_primitives<'src>()
                 .or_else(|_| s.parse::<f64>().map(CellValue::Float))
                 .unwrap()
         });
-    let word = none_of(" %!#\r\n\n").repeated().at_least(1).to_slice();
+    let word = none_of(" %!#\r\n\n")
+        .repeated()
+        .at_least(1)
+        .to_slice()
+        .map(|s: &str| {
+            s.parse::<u32>()
+                .map(CellValue::UInt)
+                .or_else(|_| s.parse::<i32>().map(CellValue::Int))
+                .or_else(|_| s.parse::<f64>().map(CellValue::Float))
+                .unwrap_or(CellValue::Str(s))
+        });
     let word_start_with_num = number
         .clone()
-        .then(whitespace().not())
+        .then(whitespace().at_least(1).not())
         .then(word)
-        .to_slice();
+        .to_slice()
+        .map(|s: &str| {
+            s.parse::<u32>()
+                .map(CellValue::UInt)
+                .or_else(|_| s.parse::<i32>().map(CellValue::Int))
+                .or_else(|_| s.parse::<f64>().map(CellValue::Float))
+                .unwrap_or(CellValue::Str(s))
+        });
     let str = choice((word_start_with_num, word));
     let boolean = choice((
         one_of("trueTRUE")
@@ -82,8 +99,8 @@ fn cell_primitives<'src>()
     choice((
         comment.map(|_| CellValue::Null),
         boolean.map(CellValue::Bool),
-        str.map(CellValue::Str),
-        number,
+        str,
+        // number,
     ))
 }
 
