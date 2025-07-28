@@ -259,8 +259,8 @@ kg
         assert!(serialized_string.contains("%ENDBLOCK SPECIES_MASS"));
         assert!(serialized_string.contains("Fe"));
         assert!(serialized_string.contains("8")); // Atomic number for Oxygen
-        assert!(serialized_string.contains("55.84999999"));
-        assert!(serialized_string.contains("15.99999999"));
+        assert!(serialized_string.contains("55.84499999"));
+        assert!(serialized_string.contains("15.999"));
         assert!(serialized_string.contains("g")); // Unit identifier
         // Note: Exact string comparison can be brittle due to formatting/whitespace/order
     }

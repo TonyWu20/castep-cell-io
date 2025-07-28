@@ -77,7 +77,7 @@ mod tests {
         ];
 
         for (input_str, expected_unit) in test_cases {
-            let mass_unit_str = format!("MASS_UNIT : {}", input_str);
+            let mass_unit_str = format!("MASS_UNIT : {input_str}");
             #[derive(Debug, Deserialize, Serialize)]
             #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
             struct CellFileWithMassUnit {
