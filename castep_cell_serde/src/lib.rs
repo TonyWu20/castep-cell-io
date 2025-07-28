@@ -51,6 +51,16 @@ pub enum CellValue<'a> {
     Float(f64),
     Array(Vec<CellValue<'a>>),
 }
+
+impl<'a> CellValue<'a> {
+    pub fn as_array(&self) -> Option<&Vec<CellValue<'a>>> {
+        if let Self::Array(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
 #[cfg(test)]
 mod test {
 
@@ -88,21 +98,32 @@ mod test {
 
     #[derive(Debug, Deserialize, PartialEq, Serialize)]
     /// A line of block `KpointsList`
+    #[serde(from = "[f64;4]")]
     pub struct Kpoint {
-        kx: f64,
-        ky: f64,
-        kz: f64,
+        coord: [f64; 3],
         weight: f64,
+    }
+
+    // struct KpointRepr([f64; 4]);
+
+    impl From<[f64; 4]> for Kpoint {
+        fn from(value: [f64; 4]) -> Self {
+            Kpoint {
+                coord: value[0..3].try_into().unwrap(),
+                weight: value[3],
+            }
+        }
     }
 
     impl ToCellValue for Kpoint {
         fn to_cell_value(&self) -> CellValue {
-            CellValue::Array(vec![
-                CellValue::Float(self.kx),
-                CellValue::Float(self.ky),
-                CellValue::Float(self.kz),
-                CellValue::Float(self.weight),
-            ])
+            CellValue::Array(
+                [
+                    self.coord.into_iter().map(CellValue::Float).collect(),
+                    vec![CellValue::Float(self.weight)],
+                ]
+                .concat(),
+            )
         }
     }
 
@@ -242,6 +263,9 @@ mod test {
     #[derive(Debug, Deserialize, Serialize)]
     struct FixCOM(bool);
 
+    #[derive(Debug, Deserialize)]
+    struct SymmetryTol(f64, LengthUnit);
+
     #[test]
     fn line_de() {
         let kpoint_line = CellValue::Array(vec![
@@ -255,9 +279,7 @@ mod test {
         debug_assert_eq!(
             kpoint,
             Kpoint {
-                kx: 0.0,
-                ky: 0.0,
-                kz: 0.0,
+                coord: [0.0, 0.0, 0.0],
                 weight: 1.0
             }
         );
@@ -306,6 +328,12 @@ mod test {
             &CellValue::Array(vec![CellValue::Str("bohr")]),
         ));
         dbg!(unit.unwrap());
+        let sym_tol =
+            SymmetryTol::deserialize(&mut CellValueDeserializer::new(&CellValue::Array(vec![
+                CellValue::Float(0.01),
+                CellValue::Str("ang"),
+            ])));
+        dbg!(sym_tol.unwrap());
     }
     const ONLY_BLOCKS: &str = r#"
 %BLOCK CELL_CONSTRAINTS

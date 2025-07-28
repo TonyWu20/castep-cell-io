@@ -152,8 +152,21 @@ fn block<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<'sr
 fn keyvalue<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<'src, char>>> {
     ident()
         .then_ignore(just(":").padded())
-        .then(cell_primitives())
-        .map(|(key, value)| Cell::KeyValue(key, value))
+        .then(
+            cell_primitives()
+                .then_ignore(just(" ").repeated())
+                .repeated()
+                .at_least(1)
+                .collect::<Vec<CellValue>>()
+                .then_ignore(newline().or(end())),
+        )
+        .map(|(key, values)| {
+            if values.len() > 1 {
+                Cell::KeyValue(key, CellValue::Array(values))
+            } else {
+                Cell::KeyValue(key, values.first().cloned().unwrap())
+            }
+        })
 }
 
 /// Rare in `.cell` and `.param`, example: `MAKE_SYMMETRY` and `STOP`
@@ -257,7 +270,7 @@ MAKE_SYMMETRY
             .map_err(|errors| {
                 errors
                     .iter()
-                    .for_each(|e| rich_error(e, "positions", POSITIONS));
+                    .for_each(|e| rich_error(e, "example", &example));
             })
             .unwrap();
         dbg!(parsed);

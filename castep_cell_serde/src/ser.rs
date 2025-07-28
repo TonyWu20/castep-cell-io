@@ -51,16 +51,24 @@ impl<'a> Serialize for CellValue<'a> {
             CellValue::Bool(b) => serializer.serialize_bool(*b),
             CellValue::Str(s) => {
                 let str_len = match s.len() {
-                    x if x < 6 => 6,
-                    x if (4..20).contains(&x) => 20,
+                    x if x < 4 => 4,
+                    x if (4..6).contains(&x) => 6,
+                    x if (6..8).contains(&x) => 8,
+                    x if (8..10).contains(&x) => 10,
+                    x if (10..16).contains(&x) => 16,
+                    x if (16..20).contains(&x) => 20,
                     x => x + 2,
                 };
                 serializer.serialize_str(&format!("{s:>str_len$}"))
             }
             CellValue::String(s) => {
                 let str_len = match s.len() {
-                    x if x < 6 => 6,
-                    x if (4..20).contains(&x) => 20,
+                    x if x < 4 => 4,
+                    x if (4..6).contains(&x) => 6,
+                    x if (6..8).contains(&x) => 8,
+                    x if (8..10).contains(&x) => 10,
+                    x if (10..16).contains(&x) => 16,
+                    x if (16..20).contains(&x) => 20,
                     x => x + 2,
                 };
                 serializer.serialize_str(&format!("{s:>str_len$}"))
