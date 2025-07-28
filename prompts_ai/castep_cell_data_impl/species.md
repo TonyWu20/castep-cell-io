@@ -157,3 +157,28 @@ Use this enum to cover all the cases for a line:
         IonFour(Species, u32, OrbitalU, OrbitalU, OrbitalU, OrbitalU),
     }
 ```
+
+This is the documentation of `QUANTIZATION_AXIS`.
+
+```
+QUANTIZATION_AXIS (.cell)
+Keyword type
+Real Vector
+
+Description
+This keyword defines the quantization (magnetization) axis to be taken for LDA+U calculations.
+
+The keyword has the following format:
+
+QUANTIZATION_AXIS : fa fb fc
+where fa fb fc are fractional coordinates for the chosen direction. If this data is missing CASTEP determines the best appropriate quantization axis, trying to find the most symmetric axis in the crystal.
+
+If an LDA+U calculation is not requested, the quantization axis is ignored.
+
+Default
+The fractional coordinates equivalent to the c axis.
+
+Example
+QUANTIZATION_AXIS : 1 1 -1
+This input defines the quantization axis ( 1 1 -1 ) which is most appropriate for a fcc structure (along one of the fourth order axes).
+```
