@@ -66,6 +66,31 @@ impl<'a, 'de> EnumAccess<'de> for EnumAcc<'a, 'de> {
                 let val = seed.deserialize(StrDeserializer::new(s))?;
                 Ok((val, self))
             }
+            CellValue::Array(array) => {
+                let variant = array
+                    .iter()
+                    .next()
+                    .map(|item| match item {
+                        CellValue::Str(s) => {
+                            let trimmed_key = s.trim_end_matches([':', ' ', '=']);
+                            let variant = seed.deserialize(StrDeserializer::new(trimmed_key))?;
+                            Ok(variant)
+                        }
+                        other => Err(Error::UnexpectedType(
+                            "CellValue::Str".to_string(),
+                            format!("{other:?}"),
+                        )),
+                    })
+                    .ok_or(Error::Empty)??;
+                // This is a newtype variant
+                if array.len() == 2 {
+                    self.de.value = &array[1];
+                    Ok((variant, self))
+                } else {
+                    // Tuple variant
+                    Ok((variant, self))
+                }
+            }
             other => Err(Error::UnexpectedType(
                 "CellValue::Str".to_string(),
                 format!("{other:?}"),
@@ -81,11 +106,11 @@ impl<'a, 'de> VariantAccess<'de> for EnumAcc<'a, 'de> {
         Ok(())
     }
 
-    fn newtype_variant_seed<T>(self, _seed: T) -> Result<T::Value, Self::Error>
+    fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value, Self::Error>
     where
         T: serde::de::DeserializeSeed<'de>,
     {
-        todo!()
+        seed.deserialize(&mut *self.de)
     }
 
     fn tuple_variant<V>(self, _len: usize, _visitorr: V) -> Result<V::Value, Self::Error>

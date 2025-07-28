@@ -4,7 +4,7 @@ mod error;
 mod parser;
 mod ser;
 
-pub use de::{from_str, from_tokens};
+pub use de::{CellValueDeserializer, from_str, from_tokens};
 pub use error::{CResult, Error};
 pub use parser::parse_cell_file;
 pub use parser::rich_error;
@@ -265,6 +265,22 @@ mod test {
 
     #[derive(Debug, Deserialize)]
     struct SymmetryTol(f64, LengthUnit);
+
+    #[test]
+    fn enum_de() {
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "lowercase")]
+        enum OrbitalU {
+            S(f64),
+            P(f64),
+            D(f64),
+            F(f64),
+        }
+        let orbital_u = CellValue::Array(vec![CellValue::Str("s:"), CellValue::Float(1.0)]);
+        let orbital_u_de =
+            OrbitalU::deserialize(&mut CellValueDeserializer::new(&orbital_u)).unwrap();
+        dbg!(orbital_u_de);
+    }
 
     #[test]
     fn line_de() {
