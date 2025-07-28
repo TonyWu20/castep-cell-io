@@ -1,3 +1,4 @@
+mod cell_constraints;
 mod fix_all_cell;
 mod fix_all_ions;
 mod fix_com;
