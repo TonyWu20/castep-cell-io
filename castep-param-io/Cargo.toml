@@ -14,6 +14,7 @@ pest-ast = {git = "https://github.com/TonyWu20/ast.git"}
 pest_derive = "2.7.15"
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.11"
+castep_cell_serde = {path = "../castep_cell_serde/", version="0.1"}
 
 [features]
 default = ["template"]
