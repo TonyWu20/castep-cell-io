@@ -20,6 +20,14 @@ pub fn parse_cell_file<'a>(input: &'a str) -> Result<Vec<Cell<'a>>, Vec<Rich<'a,
 
 fn cell_primitives<'src>()
 -> impl Parser<'src, &'src str, CellValue<'src>, extra::Err<Rich<'src, char>>> {
+    let comment = just('#')
+        .or(just('!'))
+        .then_ignore(
+            any::<&str, extra::Err<Rich<char>>>()
+                .and_is(newline().not())
+                .repeated(),
+        )
+        .ignored();
     let digits = text::digits::<&str, extra::Err<Rich<char>>>(20).to_slice();
     let frac = just('.').then(digits);
     let exp = just('e')
@@ -32,6 +40,7 @@ fn cell_primitives<'src>()
         .then(frac.or_not())
         .then(exp.or_not())
         .to_slice()
+        .then_ignore(comment.or_not().rewind())
         .boxed()
         .map(|s: &str| {
             s.parse::<u32>()
@@ -41,6 +50,12 @@ fn cell_primitives<'src>()
                 .unwrap()
         });
     let word = none_of(" %!#\r\n\n").repeated().at_least(1).to_slice();
+    let word_start_with_num = number
+        .clone()
+        .then(whitespace().not())
+        .then(word)
+        .to_slice();
+    let str = choice((word_start_with_num, word));
     let boolean = choice((
         one_of("trueTRUE")
             .repeated()
@@ -63,20 +78,12 @@ fn cell_primitives<'src>()
                 false
             }),
     ));
-    let comment = just('#')
-        .or(just('!'))
-        .then_ignore(
-            any::<&str, extra::Err<Rich<char>>>()
-                .and_is(newline().not())
-                .repeated(),
-        )
-        .ignored();
 
     choice((
         comment.map(|_| CellValue::Null),
         boolean.map(CellValue::Bool),
+        str.map(CellValue::Str),
         number,
-        word.map(CellValue::Str),
     ))
 }
 
@@ -87,6 +94,10 @@ fn block_lines<'src>()
 -> impl Parser<'src, &'src str, Vec<CellValue<'src>>, extra::Err<Rich<'src, char>>> {
     // Recognize the basic types
     cell_primitives()
+        // Ignore trailing comments (single '#' or '!' without content is also allowed)
+        // Since a valid block line should not be interrupted by comments, we just handle the trailing
+        // comments
+        .then_ignore(one_of("#!").repeated().or(comment()).or_not())
         // .. then separated by at least one whitespace
         .separated_by(just(' ').then(whitespace()).to_slice())
         // Since `CASTEP` and `Materials Studio` prefers formatting the data in right-align and with fixed-width
@@ -141,6 +152,7 @@ fn block<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<'sr
                 .into_iter()
                 .filter(|line| {
                     if let CellValue::Array(l) = line {
+                        // Skips empty vec because of presence of comments, actually
                         !l.is_empty()
                     } else {
                         false
@@ -174,7 +186,12 @@ fn keyvalue<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<
                 .repeated()
                 .at_least(1)
                 .collect::<Vec<CellValue>>()
-                .then_ignore(newline().or(end())),
+                .then_ignore(
+                    newline()
+                        .or(end())
+                        // allows trailing comments after the value,
+                        .or(comment()),
+                ),
         )
         .map(|(key, values)| {
             if values.len() > 1 {
@@ -226,11 +243,19 @@ mod parser_test {
     const EXAMPLE: &str = r#"
 %BLOCK CELL_CONSTRAINTS
        1       2       3
-       4       5       6
+       4       5       6#
 %ENDBLOCK CELL_CONSTRAINTS
 
-FIX_COM : false
-MAKE_SYMMETRY
+#comment
+!comment
+
+%BLOCK POSITIONS_FRAC
+     O   0.1635419733526620    0.0317792047151180    0.2751746346719976
+     O   0.3354045184454477    0.9672373612661035    0.7746824750061752
+     O   0.8364477955763916    0.5313805688511324    0.7241701610821136
+%ENDBLOCK POSITIONS_FRAC
+FIX_COM : false#comment
+INV_LENGTH_UNIT: 1/bohr
 "#;
     // const POSITIONS: &str = r#"%BLOCK POSITIONS_FRAC
     const POSITIONS: &str = r#"%BLOCK POSITIONS_FRAC
@@ -276,6 +301,17 @@ MAKE_SYMMETRY
             .finish()
             .print((source_name, Source::from(src)))
             .unwrap()
+    }
+    #[test]
+    fn test_example() {
+        let parsed = parse_cell_file(EXAMPLE)
+            .map_err(|errors| {
+                errors
+                    .iter()
+                    .for_each(|e| rich_error(e, "example", EXAMPLE));
+            })
+            .unwrap();
+        dbg!(parsed);
     }
 
     #[test]
