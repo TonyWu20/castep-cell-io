@@ -98,6 +98,11 @@ fn block_lines<'src>()
         // The final line before "%ENDBLOCK" goes with a trailing newline,
         // the parser will generate an empty `Vec`, so we filter it out
         .filter(|item| !item.is_empty())
+        .map(|v| {
+            v.into_iter()
+                .filter(|item| !matches!(item, CellValue::Null))
+                .collect::<Vec<CellValue>>()
+        })
         .map(CellValue::Array)
         // Separate the lines
         .separated_by(newline())
@@ -131,7 +136,18 @@ fn block<'src>() -> impl Parser<'src, &'src str, Cell<'src>, extra::Err<Rich<'sr
         .ignore_then(ident())
         .then_ignore(newline());
     block_start
-        .then(block_lines())
+        .then(block_lines().map(|lines| {
+            lines
+                .into_iter()
+                .filter(|line| {
+                    if let CellValue::Array(l) = line {
+                        !l.is_empty()
+                    } else {
+                        false
+                    }
+                })
+                .collect::<Vec<CellValue>>()
+        }))
         .then(
             caseless_check_block("%endblock")
                 .padded()
