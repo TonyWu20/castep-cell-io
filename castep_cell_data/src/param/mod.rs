@@ -8,4 +8,15 @@ pub mod general {
     mod comment;
     mod continuation;
     mod data_distribution;
+    mod iprint;
+    mod num_backup_iter;
+    mod opt_strategy;
+    mod page_wvfns;
+    mod print_clock;
+    mod print_memory_usage;
+    mod rand_seed;
+    mod reuse;
+    mod run_time;
+    mod stop;
+    mod task;
 }
