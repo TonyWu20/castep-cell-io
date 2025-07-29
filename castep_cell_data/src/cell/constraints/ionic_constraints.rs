@@ -1,7 +1,7 @@
 use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
 use serde::{Deserialize, Serialize};
 
-use crate::species::Species;
+use crate::cell::species::Species;
 
 /// Represents a single constraint entry within the IONIC_CONSTRAINTS block.
 ///

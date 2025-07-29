@@ -36,7 +36,7 @@ mod test_bs_kpoint_list {
     use castep_cell_serde::{ToCell, from_str, to_string};
     use serde::{Deserialize, Serialize};
 
-    use crate::bz_sampling_kpoints::bs_kpoints_list::BSKpointList;
+    use crate::cell::bz_sampling_kpoints::bs_kpoints_list::BSKpointList;
 
     #[test]
     fn bs_kpoint_list_serde() {

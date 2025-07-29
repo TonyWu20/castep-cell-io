@@ -1,9 +1,10 @@
-use crate::species::hubbard_u::AtomHubbardU;
-use crate::species::hubbard_u::OrbitalU;
+use crate::cell::species::{
+    Species,
+    hubbard_u::{AtomHubbardU, OrbitalU},
+};
 use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
 use serde::{Deserialize, Serialize};
 
-use crate::species::Species;
 /// Represents the specification for Hubbard U values for a specific atom/ion.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -155,7 +156,7 @@ mod atom_hubbard_u {
     use castep_cell_serde::{CellValue, CellValueDeserializer};
     use serde::Deserialize;
 
-    use crate::species::hubbard_u::AtomHubbardU;
+    use crate::cell::species::hubbard_u::AtomHubbardU;
 
     #[test]
     fn test_atom_hubbard_u() {

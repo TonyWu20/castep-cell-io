@@ -87,3 +87,38 @@ Default
 Example
 INV_LENGTH_UNIT : 1/nm
 ```
+
+This is the documentation of `PRESSURE_UNIT`
+
+```markdown
+# PRESSURE_UNIT (.param)
+
+## Keyword type
+
+String
+
+## Description
+
+This keyword specifies the units in which pressure will be reported.
+
+The available units and their associated identifiers are:
+
+| Unit                  | Identifier        |
+| --------------------- | ----------------- |
+| Hartree per Bohr3     | hartree/bohr\*\*3 |
+| Electron Volts per Å3 | ev/ang\*\*3       |
+| Pascal                | pa                |
+| Megapascal            | mpa               |
+| Gigapascal            | gpa               |
+| Atmosphere            | atm               |
+| Bar                   | bar               |
+| Megabar               | mbar              |
+
+## Default
+
+gpa
+
+## Example
+
+PRESSURE_UNIT : atm
+```

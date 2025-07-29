@@ -1,4 +1,4 @@
-use crate::species::Species;
+use crate::cell::species::Species;
 use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
 use serde::{Deserialize, Serialize};
 

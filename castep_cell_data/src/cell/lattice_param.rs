@@ -114,12 +114,9 @@ impl ToCell for LatticeABC {
 
 #[cfg(test)]
 mod test_lattice_param {
+    use super::*;
     use castep_cell_serde::{ToCell, from_str, to_string};
     use serde::{Deserialize, Serialize};
-
-    use crate::lattice_param::LatticeABC;
-
-    use super::LatticeCart;
 
     #[test]
     fn lattice_param_serde() {
