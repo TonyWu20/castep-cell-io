@@ -157,7 +157,8 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
         V: serde::de::Visitor<'de>,
     {
         match self.value {
-            CellValue::Int(i) => visitor.visit_i8(*i as i8),
+            CellValue::UInt(u) => visitor.visit_i8((*u).try_into().map_err(Error::TryFromInt)?),
+            CellValue::Int(i) => visitor.visit_i8((*i).try_into().map_err(Error::TryFromInt)?),
             other => Err(Error::UnexpectedType(
                 "i8".to_string(),
                 format!("{other:?}"),
@@ -170,7 +171,8 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
         V: serde::de::Visitor<'de>,
     {
         match self.value {
-            CellValue::Int(i) => visitor.visit_i16(*i as i16),
+            CellValue::UInt(u) => visitor.visit_i16((*u).try_into().map_err(Error::TryFromInt)?),
+            CellValue::Int(i) => visitor.visit_i16((*i).try_into().map_err(Error::TryFromInt)?),
             other => Err(Error::UnexpectedType(
                 "i16".to_string(),
                 format!("{other:?}"),
@@ -183,6 +185,7 @@ impl<'a, 'de> Deserializer<'de> for &'a mut CellValueDeserializer<'a, 'de> {
         V: serde::de::Visitor<'de>,
     {
         match self.value {
+            CellValue::UInt(u) => visitor.visit_i32((*u).try_into().map_err(Error::TryFromInt)?),
             CellValue::Int(i) => visitor.visit_i32(*i),
             other => Err(Error::UnexpectedType(
                 "i32".to_string(),
