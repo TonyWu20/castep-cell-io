@@ -204,3 +204,91 @@ SinglePoint
 Example
 TASK : optics
 ```
+
+This is the documentations for types in module `general`.
+
+```
+WRITE_CHECKPOINT(.param)
+Keyword type
+String
+
+Description
+Specifies whether or not to write both seedname.checkand seedname.castep_bin files, and (optionally) fine control on what to write for periodic backup, failure or success.
+
+Allowed values:
+
+NONE
+MINIMAL or BOTH
+ALL or FULL
+Options:
+
+SUCCESS=
+FAILURE=
+BACKUP=
+Only one of these options can be specified (that is, it is not possible to request different behavior, for example for successful termination and for the failed calculations.
+
+If, for example, an option is requested for a failed calculation, the default behavior will be used in backups and in the case of failure; that is, both seedname.checkand seedname.castep_bin files will be produced at intermediate backups and in the case of a job completed with a failure termination.
+
+Default
+ALL
+Example
+WRITE_CHECKPOINT : SUCCESS=BOTH
+WRITE_CHECKPOINT : MINIMAL
+```
+
+```
+WRITE_FORMATTED_DENSITY(.param)
+Keyword type
+Logical
+
+Description
+This keyword specifies whether the final electron density is written to an ASCII file called seedname.den_fmt.
+
+Default
+FALSE
+Example
+WRITE_FORMATTED_DENSITY : TRUE
+```
+
+```
+WRITE_FORMATTED_ELF (.param)
+Keyword type
+Logical
+
+Description
+This keyword specifies whether the electron localization function (ELF) is written to an ASCII file called seedname.elf_fmt.
+
+Default
+FALSE
+Example
+WRITE_FORMATTED_ELF : TRUE
+```
+
+```
+WRITE_FORMATTED_POTENTIAL(.param)
+Keyword type
+Logical
+
+Description
+This keyword specifies whether the final local potential is written to an ASCII file called seedname.pot_fmt.
+
+Default
+FALSE
+
+Example
+WRITE_FORMATTED_POTENTIAL : TRUE
+```
+
+```
+WRITE_ORBITALS(.param)
+Keyword type
+Logical
+
+Description
+Specifies whether or not to write seedname.orbitals binary file in a band structure calculation.
+
+Default
+FALSE unless TASK is BANDSTRUCTURE.
+Example
+WRITE_ORBITALS : TRUE
+```

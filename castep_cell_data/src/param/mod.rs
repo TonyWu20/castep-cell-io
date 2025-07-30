@@ -19,4 +19,9 @@ pub mod general {
     mod run_time;
     mod stop;
     mod task;
+    mod write_checkpoint;
+    mod write_formatted_density;
+    mod write_formatted_elf;
+    mod write_formatted_potential;
+    mod write_orbitals;
 }
