@@ -53,10 +53,10 @@ impl ToCell for LatticeCart {
         Cell::Block(
             "LATTICE_CART",
             vec![
-                match &self.unit {
-                    Some(u) => CellValue::Array(vec![u.to_cell_value()]),
-                    None => CellValue::Null,
-                },
+                self.unit
+                    .as_ref()
+                    .map(|u| CellValue::Array(vec![u.to_cell_value()]))
+                    .unwrap_or(CellValue::Null),
                 CellValue::Array(self.a.into_iter().map(CellValue::Float).collect()),
                 CellValue::Array(self.b.into_iter().map(CellValue::Float).collect()),
                 CellValue::Array(self.c.into_iter().map(CellValue::Float).collect()),
@@ -101,10 +101,10 @@ impl ToCell for LatticeABC {
         Cell::Block(
             "LATTICE_ABC",
             vec![
-                CellValue::Array(vec![match &self.unit {
-                    Some(u) => u.to_cell_value(),
-                    None => CellValue::Null,
-                }]),
+                self.unit
+                    .as_ref()
+                    .map(|u| CellValue::Array(vec![u.to_cell_value()]))
+                    .unwrap_or(CellValue::Null),
                 CellValue::Array(self.abc.into_iter().map(CellValue::Float).collect()),
                 CellValue::Array(self.angles.into_iter().map(CellValue::Float).collect()),
             ],

@@ -58,10 +58,10 @@ impl ToCell for ExternalEfield {
     /// Converts the struct into the intermediate `Cell` representation for serialization.
     fn to_cell(&self) -> Cell {
         let block_content = [
-            match &self.unit {
-                Some(u) => CellValue::Array(vec![u.to_cell_value()]),
-                None => CellValue::Null,
-            },
+            self.unit
+                .as_ref()
+                .map(|u| CellValue::Array(vec![u.to_cell_value()]))
+                .unwrap_or(CellValue::Null),
             CellValue::Array(
                 self.field_vector
                     .into_iter()

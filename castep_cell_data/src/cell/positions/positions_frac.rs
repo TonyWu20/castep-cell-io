@@ -62,14 +62,18 @@ impl ToCellValue for PositionFracEntry {
             [self.species.to_cell_value()]
                 .into_iter()
                 .chain(self.coord.into_iter().map(CellValue::Float))
-                .chain(match &self.spin {
-                    Some(spin) => [
-                        CellValue::String("SPIN=".to_string()),
-                        CellValue::Float(*spin),
-                    ]
-                    .to_vec(),
-                    None => [CellValue::Null].to_vec(),
-                })
+                .chain(
+                    self.spin
+                        .as_ref()
+                        .map(|spin| {
+                            [
+                                CellValue::String("SPIN=".to_string()),
+                                CellValue::Float(*spin),
+                            ]
+                            .to_vec()
+                        })
+                        .unwrap_or([CellValue::Null].to_vec()),
+                )
                 .collect(),
         )
     }
