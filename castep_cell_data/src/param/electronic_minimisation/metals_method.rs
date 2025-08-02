@@ -13,16 +13,13 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "METALS_METHOD")]
 pub enum MetalsMethod {
     /// System treated by density mixing
-    #[serde(rename = "DM")]
-    #[serde(alias = "dm")]
+    #[serde(alias = "dm", alias = "DM")]
     Dm,
     /// System treated by ensemble density functional method
-    #[serde(rename = "EDFT")]
-    #[serde(alias = "edft")]
+    #[serde(alias = "edft", alias = "EDFT")]
     Edft,
     /// Currently not used
-    #[serde(rename = "NONE")]
-    #[serde(alias = "none")]
+    #[serde(alias = "none", alias = "NONE")]
     None,
 }
 
@@ -72,7 +69,7 @@ mod tests {
 
         for (input_str, expected_method) in test_cases {
             #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+            #[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE", serialize = "snake_case"))]
             struct CellFileWithMetalsMethod {
                 metals_method: MetalsMethod,
             }

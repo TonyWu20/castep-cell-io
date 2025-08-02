@@ -13,20 +13,20 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "SMEARING_SCHEME")]
 pub enum SmearingScheme {
     /// Gaussian smearing
-    #[serde(rename = "Gaussian")]
+    #[serde(alias = "gaussian", alias = "GAUSSIAN")]
     #[default]
     Gaussian,
     /// Gaussian splines smearing
-    #[serde(rename = "GaussianSplines")]
+    #[serde(alias = "GAUSSIANSPLINES", alias = "gaussiansplines")]
     GaussianSplines,
     /// Fermi-Dirac smearing
-    #[serde(rename = "FermiDirac")]
+    #[serde(alias = "fermidirac", alias = "FERMIDIRAC")]
     FermiDirac,
     /// Hermite polynomials smearing
-    #[serde(rename = "HermitePolynomials")]
+    #[serde(alias = "hermitepolynomials", alias = "HERMITEPOLYNOMIALS")]
     HermitePolynomials,
     /// Cold smearing
-    #[serde(rename = "ColdSmearing")]
+    #[serde(alias = "coldsmearing", alias = "COLDSMEARING")]
     ColdSmearing,
 }
 
