@@ -1,4 +1,5 @@
 pub mod basis_set;
+pub mod density_mixing;
 pub mod electronic;
 pub mod electronic_minimisation;
 pub mod exchange_correlation;
