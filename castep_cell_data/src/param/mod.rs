@@ -4,4 +4,6 @@ pub mod electronic;
 pub mod electronic_minimisation;
 pub mod exchange_correlation;
 pub mod general;
+pub mod geometry_optimization;
+pub mod population_analysis;
 pub mod pseudopotential;
