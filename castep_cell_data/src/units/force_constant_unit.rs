@@ -13,16 +13,16 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "FORCE_CONSTANT_UNIT")]
 pub enum ForceConstantUnit {
     /// Hartree per Bohr^2
-    #[serde(rename = "hartree/bohr**2")]
+    #[serde(rename = "hartree/bohr**2", alias = "HARTREE/BOHR**2")]
     HartreePerBohr2,
     /// Electron Volts per Å^2
-    #[serde(rename = "ev/ang**2")]
+    #[serde(rename = "ev/ang**2", alias = "EV/ANG**2")]
     EvPerAng2,
     /// Newton per meter
-    #[serde(rename = "n/m")]
+    #[serde(rename = "n/m", alias = "N/M")]
     NewtonPerMeter,
     /// Dynes per centimeter
-    #[serde(rename = "dyne/cm")]
+    #[serde(rename = "dyne/cm", alias = "DYNE/CM")]
     DynesPerCentimeter,
 }
 
@@ -96,8 +96,7 @@ mod tests {
             let cell_file = cell_file_result.unwrap();
             assert_eq!(
                 cell_file.force_constant_unit, expected_unit,
-                "Failed for input: {}",
-                input_str
+                "Failed for input: {input_str}"
             );
         }
 

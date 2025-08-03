@@ -12,13 +12,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "DATA_DISTRIBUTION")]
 pub enum DataDistribution {
-    #[serde(rename = "Kpoint")]
+    #[serde(alias = "Kpoint", alias = "kpoint", alias = "KPOINT")]
     KPoint,
-    #[serde(rename = "Gvector")]
+    #[serde(alias = "Gvector", alias = "GVECTOR", alias = "gvector")]
     GVector,
-    #[serde(rename = "Mixed")]
+    #[serde(alias = "MIXED", alias = "mixed")]
     Mixed,
-    #[serde(rename = "Default")]
+    #[serde(rename = "Default", alias = "default", alias = "DEFAULT")]
     Default,
 }
 

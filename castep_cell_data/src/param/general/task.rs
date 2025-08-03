@@ -13,43 +13,43 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "TASK")]
 pub enum Task {
     /// Performs a single-point energy calculation.
-    #[serde(rename = "SinglePoint")]
+    #[serde(alias = "SINGLEPOINT", alias = "singlepoint")]
     SinglePoint,
     /// Calculates band structure properties.
-    #[serde(rename = "BandStructure")]
+    #[serde(alias = "BANDSTRUCTURE", alias = "bandstructure")]
     BandStructure,
     /// Searches for a minimum energy structure.
-    #[serde(rename = "GeometryOptimization")]
+    #[serde(alias = "GEOMETRYOPTIMIZATION", alias = "geometryoptimization")]
     GeometryOptimization,
     /// Performs a molecular dynamics calculation.
-    #[serde(rename = "MolecularDynamics")]
+    #[serde(alias = "MOLECULARDYNAMICS", alias = "moleculardynamics")]
     MolecularDynamics,
     /// Calculates optical properties.
-    #[serde(rename = "Optics")]
+    #[serde(alias = "OPTICS", alias = "optics")]
     Optics,
     /// Performs a linear response calculation to determine phonon frequencies and eigenvectors.
-    #[serde(rename = "Phonon")]
+    #[serde(alias = "PHONON", alias = "phonon")]
     Phonon,
     /// Performs an electric field linear response calculation.
-    #[serde(rename = "Efield")]
+    #[serde(alias = "EFIELD", alias = "efield")]
     Efield,
     /// Performs both Phonon and Efield calculations.
-    #[serde(rename = "Phonon+Efield")]
+    #[serde(alias = "PHONON+EFIELD", alias = "phonon+efield")]
     PhononPlusEfield,
     /// Performs a transition-state search.
-    #[serde(rename = "TransitionStateSearch")]
+    #[serde(alias = "TRANSITIONSTATESEARCH", alias = "transitionstatesearch")]
     TransitionStateSearch,
     /// Performs an NMR calculation.
-    #[serde(rename = "MagRes")]
+    #[serde(alias = "MAGRES", alias = "magres")]
     MagRes,
     /// Performs core level spectroscopy calculation.
-    #[serde(rename = "Elnes")]
+    #[serde(alias = "ELNES", alias = "elnes")]
     Elnes,
     /// Performs electronic spectroscopy calculation.
-    #[serde(rename = "ElectronicSpectroscopy")]
+    #[serde(alias = "ELECTRONICSPECTROSCOPY", alias = "electronicspectroscopy")]
     ElectronicSpectroscopy,
     /// Performs a free energy of solvation calculation.
-    #[serde(rename = "Autosolvation")]
+    #[serde(alias = "AUTOSOLVATION", alias = "autosolvation")]
     Autosolvation,
 }
 

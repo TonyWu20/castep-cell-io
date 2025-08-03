@@ -14,14 +14,14 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "OPT_STRATEGY")]
 pub enum OptStrategy {
     /// Maximizes performance at the cost of additional memory usage.
-    #[serde(rename = "Speed")]
+    #[serde(alias = "speed", alias = "SPEED")]
     Speed,
     /// Balances performance and memory usage.
-    #[serde(rename = "Default")]
+    #[serde(alias = "default", alias = "DEFAULT")]
     #[default]
     Default,
     /// Minimizes memory usage at a cost of decreased performance.
-    #[serde(rename = "Memory")]
+    #[serde(alias = "memory", alias = "MEMEORY")]
     Memory,
 }
 

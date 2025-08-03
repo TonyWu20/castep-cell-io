@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "PSPOT_NONLOCAL_TYPE")]
 pub enum PspotNonlocalType {
     /// Reciprocal space nonlocal pseudopotentials
-    #[serde(rename = "RECIPROCAL")]
+    #[serde(alias = "RECIPROCAL", alias = "reciprocal")]
     Reciprocal,
     /// Real space nonlocal pseudopotentials
-    #[serde(rename = "REAL")]
+    #[serde(alias = "REAL", alias = "real")]
     Real,
 }
 
@@ -78,8 +78,7 @@ mod tests {
             let cell_file = cell_file_result.unwrap();
             assert_eq!(
                 cell_file.pspot_nonlocal_type, expected_type,
-                "Failed for input: {}",
-                input_str
+                "Failed for input: {input_str}"
             );
         }
 

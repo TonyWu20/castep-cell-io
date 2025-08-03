@@ -14,10 +14,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "PSPOT_BETA_PHI_TYPE")]
 pub enum PspotBetaPhiType {
     /// Reciprocal space nonlocal pseudopotentials
-    #[serde(rename = "RECIPROCAL")]
+    #[serde(alias = "RECIPROCAL", alias = "reciprocal")]
     Reciprocal,
     /// Real space nonlocal pseudopotentials
-    #[serde(rename = "REAL")]
+    #[serde(alias = "REAL", alias = "real")]
     Real,
 }
 

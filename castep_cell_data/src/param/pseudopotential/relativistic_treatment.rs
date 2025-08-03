@@ -14,17 +14,17 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "RELATIVISTIC_TREATMENT")]
 pub enum RelativisticTreatment {
     /// Completely non-relativistic pseudopotentials
-    #[serde(rename = "SCHROEDINGER")]
+    #[serde(alias = "SCHROEDINGER", alias = "schroedinger")]
     Schroedinger,
     /// Scalar relativistic treatment (ZORA)
-    #[serde(rename = "ZORA")]
+    #[serde(alias = "ZORA", alias = "zora")]
     Zora,
     /// Scalar relativistic treatment (Koelling-Harmon)
-    #[serde(rename = "KOELLING-HARMON")]
+    #[serde(alias = "KOELLING-HARMON", alias = "koelling-harmon")]
     #[default]
     KoellingHarmon,
     /// Fully relativistic treatment
-    #[serde(rename = "DIRAC")]
+    #[serde(alias = "DIRAC", alias = "dirac")]
     Dirac,
 }
 
@@ -91,8 +91,7 @@ mod tests {
             let cell_file = cell_file_result.unwrap();
             assert_eq!(
                 cell_file.relativistic_treatment, expected_treatment,
-                "Failed for input: {}",
-                input_str
+                "Failed for input: {input_str}"
             );
         }
 

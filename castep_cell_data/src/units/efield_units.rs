@@ -8,13 +8,15 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "EFIELD_UNIT")] // Name for serde, though likely used via variant names
 pub enum EFieldUnit {
     /// The default unit: eV/Å/electron
-    #[serde(rename = "ev/ang/e")] // CASTEP notation for eV/Å/electron
+    #[serde(rename = "ev/ang/e", alias = "EV/ANG/E")] // CASTEP notation for eV/Å/electron
     #[default]
     EvPerAngPerE,
     /// Hartree per Bohr per electron
-    #[serde(rename = "hartree/bohr/e")]
+    #[serde(rename = "hartree/bohr/e", alias = "HARTREE/BOHR/E")]
     HartreePerBohrPerE,
     // Add other units if they become valid/used in CASTEP for this context
+    #[serde(rename = "N/C", alias = "n/c")]
+    NewtonPerCharge,
 }
 
 // Implement ToCellValue for EFieldUnit to allow serialization via your backend.
@@ -24,7 +26,7 @@ impl ToCellValue for EFieldUnit {
             match self {
                 EFieldUnit::EvPerAngPerE => "ev/ang/e",
                 EFieldUnit::HartreePerBohrPerE => "hartree/bohr/e",
-                // Add arms for other variants
+                EFieldUnit::NewtonPerCharge => "n/c", // Add arms for other variants
             }
             .to_string(), // Convert &str to String for CellValue::String
         )
@@ -46,6 +48,7 @@ mod tests {
                 "EFIELD_UNIT : hartree/bohr/e",
                 EFieldUnit::HartreePerBohrPerE,
             ),
+            ("EFIELD_UNIT : N/C", EFieldUnit::NewtonPerCharge),
         ];
 
         for (input_str, expected_unit) in test_cases {
@@ -74,6 +77,10 @@ mod tests {
         assert_eq!(
             EFieldUnit::HartreePerBohrPerE.to_cell_value(),
             CellValue::String("hartree/bohr/e".to_string())
+        );
+        assert_eq!(
+            EFieldUnit::NewtonPerCharge.to_cell_value(),
+            CellValue::String("n/c".to_string())
         );
 
         // Test Default
