@@ -149,7 +149,7 @@ impl ToCell for WriteCheckpoint {
                 WriteCheckpointAction::All => "ALL",
                 WriteCheckpointAction::Full => "FULL",
             };
-            let full_value = format!("{}={}", option_prefix, option_action_str);
+            let full_value = format!("{option_prefix}={option_action_str}");
             Cell::KeyValue("WRITE_CHECKPOINT", CellValue::String(full_value))
         } else {
             // If no option, just serialize the action

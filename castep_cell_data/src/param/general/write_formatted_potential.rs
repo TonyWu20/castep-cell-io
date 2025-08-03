@@ -9,15 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// WRITE_FORMATTED_POTENTIAL : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "WRITE_FORMATTED_POTENTIAL")]
 pub struct WriteFormattedPotential(pub bool);
-
-impl Default for WriteFormattedPotential {
-    fn default() -> Self {
-        Self(false) // Default is FALSE
-    }
-}
 
 impl ToCell for WriteFormattedPotential {
     fn to_cell(&self) -> Cell {

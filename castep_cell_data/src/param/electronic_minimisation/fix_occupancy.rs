@@ -9,15 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// FIX_OCCUPANCY : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "FIX_OCCUPANCY")]
 pub struct FixOccupancy(pub bool);
-
-impl Default for FixOccupancy {
-    fn default() -> Self {
-        Self(false) // Default is FALSE
-    }
-}
 
 impl ToCell for FixOccupancy {
     fn to_cell(&self) -> Cell {

@@ -9,15 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// WRITE_FORMATTED_ELF : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "WRITE_FORMATTED_ELF")]
 pub struct WriteFormattedElf(pub bool);
-
-impl Default for WriteFormattedElf {
-    fn default() -> Self {
-        Self(false) // Default is FALSE
-    }
-}
 
 impl ToCell for WriteFormattedElf {
     fn to_cell(&self) -> Cell {

@@ -9,15 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// WRITE_FORMATTED_DENSITY : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "WRITE_FORMATTED_DENSITY")]
 pub struct WriteFormattedDensity(pub bool);
-
-impl Default for WriteFormattedDensity {
-    fn default() -> Self {
-        Self(false) // Default is FALSE
-    }
-}
 
 impl ToCell for WriteFormattedDensity {
     fn to_cell(&self) -> Cell {

@@ -9,18 +9,13 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// WRITE_ORBITALS : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "WRITE_ORBITALS")]
 pub struct WriteOrbitals(pub bool);
 
 // Note: The default logic ("FALSE unless TASK is BANDSTRUCTURE") is context-dependent
 // and cannot be easily encoded in the struct itself without access to the TASK value.
 // The `Default` implementation here provides a base default of `false`.
-impl Default for WriteOrbitals {
-    fn default() -> Self {
-        Self(false) // Base default is FALSE
-    }
-}
 
 impl ToCell for WriteOrbitals {
     fn to_cell(&self) -> Cell {
