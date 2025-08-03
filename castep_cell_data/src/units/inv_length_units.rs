@@ -15,16 +15,16 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "INV_LENGTH_UNIT")] // Ensures correct key name during serde
 pub enum InvLengthUnit {
     /// Bohr-1
-    #[serde(rename = "1/bohr")]
+    #[serde(alias = "1/BOHR", alias = "1/bohr")]
     Bohr,
     /// Meter-1
-    #[serde(rename = "1/m")]
+    #[serde(alias = "1/M", alias = "1/m")]
     Meter,
     /// Nanometer-1
-    #[serde(rename = "1/nm")]
+    #[serde(alias = "1/NM", alias = "1/nm")]
     NanoMeter,
     /// Å-1
-    #[serde(rename = "1/ang")]
+    #[serde(alias = "1/ANG", alias = "1/ang")]
     #[default]
     Angstrom,
 }

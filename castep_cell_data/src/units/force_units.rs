@@ -17,14 +17,14 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "FORCE_UNIT")] // Ensures correct key name during serde
 pub enum ForceUnit {
     /// Hartree per Bohr
-    #[serde(rename = "hartree/bohr")]
+    #[serde(alias = "HARTREE/BOHR", alias = "hartree/bohr")]
     HartreePerBohr,
     /// Electron volts per Ångström
-    #[serde(rename = "ev/ang")]
+    #[serde(alias = "EV/ANG", alias = "ev/ang")]
     #[default]
     EvPerAng,
     /// Newton
-    #[serde(rename = "n")]
+    #[serde(alias = "N", alias = "n")]
     Newton,
 }
 

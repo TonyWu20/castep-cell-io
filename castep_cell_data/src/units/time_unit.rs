@@ -9,36 +9,33 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// TIME_UNIT : aut
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "TIME_UNIT")]
 pub enum TimeUnit {
     /// Atomic unit of time
-    #[serde(rename = "aut")]
+    #[serde(alias = "AUT", alias = "aut")]
     AtomicUnitOfTime,
     /// Second
-    #[serde(rename = "s")]
+    #[serde(alias = "S", alias = "s")]
     Second,
     /// Millisecond
-    #[serde(rename = "ms")]
+    #[serde(alias = "MS", alias = "ms")]
     Millisecond,
     /// Microsecond
-    #[serde(rename = "mus")]
+    #[serde(alias = "MUS", alias = "mus")]
     Microsecond,
     /// Nanosecond
-    #[serde(rename = "ns")]
+    #[serde(alias = "NS", alias = "ns")]
     Nanosecond,
     /// Picosecond
-    #[serde(rename = "ps")]
+    #[serde(alias = "PS", alias = "ps")]
+    #[default]
     Picosecond,
     /// Femtosecond
-    #[serde(rename = "fs")]
+    #[serde(alias = "FS", alias = "fs")]
     Femtosecond,
-}
-
-impl Default for TimeUnit {
-    fn default() -> Self {
-        Self::Picosecond // Default is ps
-    }
 }
 
 impl ToCell for TimeUnit {
@@ -96,8 +93,7 @@ mod tests {
             let cell_file = cell_file_result.unwrap();
             assert_eq!(
                 cell_file.time_unit, expected_unit,
-                "Failed for input: {}",
-                input_str
+                "Failed for input: {input_str}"
             );
         }
 

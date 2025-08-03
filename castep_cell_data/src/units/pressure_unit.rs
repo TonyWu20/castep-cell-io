@@ -9,32 +9,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// PRESSURE_UNIT : atm
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "PRESSURE_UNIT")] // Ensures correct key name during serde
 pub enum PressureUnit {
     /// Hartree per Bohr^3
-    #[serde(rename = "hartree/bohr**3")]
+    #[serde(alias = "HARTREE/BOHR**3", alias = "hartree/bohr**3")]
     HartreePerBohr3,
     /// Electron Volts per Å^3
-    #[serde(rename = "ev/ang**3")]
+    #[serde(alias = "EV/ANG**3", alias = "ev/ang**3")]
     EvPerAng3,
     /// Pascal
-    #[serde(rename = "pa")]
+    #[serde(alias = "PA", alias = "pa")]
     Pascal,
     /// Megapascal
-    #[serde(rename = "mpa")]
+    #[serde(alias = "MPA", alias = "mpa")]
     MegaPascal,
     /// Gigapascal (Default)
-    #[serde(rename = "gpa")]
+    #[serde(alias = "GPA", alias = "gpa")]
+    #[default]
     GigaPascal,
     /// Atmosphere
-    #[serde(rename = "atm")]
+    #[serde(alias = "ATM", alias = "atm")]
     Atmosphere,
     /// Bar
-    #[serde(rename = "bar")]
+    #[serde(alias = "BAR", alias = "bar")]
     Bar,
     /// Megabar
-    #[serde(rename = "mbar")]
+    #[serde(alias = "MBAR", alias = "mbar")]
     MegaBar,
 }
 
@@ -42,12 +45,6 @@ impl PressureUnit {
     /// Returns the default unit.
     pub const fn default_unit() -> Self {
         Self::GigaPascal // Default is gpa
-    }
-}
-
-impl Default for PressureUnit {
-    fn default() -> Self {
-        Self::default_unit()
     }
 }
 

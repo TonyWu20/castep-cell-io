@@ -3,19 +3,27 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
 )]
-#[serde(rename_all = "lowercase")]
+/// This keyword specifies the units in which lengths will be reported.
+///
+/// Keyword type: String
+///
+/// Default: ang
+///
+/// Example:
+/// LENGTH_UNIT : bohr
 pub enum LengthUnit {
+    #[serde(alias = "BOHR", alias = "bohr")]
     Bohr,
-    #[serde(alias = "a0")]
+    #[serde(alias = "a0", alias = "A0")]
     BohrA0,
-    #[serde(rename = "m")]
+    #[serde(alias = "M", alias = "m")]
     Meter,
-    #[serde(rename = "cm")]
+    #[serde(alias = "CM", alias = "cm")]
     Centimeter,
-    #[serde(rename = "nm")]
+    #[serde(alias = "NM", alias = "nm")]
     Nanometer,
     #[default]
-    #[serde(rename = "ang")]
+    #[serde(alias = "ANG", alias = "ang")]
     Ang,
 }
 

@@ -9,33 +9,30 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// VELOCITY_UNIT : bohr/fs
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "VELOCITY_UNIT")]
 pub enum VelocityUnit {
     /// Atomic unit of velocity
-    #[serde(rename = "auv")]
+    #[serde(alias = "AUV", alias = "auv")]
     AtomicUnitOfVelocity,
     /// Å/ps
-    #[serde(rename = "ang/ps")]
+    #[serde(alias = "ANG/PS", alias = "ang/ps")]
+    #[default]
     AngPerPs,
     /// Å/fs
-    #[serde(rename = "ang/fs")]
+    #[serde(alias = "ANG/FS", alias = "ang/fs")]
     AngPerFs,
     /// Bohr per picosecond
-    #[serde(rename = "bohr/ps")]
+    #[serde(alias = "BOHR/PS", alias = "bohr/ps")]
     BohrPerPs,
     /// Bohr per femtosecond
-    #[serde(rename = "bohr/fs")]
+    #[serde(alias = "BOHR/FS", alias = "bohr/fs")]
     BohrPerFs,
     /// Meters per second
-    #[serde(rename = "m/s")]
+    #[serde(alias = "M/S", alias = "m/s")]
     MetersPerSecond,
-}
-
-impl Default for VelocityUnit {
-    fn default() -> Self {
-        Self::AngPerPs // Default is ang/ps
-    }
 }
 
 impl ToCell for VelocityUnit {
@@ -92,8 +89,7 @@ mod tests {
             let cell_file = cell_file_result.unwrap();
             assert_eq!(
                 cell_file.velocity_unit, expected_unit,
-                "Failed for input: {}",
-                input_str
+                "Failed for input: {input_str}"
             );
         }
 

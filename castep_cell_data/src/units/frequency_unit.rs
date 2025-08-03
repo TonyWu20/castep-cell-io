@@ -9,63 +9,60 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// FREQUENCY_UNIT : hz
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "FREQUENCY_UNIT")]
 pub enum FrequencyUnit {
     /// Hartree
-    #[serde(rename = "ha")]
+    #[serde(alias = "HA", alias = "ha")]
     Hartree,
     /// Millihartree
-    #[serde(rename = "mha")]
+    #[serde(alias = "MHA", alias = "mha")]
     Millihartree,
     /// Electron Volt
-    #[serde(rename = "ev")]
+    #[serde(alias = "EV", alias = "ev")]
     ElectronVolt,
     /// Milli-electron Volt
-    #[serde(rename = "mev")]
+    #[serde(alias = "MEV", alias = "mev")]
     MilliElectronVolt,
     /// Rydberg
-    #[serde(rename = "ry")]
+    #[serde(alias = "RY", alias = "ry")]
     Rydberg,
     /// Millirydberg
-    #[serde(rename = "mry")]
+    #[serde(alias = "MRY", alias = "mry")]
     Millirydberg,
     /// Kilojoules per mole
-    #[serde(rename = "kj/mol")]
+    #[serde(alias = "KJ/MOL", alias = "kj/mol")]
     KilojoulesPerMole,
     /// Kilocalories per mole
-    #[serde(rename = "kcal/mol")]
+    #[serde(alias = "KCAL/MOL", alias = "kcal/mol")]
     KilocaloriesPerMole,
     /// Joules
-    #[serde(rename = "j")]
+    #[serde(alias = "J", alias = "j")]
     Joules,
     /// Erg
-    #[serde(rename = "erg")]
+    #[serde(alias = "ERG", alias = "erg")]
     Erg,
     /// Hertz
-    #[serde(rename = "hz")]
+    #[serde(alias = "HZ", alias = "hz")]
     Hertz,
     /// Megahertz
-    #[serde(rename = "mhz")]
+    #[serde(alias = "MHZ", alias = "mhz")]
     Megahertz,
     /// Gigahertz
-    #[serde(rename = "ghz")]
+    #[serde(alias = "GHZ", alias = "ghz")]
     Gigahertz,
     /// Terahertz
-    #[serde(rename = "thz")]
+    #[serde(alias = "THZ", alias = "thz")]
     Terahertz,
     /// Wavenumber
-    #[serde(rename = "cm-1")]
+    #[serde(alias = "CM-1", alias = "cm-1")]
+    #[default]
     Wavenumber,
     /// Kelvin
-    #[serde(rename = "k")]
+    #[serde(alias = "K", alias = "k")]
     Kelvin,
-}
-
-impl Default for FrequencyUnit {
-    fn default() -> Self {
-        Self::Wavenumber // Default is cm-1
-    }
 }
 
 impl ToCell for FrequencyUnit {

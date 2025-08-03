@@ -9,30 +9,27 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// VOLUME_UNIT : nm**3
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "VOLUME_UNIT")]
 pub enum VolumeUnit {
     /// Bohr^3
-    #[serde(rename = "bohr**3")]
+    #[serde(alias = "BOHR**3", alias = "bohr**3")]
     Bohr3,
     /// Meter^3
-    #[serde(rename = "m**3")]
+    #[serde(alias = "M**3", alias = "m**3")]
     Meter3,
     /// Centimeter^3
-    #[serde(rename = "cm**3")]
+    #[serde(alias = "CM**3", alias = "cm**3")]
     Centimeter3,
     /// Nanometer^3
-    #[serde(rename = "nm**3")]
+    #[serde(alias = "NM**3", alias = "nm**3")]
     Nanometer3,
     /// Ångstrom^3
-    #[serde(rename = "ang**3")]
+    #[serde(alias = "ANG**3", alias = "ang**3")]
+    #[default]
     Ang3,
-}
-
-impl Default for VolumeUnit {
-    fn default() -> Self {
-        Self::Ang3 // Default is ang**3
-    }
 }
 
 impl ToCell for VolumeUnit {

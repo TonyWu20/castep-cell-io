@@ -21,21 +21,20 @@ use serde::{Deserialize, Serialize};
     Ord,
     Default, // Derive Default
 )]
-#[serde(rename_all = "lowercase")] // Allows lowercase variants like "kg", "g"
 // #[serde(rename = "MASS_UNIT")] // Ensures correct key name during serde if used directly
 pub enum MassUnit {
     /// Electron mass
-    #[serde(rename = "me")]
+    #[serde(alias = "ME", alias = "me")]
     ElectronMass,
     /// Atomic mass unit
     #[default] // Specifies the default variant
-    #[serde(rename = "amu")]
+    #[serde(alias = "AMU", alias = "amu")]
     AtomicMassUnit,
     /// Kilogram
-    #[serde(rename = "kg")]
+    #[serde(alias = "KG", alias = "kg")]
     Kilogram,
     /// Gram
-    #[serde(rename = "g")]
+    #[serde(alias = "G", alias = "g")]
     Gram,
 }
 

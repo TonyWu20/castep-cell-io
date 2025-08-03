@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// FORCE_CONSTANT_UNIT : n/m
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(rename = "FORCE_CONSTANT_UNIT")]
 pub enum ForceConstantUnit {
     /// Hartree per Bohr^2
@@ -17,6 +19,7 @@ pub enum ForceConstantUnit {
     HartreePerBohr2,
     /// Electron Volts per Å^2
     #[serde(rename = "ev/ang**2", alias = "EV/ANG**2")]
+    #[default]
     EvPerAng2,
     /// Newton per meter
     #[serde(rename = "n/m", alias = "N/M")]
@@ -24,12 +27,6 @@ pub enum ForceConstantUnit {
     /// Dynes per centimeter
     #[serde(rename = "dyne/cm", alias = "DYNE/CM")]
     DynesPerCentimeter,
-}
-
-impl Default for ForceConstantUnit {
-    fn default() -> Self {
-        Self::EvPerAng2 // Default is ev/ang**2
-    }
 }
 
 impl ToCell for ForceConstantUnit {
