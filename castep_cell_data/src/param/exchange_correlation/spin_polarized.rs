@@ -10,15 +10,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// SPIN_POLARIZED : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "SPIN_POLARIZED")]
 pub struct SpinPolarized(pub bool);
-
-impl Default for SpinPolarized {
-    fn default() -> Self {
-        Self(false) // Default is FALSE
-    }
-}
 
 impl ToCell for SpinPolarized {
     fn to_cell(&self) -> Cell {
