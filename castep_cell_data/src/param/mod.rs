@@ -1,3 +1,4 @@
+pub mod band_structure;
 pub mod basis_set;
 pub mod density_mixing;
 pub mod electronic;
@@ -5,5 +6,6 @@ pub mod electronic_minimisation;
 pub mod exchange_correlation;
 pub mod general;
 pub mod geometry_optimization;
+pub mod phonon;
 pub mod population_analysis;
 pub mod pseudopotential;
