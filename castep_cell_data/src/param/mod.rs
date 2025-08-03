@@ -7,6 +7,8 @@ pub mod electronic_minimisation;
 pub mod exchange_correlation;
 pub mod general;
 pub mod geometry_optimization;
+pub mod molecular_dynamics;
+pub mod nmr;
 pub mod phonon;
 pub mod population_analysis;
 pub mod pseudopotential;
