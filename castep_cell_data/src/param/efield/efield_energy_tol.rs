@@ -3,7 +3,6 @@ use castep_cell_io::parse::{FromCellValue, FromKeyValue};
 use castep_cell_io::{CResult, Error};
 use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
-// Assuming VolumeUnit exists in units module
 use crate::units::VolumeUnit;
 
 /// Controls the tolerance for accepting convergence of the field constants.
@@ -15,39 +14,11 @@ use crate::units::VolumeUnit;
 /// Example:
 /// EFIELD_ENERGY_TOL : 0.000002 ANG**3
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
-#[serde(rename = "EFIELD_ENERGY_TOL")]
-#[serde(from = "EfieldEnergyTolRepr")] // Use intermediate repr for deserialization
 pub struct EfieldEnergyTol {
     /// The energy tolerance value.
     pub value: f64,
     /// The optional unit of the volume value.
     pub unit: Option<VolumeUnit>,
-}
-
-/// Intermediate representation for deserializing `EfieldEnergyTol`.
-/// Handles the optional unit.
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum EfieldEnergyTolRepr {
-    /// Format: value unit
-    WithUnit(f64, VolumeUnit),
-    /// Format: value (default unit Angstrom^3 implied)
-    Essential(f64),
-}
-
-impl From<EfieldEnergyTolRepr> for EfieldEnergyTol {
-    fn from(repr: EfieldEnergyTolRepr) -> Self {
-        match repr {
-            EfieldEnergyTolRepr::WithUnit(value, unit) => Self {
-                value,
-                unit: Some(unit),
-            },
-            EfieldEnergyTolRepr::Essential(value) => Self {
-                value,
-                unit: None, // Default unit (Angstrom^3) implied
-            },
-        }
-    }
 }
 
 impl FromCellValue for EfieldEnergyTol {
