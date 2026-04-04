@@ -37,9 +37,11 @@
               ])
               stdenv
               fish
-              python313
-              python313Packages.pip
-              python313Packages.pynvim
+              (python313.withPackages (ps: with ps; [
+                beautifulsoup4
+                requests
+                pynvim
+              ]))
               uv
             ];
             env = {
