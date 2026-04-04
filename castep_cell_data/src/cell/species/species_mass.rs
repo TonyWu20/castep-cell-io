@@ -104,3 +104,82 @@ impl ToCell for SpeciesMass {
         Cell::Block("SPECIES_MASS", block_content)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_species_mass_entry_from_cell_value() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("Fe"),
+            CellValue::Float(55.845),
+        ]);
+        let entry = SpeciesMassEntry::from_cell_value(&val).unwrap();
+        assert_eq!(entry.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(entry.mass, 55.845);
+    }
+
+    #[test]
+    fn test_species_mass_entry_insufficient_elements() {
+        let val = CellValue::Array(vec![CellValue::Str("Fe")]);
+        assert!(SpeciesMassEntry::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_species_mass_empty() {
+        let result = SpeciesMass::from_block_rows(&[]).unwrap();
+        assert!(result.unit.is_none());
+        assert_eq!(result.masses.len(), 0);
+    }
+
+    #[test]
+    fn test_species_mass_with_unit() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("amu")]),
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::Float(55.845),
+            ]),
+        ];
+        let result = SpeciesMass::from_block_rows(&rows).unwrap();
+        assert!(result.unit.is_some());
+        assert_eq!(result.masses.len(), 1);
+    }
+
+    #[test]
+    fn test_species_mass_without_unit() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::Float(55.845),
+            ]),
+        ];
+        let result = SpeciesMass::from_block_rows(&rows).unwrap();
+        assert!(result.unit.is_none());
+        assert_eq!(result.masses.len(), 1);
+    }
+
+    #[test]
+    fn test_species_mass_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("amu")]),
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::Float(55.845),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Str("O"),
+                CellValue::Float(15.999),
+            ]),
+        ];
+        let result = SpeciesMass::from_block_rows(&rows).unwrap();
+        assert_eq!(result.masses.len(), 2);
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(SpeciesMass::BLOCK_NAME, "SPECIES_MASS");
+    }
+}

@@ -1,7 +1,7 @@
 use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
 use castep_cell_io::parse::FromCellValue;
 use castep_cell_io::{CResult, Error};
-use castep_cell_io::query::value_as_str;
+use castep_cell_io::query::value_as_string;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the units in which force constants will be reported.
@@ -34,7 +34,7 @@ pub enum ForceConstantUnit {
 
 impl FromCellValue for ForceConstantUnit {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
-        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+        match value_as_string(value)?.to_ascii_lowercase().as_str() {
             "hartree/bohr**2" => Ok(Self::HartreePerBohr2),
             "ev/ang**2" => Ok(Self::EvPerAng2),
             "n/m" => Ok(Self::NewtonPerMeter),

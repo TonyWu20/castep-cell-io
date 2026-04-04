@@ -46,4 +46,25 @@ impl ToCellValue for FixVOL {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_true() {
+        let val = CellValue::Bool(true);
+        assert_eq!(FixVOL::from_cell_value(&val).unwrap().0, true);
+    }
+
+    #[test]
+    fn test_from_cell_value_false() {
+        let val = CellValue::Bool(false);
+        assert_eq!(FixVOL::from_cell_value(&val).unwrap().0, false);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(FixVOL::KEY_NAME, "FIX_VOL");
+    }
+}
 

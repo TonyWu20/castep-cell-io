@@ -71,4 +71,21 @@ impl ToCellValue for PhononForceConstantCutoff {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(6.34);
+        let result = PhononForceConstantCutoff::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 6.34);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononForceConstantCutoff::KEY_NAME, "PHONON_FORCE_CONSTANT_CUTOFF");
+    }
+}
 

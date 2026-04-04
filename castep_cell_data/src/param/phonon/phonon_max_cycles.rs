@@ -49,3 +49,20 @@ impl ToCellValue for PhononMaxCycles {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(30);
+        let result = PhononMaxCycles::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 30);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononMaxCycles::KEY_NAME, "PHONON_MAX_CYCLES");
+    }
+}
+

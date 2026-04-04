@@ -72,4 +72,21 @@ impl ToCellValue for MdCellT {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(2.0);
+        let result = MdCellT::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 2.0);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdCellT::KEY_NAME, "MD_CELL_T");
+    }
+}
 

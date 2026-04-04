@@ -82,5 +82,34 @@ impl ToCellValue for GeomMethod {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
 
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("bfgs")).unwrap(), GeomMethod::Bfgs);
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("BFGS")).unwrap(), GeomMethod::Bfgs);
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("lbfgs")).unwrap(), GeomMethod::Lbfgs);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("delocalized")).unwrap(), GeomMethod::Delocalized);
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("delocalised")).unwrap(), GeomMethod::Delocalized);
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("dampedmd")).unwrap(), GeomMethod::DampedMd);
+        assert_eq!(GeomMethod::from_cell_value(&CellValue::Str("tpsd")).unwrap(), GeomMethod::Tpsd);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(GeomMethod::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(GeomMethod::KEY_NAME, "GEOM_METHOD");
+    }
+}
 

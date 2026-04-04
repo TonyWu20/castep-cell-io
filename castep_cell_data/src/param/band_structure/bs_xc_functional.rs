@@ -124,3 +124,42 @@ impl ToCellValue for BsXcFunctional {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("lda")).unwrap(), BsXcFunctional::Lda);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("LDA")).unwrap(), BsXcFunctional::Lda);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("pbe")).unwrap(), BsXcFunctional::Pbe);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("pw91")).unwrap(), BsXcFunctional::Pw91);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("rpbe")).unwrap(), BsXcFunctional::Rpbe);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("wc")).unwrap(), BsXcFunctional::Wc);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("pbesol")).unwrap(), BsXcFunctional::Pbesol);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("hf")).unwrap(), BsXcFunctional::Hf);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("hf-lda")).unwrap(), BsXcFunctional::HfLda);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("shf")).unwrap(), BsXcFunctional::SHF);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("shf-lda")).unwrap(), BsXcFunctional::SHFLda);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("pbe0")).unwrap(), BsXcFunctional::Pbe0);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("b3lyp")).unwrap(), BsXcFunctional::B3lyp);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("hse03")).unwrap(), BsXcFunctional::Hse03);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("hse06")).unwrap(), BsXcFunctional::Hse06);
+        assert_eq!(BsXcFunctional::from_cell_value(&CellValue::Str("rscan")).unwrap(), BsXcFunctional::Rscan);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(BsXcFunctional::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsXcFunctional::KEY_NAME, "BS_XC_FUNCTIONAL");
+    }
+}

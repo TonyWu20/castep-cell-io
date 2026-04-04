@@ -59,3 +59,60 @@ impl ToCellValue for Kpoint {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_kpoint_from_cell_value() {
+        let val = CellValue::Array(vec![
+            CellValue::Float(0.5),
+            CellValue::Float(0.25),
+            CellValue::Float(0.0),
+            CellValue::Float(1.0),
+        ]);
+        let kpt = Kpoint::from_cell_value(&val).unwrap();
+        assert_eq!(kpt.coord, [0.5, 0.25, 0.0]);
+        assert_eq!(kpt.weight, 1.0);
+    }
+
+    #[test]
+    fn test_kpoint_insufficient_elements() {
+        let val = CellValue::Array(vec![
+            CellValue::Float(0.5),
+            CellValue::Float(0.25),
+            CellValue::Float(0.0),
+        ]);
+        assert!(Kpoint::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_kpoint_to_cell_value() {
+        let kpt = Kpoint {
+            coord: [0.5, 0.25, 0.0],
+            weight: 1.0,
+        };
+        let val = kpt.to_cell_value();
+        match val {
+            CellValue::Array(arr) => {
+                assert_eq!(arr.len(), 4);
+                assert_eq!(arr[3], CellValue::Float(1.0));
+            }
+            _ => panic!("Expected Array"),
+        }
+    }
+
+    #[test]
+    fn test_kpoint_partial_ord() {
+        let kpt1 = Kpoint {
+            coord: [0.0, 0.0, 0.0],
+            weight: 1.0,
+        };
+        let kpt2 = Kpoint {
+            coord: [0.5, 0.0, 0.0],
+            weight: 1.0,
+        };
+        assert!(kpt1 < kpt2);
+    }
+}

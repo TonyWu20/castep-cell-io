@@ -71,4 +71,21 @@ impl ToCellValue for GeomForceTol {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(0.07);
+        let result = GeomForceTol::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 0.07);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(GeomForceTol::KEY_NAME, "GEOM_FORCE_TOL");
+    }
+}
 

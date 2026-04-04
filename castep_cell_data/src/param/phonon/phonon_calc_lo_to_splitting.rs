@@ -48,4 +48,25 @@ impl ToCellValue for PhononCalcLoToSplitting {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_true() {
+        let val = CellValue::Bool(true);
+        assert_eq!(PhononCalcLoToSplitting::from_cell_value(&val).unwrap().0, true);
+    }
+
+    #[test]
+    fn test_from_cell_value_false() {
+        let val = CellValue::Bool(false);
+        assert_eq!(PhononCalcLoToSplitting::from_cell_value(&val).unwrap().0, false);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononCalcLoToSplitting::KEY_NAME, "PHONON_CALC_LO_TO_SPLITTING");
+    }
+}
 

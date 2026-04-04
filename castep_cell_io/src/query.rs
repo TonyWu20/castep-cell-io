@@ -113,10 +113,33 @@ pub fn row_as_f64_n<const N: usize>(v: &CellValue<'_>) -> CResult<[f64; N]> {
     }
 }
 
+/// Extract exactly N i32 values from a CellValue::Array row.
+pub fn row_as_i32_n<const N: usize>(v: &CellValue<'_>) -> CResult<[i32; N]> {
+    match v {
+        CellValue::Array(arr) => {
+            if arr.len() < N {
+                return Err(Error::Message(format!(
+                    "expected array of length {N}, got {}",
+                    arr.len()
+                )));
+            }
+            let mut out = [0i32; N];
+            for (i, val) in arr.iter().take(N).enumerate() {
+                out[i] = value_as_i32(val)?;
+            }
+            Ok(out)
+        }
+        other => Err(Error::UnexpectedType(
+            "Array".into(),
+            format!("{other:?}"),
+        )),
+    }
+}
+
 #[cfg(test)]
 mod query_test {
     use crate::{CellValue, parse_cell_file};
-    use super::{find_block, find_keyvalue, has_flag, row_as_f64_n, value_as_bool, value_as_f64};
+    use super::{find_block, find_keyvalue, has_flag, row_as_f64_n, row_as_i32_n, value_as_bool, value_as_f64};
 
     const MIXED_CASE: &str = r#"
 LATTICE_CART : dummy
@@ -174,6 +197,24 @@ SYMMETRY_GENERATE
     fn row_as_f64_n_too_short() {
         let row = CellValue::Array(vec![CellValue::Float(1.0)]);
         let result = row_as_f64_n::<3>(&row);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn row_as_i32_n_correct() {
+        let row = CellValue::Array(vec![
+            CellValue::Int(1),
+            CellValue::Int(2),
+            CellValue::Int(3),
+        ]);
+        let arr: [i32; 3] = row_as_i32_n(&row).unwrap();
+        assert_eq!(arr, [1, 2, 3]);
+    }
+
+    #[test]
+    fn row_as_i32_n_too_short() {
+        let row = CellValue::Array(vec![CellValue::Int(1)]);
+        let result = row_as_i32_n::<3>(&row);
         assert!(result.is_err());
     }
 

@@ -39,4 +39,25 @@ impl ToCellValue for PrintClock {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_true() {
+        let val = CellValue::Bool(true);
+        assert_eq!(PrintClock::from_cell_value_kv(&val).unwrap().0, true);
+    }
+
+    #[test]
+    fn test_from_cell_value_false() {
+        let val = CellValue::Bool(false);
+        assert_eq!(PrintClock::from_cell_value_kv(&val).unwrap().0, false);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PrintClock::KEY_NAME, "PRINT_CLOCK");
+    }
+}
 

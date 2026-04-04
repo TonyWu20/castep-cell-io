@@ -120,4 +120,48 @@ impl ToCellValue for Task {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive_parsing() {
+        let val = CellValue::Str("singlepoint");
+        assert_eq!(Task::from_cell_value(&val).unwrap(), Task::SinglePoint);
+
+        let val = CellValue::Str("SINGLEPOINT");
+        assert_eq!(Task::from_cell_value(&val).unwrap(), Task::SinglePoint);
+
+        let val = CellValue::Str("SinglePoint");
+        assert_eq!(Task::from_cell_value(&val).unwrap(), Task::SinglePoint);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(Task::from_cell_value(&CellValue::Str("bandstructure")).unwrap(), Task::BandStructure);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("geometryoptimization")).unwrap(), Task::GeometryOptimization);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("moleculardynamics")).unwrap(), Task::MolecularDynamics);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("optics")).unwrap(), Task::Optics);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("phonon")).unwrap(), Task::Phonon);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("efield")).unwrap(), Task::Efield);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("phonon+efield")).unwrap(), Task::PhononPlusEfield);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("transitionstatesearch")).unwrap(), Task::TransitionStateSearch);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("magres")).unwrap(), Task::MagRes);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("elnes")).unwrap(), Task::Elnes);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("electronicspectroscopy")).unwrap(), Task::ElectronicSpectroscopy);
+        assert_eq!(Task::from_cell_value(&CellValue::Str("autosolvation")).unwrap(), Task::Autosolvation);
+    }
+
+    #[test]
+    fn test_invalid_variant() {
+        let val = CellValue::Str("invalid");
+        assert!(Task::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(Task::KEY_NAME, "TASK");
+    }
+}
 

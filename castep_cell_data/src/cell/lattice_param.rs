@@ -131,4 +131,139 @@ impl ToCell for LatticeABC {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // LatticeCart tests
+    #[test]
+    fn test_lattice_cart_no_unit() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(0.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(5.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(0.0), CellValue::Float(5.0)]),
+        ];
+        let result = LatticeCart::from_block_rows(&rows).unwrap();
+        assert_eq!(result.unit, None);
+        assert_eq!(result.a, [5.0, 0.0, 0.0]);
+        assert_eq!(result.b, [0.0, 5.0, 0.0]);
+        assert_eq!(result.c, [0.0, 0.0, 5.0]);
+    }
+
+    #[test]
+    fn test_lattice_cart_with_unit_ang() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("ang")]),
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(0.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(5.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(0.0), CellValue::Float(5.0)]),
+        ];
+        let result = LatticeCart::from_block_rows(&rows).unwrap();
+        assert_eq!(result.unit, Some(LengthUnit::Ang));
+    }
+
+    #[test]
+    fn test_lattice_cart_with_unit_bohr() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("bohr")]),
+            CellValue::Array(vec![CellValue::Float(9.45), CellValue::Float(0.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(9.45), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(0.0), CellValue::Float(9.45)]),
+        ];
+        let result = LatticeCart::from_block_rows(&rows).unwrap();
+        assert_eq!(result.unit, Some(LengthUnit::Bohr));
+    }
+
+    #[test]
+    fn test_lattice_cart_empty_rows() {
+        let rows = vec![];
+        let result = LatticeCart::from_block_rows(&rows);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_lattice_cart_insufficient_rows() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(0.0), CellValue::Float(0.0)]),
+            CellValue::Array(vec![CellValue::Float(0.0), CellValue::Float(5.0), CellValue::Float(0.0)]),
+        ];
+        let result = LatticeCart::from_block_rows(&rows);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_lattice_cart_to_cell_no_unit() {
+        let lattice = LatticeCart {
+            unit: None,
+            a: [5.0, 0.0, 0.0],
+            b: [0.0, 5.0, 0.0],
+            c: [0.0, 0.0, 5.0],
+        };
+        let cell = lattice.to_cell();
+        match cell {
+            Cell::Block(name, values) => {
+                assert_eq!(name, "LATTICE_CART");
+                assert_eq!(values.len(), 4);
+            }
+            _ => panic!("Expected Cell::Block"),
+        }
+    }
+
+    // LatticeABC tests
+    #[test]
+    fn test_lattice_abc_no_unit() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(5.0), CellValue::Float(5.0)]),
+            CellValue::Array(vec![CellValue::Float(90.0), CellValue::Float(90.0), CellValue::Float(90.0)]),
+        ];
+        let result = LatticeABC::from_block_rows(&rows).unwrap();
+        assert_eq!(result.unit, None);
+        assert_eq!(result.abc, [5.0, 5.0, 5.0]);
+        assert_eq!(result.angles, [90.0, 90.0, 90.0]);
+    }
+
+    #[test]
+    fn test_lattice_abc_with_unit() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("ang")]),
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(5.0), CellValue::Float(5.0)]),
+            CellValue::Array(vec![CellValue::Float(90.0), CellValue::Float(90.0), CellValue::Float(90.0)]),
+        ];
+        let result = LatticeABC::from_block_rows(&rows).unwrap();
+        assert_eq!(result.unit, Some(LengthUnit::Ang));
+    }
+
+    #[test]
+    fn test_lattice_abc_empty_rows() {
+        let rows = vec![];
+        let result = LatticeABC::from_block_rows(&rows);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_lattice_abc_insufficient_rows() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Float(5.0), CellValue::Float(5.0), CellValue::Float(5.0)]),
+        ];
+        let result = LatticeABC::from_block_rows(&rows);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_lattice_abc_to_cell() {
+        let lattice = LatticeABC {
+            unit: Some(LengthUnit::Ang),
+            abc: [5.0, 5.0, 5.0],
+            angles: [90.0, 90.0, 90.0],
+        };
+        let cell = lattice.to_cell();
+        match cell {
+            Cell::Block(name, values) => {
+                assert_eq!(name, "LATTICE_ABC");
+                assert_eq!(values.len(), 3);
+            }
+            _ => panic!("Expected Cell::Block"),
+        }
+    }
+}
 

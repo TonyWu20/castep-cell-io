@@ -75,4 +75,66 @@ impl ToCell for SpeciesPot {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_species_pot_entry_from_cell_value() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("Fe"),
+            CellValue::Str("Fe.usp"),
+        ]);
+        let entry = SpeciesPotEntry::from_cell_value(&val).unwrap();
+        assert_eq!(entry.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(entry.filename, "Fe.usp");
+    }
+
+    #[test]
+    fn test_species_pot_entry_insufficient_elements() {
+        let val = CellValue::Array(vec![CellValue::Str("Fe")]);
+        assert!(SpeciesPotEntry::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_species_pot_empty() {
+        let result = SpeciesPot::from_block_rows(&[]).unwrap();
+        assert_eq!(result.potentials.len(), 0);
+    }
+
+    #[test]
+    fn test_species_pot_single_entry() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::Str("Fe.usp"),
+            ]),
+        ];
+        let result = SpeciesPot::from_block_rows(&rows).unwrap();
+        assert_eq!(result.potentials.len(), 1);
+        assert_eq!(result.potentials[0].filename, "Fe.usp");
+    }
+
+    #[test]
+    fn test_species_pot_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::Str("Fe.usp"),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Str("O"),
+                CellValue::Str("O.usp"),
+            ]),
+        ];
+        let result = SpeciesPot::from_block_rows(&rows).unwrap();
+        assert_eq!(result.potentials.len(), 2);
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(SpeciesPot::BLOCK_NAME, "SPECIES_POT");
+    }
+}
 

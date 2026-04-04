@@ -48,3 +48,19 @@ impl ToCellValue for BsMaxCgSteps {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(10);
+        let result = BsMaxCgSteps::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 10);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsMaxCgSteps::KEY_NAME, "BS_MAX_CG_STEPS");
+    }
+}

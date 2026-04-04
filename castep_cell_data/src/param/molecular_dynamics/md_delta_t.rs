@@ -72,4 +72,21 @@ impl ToCellValue for MdDeltaT {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(1.54);
+        let result = MdDeltaT::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 1.54);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdDeltaT::KEY_NAME, "MD_DELTA_T");
+    }
+}
 

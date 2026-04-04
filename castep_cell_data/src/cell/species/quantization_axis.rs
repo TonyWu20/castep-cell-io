@@ -67,4 +67,48 @@ impl ToCellValue for QuantizationAxis {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_quantization_axis_from_cell_value() {
+        let val = CellValue::Array(vec![
+            CellValue::Float(1.0),
+            CellValue::Float(1.0),
+            CellValue::Float(-1.0),
+        ]);
+        let result = QuantizationAxis::from_cell_value(&val).unwrap();
+        assert_eq!(result.direction, [1.0, 1.0, -1.0]);
+    }
+
+    #[test]
+    fn test_quantization_axis_insufficient_elements() {
+        let val = CellValue::Array(vec![
+            CellValue::Float(1.0),
+            CellValue::Float(1.0),
+        ]);
+        assert!(QuantizationAxis::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_quantization_axis_key_name() {
+        assert_eq!(QuantizationAxis::KEY_NAME, "QUANTIZATION_AXIS");
+    }
+
+    #[test]
+    fn test_quantization_axis_to_cell_value() {
+        let qa = QuantizationAxis {
+            direction: [1.0, 1.0, -1.0],
+        };
+        let cell_val = qa.to_cell_value();
+        match cell_val {
+            CellValue::Array(arr) => {
+                assert_eq!(arr.len(), 3);
+            }
+            _ => panic!("Expected array"),
+        }
+    }
+}
 

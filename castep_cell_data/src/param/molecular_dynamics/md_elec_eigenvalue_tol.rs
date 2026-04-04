@@ -72,4 +72,21 @@ impl ToCellValue for MdElecEigenvalueTol {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(0.000007);
+        let result = MdElecEigenvalueTol::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 0.000007);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdElecEigenvalueTol::KEY_NAME, "MD_ELEC_EIGENVALUE_TOL");
+    }
+}
 

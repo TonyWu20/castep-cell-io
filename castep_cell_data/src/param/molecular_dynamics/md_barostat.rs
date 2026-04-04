@@ -61,4 +61,30 @@ impl ToCellValue for MdBarostat {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MdBarostat::from_cell_value(&CellValue::Str("andersen-hoover")).unwrap(), MdBarostat::AndersenHoover);
+        assert_eq!(MdBarostat::from_cell_value(&CellValue::Str("ANDERSEN-HOOVER")).unwrap(), MdBarostat::AndersenHoover);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(MdBarostat::from_cell_value(&CellValue::Str("parrinello-rahman")).unwrap(), MdBarostat::ParrinelloRahman);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MdBarostat::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdBarostat::KEY_NAME, "MD_BAROSTAT");
+    }
+}
 

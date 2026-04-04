@@ -69,4 +69,32 @@ impl ToCellValue for MdEnsemble {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MdEnsemble::from_cell_value(&CellValue::Str("nvt")).unwrap(), MdEnsemble::Nvt);
+        assert_eq!(MdEnsemble::from_cell_value(&CellValue::Str("NVT")).unwrap(), MdEnsemble::Nvt);
+        assert_eq!(MdEnsemble::from_cell_value(&CellValue::Str("nve")).unwrap(), MdEnsemble::Nve);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(MdEnsemble::from_cell_value(&CellValue::Str("npt")).unwrap(), MdEnsemble::Npt);
+        assert_eq!(MdEnsemble::from_cell_value(&CellValue::Str("nph")).unwrap(), MdEnsemble::Nph);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MdEnsemble::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdEnsemble::KEY_NAME, "MD_ENSEMBLE");
+    }
+}
 

@@ -61,4 +61,32 @@ impl ToCellValue for OptStrategy {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(OptStrategy::from_cell_value(&CellValue::Str("speed")).unwrap(), OptStrategy::Speed);
+        assert_eq!(OptStrategy::from_cell_value(&CellValue::Str("SPEED")).unwrap(), OptStrategy::Speed);
+        assert_eq!(OptStrategy::from_cell_value(&CellValue::Str("memory")).unwrap(), OptStrategy::Memory);
+        assert_eq!(OptStrategy::from_cell_value(&CellValue::Str("MEMORY")).unwrap(), OptStrategy::Memory);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(OptStrategy::from_cell_value(&CellValue::Str("default")).unwrap(), OptStrategy::Default);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(OptStrategy::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(OptStrategy::KEY_NAME, "OPT_STRATEGY");
+    }
+}
 

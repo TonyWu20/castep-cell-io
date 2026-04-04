@@ -65,4 +65,31 @@ impl ToCellValue for MdDampingScheme {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MdDampingScheme::from_cell_value(&CellValue::Str("independent")).unwrap(), MdDampingScheme::Independent);
+        assert_eq!(MdDampingScheme::from_cell_value(&CellValue::Str("INDEPENDENT")).unwrap(), MdDampingScheme::Independent);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(MdDampingScheme::from_cell_value(&CellValue::Str("coupled")).unwrap(), MdDampingScheme::Coupled);
+        assert_eq!(MdDampingScheme::from_cell_value(&CellValue::Str("steepestdescents")).unwrap(), MdDampingScheme::SteepestDescents);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MdDampingScheme::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdDampingScheme::KEY_NAME, "MD_DAMPING_SCHEME");
+    }
+}
 

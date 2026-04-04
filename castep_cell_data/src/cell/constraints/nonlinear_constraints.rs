@@ -183,4 +183,205 @@ impl ToCell for NonlinearConstraints {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::{CellValue, FromCellValue, parse::FromBlock};
+
+    #[test]
+    fn test_constraint_type_distance() {
+        let val = CellValue::Str("distance");
+        let ct = ConstraintType::from_cell_value(&val).unwrap();
+        assert_eq!(ct, ConstraintType::Distance);
+    }
+
+    #[test]
+    fn test_constraint_type_bend() {
+        let val = CellValue::Str("bend");
+        let ct = ConstraintType::from_cell_value(&val).unwrap();
+        assert_eq!(ct, ConstraintType::Bend);
+    }
+
+    #[test]
+    fn test_constraint_type_torsion() {
+        let val = CellValue::Str("torsion");
+        let ct = ConstraintType::from_cell_value(&val).unwrap();
+        assert_eq!(ct, ConstraintType::Torsion);
+    }
+
+    #[test]
+    fn test_constraint_type_case_insensitive() {
+        let val = CellValue::Str("DISTANCE");
+        let ct = ConstraintType::from_cell_value(&val).unwrap();
+        assert_eq!(ct, ConstraintType::Distance);
+    }
+
+    #[test]
+    fn test_constraint_type_invalid() {
+        let val = CellValue::Str("invalid");
+        assert!(ConstraintType::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_nonlinear_constraint_distance() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("distance"),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(2),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+        ]);
+        let constraint = NonlinearConstraint::from_cell_value(&val).unwrap();
+        assert_eq!(constraint.constraint_type, ConstraintType::Distance);
+        assert_eq!(constraint.atom_sites.len(), 2);
+        assert_eq!(constraint.atom_sites[0].ion_number, 1);
+        assert_eq!(constraint.atom_sites[1].ion_number, 2);
+    }
+
+    #[test]
+    fn test_nonlinear_constraint_bend() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("bend"),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(2),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(3),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+        ]);
+        let constraint = NonlinearConstraint::from_cell_value(&val).unwrap();
+        assert_eq!(constraint.constraint_type, ConstraintType::Bend);
+        assert_eq!(constraint.atom_sites.len(), 3);
+    }
+
+    #[test]
+    fn test_nonlinear_constraint_torsion() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("torsion"),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(2),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(3),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("N"),
+            CellValue::UInt(4),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+        ]);
+        let constraint = NonlinearConstraint::from_cell_value(&val).unwrap();
+        assert_eq!(constraint.constraint_type, ConstraintType::Torsion);
+        assert_eq!(constraint.atom_sites.len(), 4);
+    }
+
+    #[test]
+    fn test_nonlinear_constraint_insufficient_elements() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("distance"),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+        ]);
+        assert!(NonlinearConstraint::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_nonlinear_constraint_not_array() {
+        let val = CellValue::Str("invalid");
+        assert!(NonlinearConstraint::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_nonlinear_constraints_single_entry() {
+        let rows = vec![CellValue::Array(vec![
+            CellValue::Str("distance"),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Str("O"),
+            CellValue::UInt(2),
+            CellValue::Int(0),
+            CellValue::Int(0),
+            CellValue::Int(0),
+        ])];
+        let result = NonlinearConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.constraints.len(), 1);
+    }
+
+    #[test]
+    fn test_nonlinear_constraints_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("distance"),
+                CellValue::Str("Fe"),
+                CellValue::UInt(1),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Str("O"),
+                CellValue::UInt(2),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Int(0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Str("bend"),
+                CellValue::Str("Fe"),
+                CellValue::UInt(1),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Str("O"),
+                CellValue::UInt(2),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Str("O"),
+                CellValue::UInt(3),
+                CellValue::Int(0),
+                CellValue::Int(0),
+                CellValue::Int(0),
+            ]),
+        ];
+        let result = NonlinearConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.constraints.len(), 2);
+    }
+
+    #[test]
+    fn test_nonlinear_constraints_empty() {
+        let result = NonlinearConstraints::from_block_rows(&[]).unwrap();
+        assert_eq!(result.constraints.len(), 0);
+    }
+
+    #[test]
+    fn test_nonlinear_constraints_block_name() {
+        assert_eq!(NonlinearConstraints::BLOCK_NAME, "NONLINEAR_CONSTRAINTS");
+    }
+}
 

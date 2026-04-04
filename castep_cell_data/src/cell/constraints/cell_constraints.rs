@@ -63,4 +63,112 @@ impl ToCell for CellConstraints {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::{CellValue, parse::FromBlock};
+
+    #[test]
+    fn test_cell_constraints_basic() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::UInt(1),
+                CellValue::UInt(1),
+                CellValue::UInt(0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+            ]),
+        ];
+        let result = CellConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.lengths, [1, 1, 0]);
+        assert_eq!(result.angles, [0, 0, 0]);
+    }
+
+    #[test]
+    fn test_cell_constraints_all_free() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::UInt(1),
+                CellValue::UInt(2),
+                CellValue::UInt(3),
+            ]),
+            CellValue::Array(vec![
+                CellValue::UInt(1),
+                CellValue::UInt(2),
+                CellValue::UInt(3),
+            ]),
+        ];
+        let result = CellConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.lengths, [1, 2, 3]);
+        assert_eq!(result.angles, [1, 2, 3]);
+    }
+
+    #[test]
+    fn test_cell_constraints_all_fixed() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+            ]),
+        ];
+        let result = CellConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.lengths, [0, 0, 0]);
+        assert_eq!(result.angles, [0, 0, 0]);
+    }
+
+    #[test]
+    fn test_cell_constraints_insufficient_rows() {
+        let rows = vec![CellValue::Array(vec![
+            CellValue::UInt(1),
+            CellValue::UInt(1),
+            CellValue::UInt(0),
+        ])];
+        assert!(CellConstraints::from_block_rows(&rows).is_err());
+    }
+
+    #[test]
+    fn test_cell_constraints_empty() {
+        assert!(CellConstraints::from_block_rows(&[]).is_err());
+    }
+
+    #[test]
+    fn test_cell_constraints_insufficient_elements_lengths() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::UInt(1), CellValue::UInt(1)]),
+            CellValue::Array(vec![
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+                CellValue::UInt(0),
+            ]),
+        ];
+        assert!(CellConstraints::from_block_rows(&rows).is_err());
+    }
+
+    #[test]
+    fn test_cell_constraints_insufficient_elements_angles() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::UInt(1),
+                CellValue::UInt(1),
+                CellValue::UInt(0),
+            ]),
+            CellValue::Array(vec![CellValue::UInt(0), CellValue::UInt(0)]),
+        ];
+        assert!(CellConstraints::from_block_rows(&rows).is_err());
+    }
+
+    #[test]
+    fn test_cell_constraints_block_name() {
+        assert_eq!(CellConstraints::BLOCK_NAME, "CELL_CONSTRAINTS");
+    }
+}
 

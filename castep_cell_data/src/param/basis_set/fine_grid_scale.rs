@@ -49,4 +49,20 @@ impl ToCellValue for FineGridScale {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Float(2.0);
+        let result = FineGridScale::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 2.0);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(FineGridScale::KEY_NAME, "FINE_GRID_SCALE");
+    }
+}
 

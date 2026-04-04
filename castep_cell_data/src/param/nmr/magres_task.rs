@@ -1,4 +1,6 @@
-use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult, Error};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Defines the type of NMR calculation to be performed.
@@ -29,6 +31,25 @@ impl Default for MagresTask {
     }
 }
 
+impl FromCellValue for MagresTask {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "shielding" => Ok(Self::Shielding),
+            "efg" => Ok(Self::Efg),
+            "nmr" => Ok(Self::Nmr),
+            other => Err(Error::Message(format!("unknown MagresTask: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MagresTask {
+    const KEY_NAME: &'static str = "MAGRES_TASK";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
+
 impl ToCell for MagresTask {
     fn to_cell(&self) -> Cell {
         Cell::KeyValue("MAGRES_TASK", self.to_cell_value())
@@ -48,4 +69,32 @@ impl ToCellValue for MagresTask {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+    use castep_cell_io::parse::FromCellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MagresTask::from_cell_value(&CellValue::Str("shielding")).unwrap(), MagresTask::Shielding);
+        assert_eq!(MagresTask::from_cell_value(&CellValue::Str("SHIELDING")).unwrap(), MagresTask::Shielding);
+        assert_eq!(MagresTask::from_cell_value(&CellValue::Str("efg")).unwrap(), MagresTask::Efg);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(MagresTask::from_cell_value(&CellValue::Str("nmr")).unwrap(), MagresTask::Nmr);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MagresTask::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MagresTask::KEY_NAME, "MAGRES_TASK");
+    }
+}
 

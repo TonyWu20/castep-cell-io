@@ -56,3 +56,25 @@ impl ToCellValue for PspotBetaPhiType {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(PspotBetaPhiType::from_cell_value(&CellValue::Str("reciprocal")).unwrap(), PspotBetaPhiType::Reciprocal);
+        assert_eq!(PspotBetaPhiType::from_cell_value(&CellValue::Str("RECIPROCAL")).unwrap(), PspotBetaPhiType::Reciprocal);
+        assert_eq!(PspotBetaPhiType::from_cell_value(&CellValue::Str("real")).unwrap(), PspotBetaPhiType::Real);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(PspotBetaPhiType::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PspotBetaPhiType::KEY_NAME, "PSPOT_BETA_PHI_TYPE");
+    }
+}

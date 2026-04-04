@@ -61,3 +61,25 @@ impl ToCellValue for MagresMethod {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MagresMethod::from_cell_value(&CellValue::Str("crystal")).unwrap(), MagresMethod::Crystal);
+        assert_eq!(MagresMethod::from_cell_value(&CellValue::Str("CRYSTAL")).unwrap(), MagresMethod::Crystal);
+        assert_eq!(MagresMethod::from_cell_value(&CellValue::Str("molecular")).unwrap(), MagresMethod::Molecular);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MagresMethod::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MagresMethod::KEY_NAME, "MAGRES_METHOD");
+    }
+}

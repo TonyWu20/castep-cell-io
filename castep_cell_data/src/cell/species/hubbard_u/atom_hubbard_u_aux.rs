@@ -58,3 +58,43 @@ impl FromBlock for AtomHubbardU {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_atom_hubbard_u_empty() {
+        let result = AtomHubbardU::from_block_rows(&[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_atom_hubbard_u_species_only() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("Fe")]),
+        ];
+        let result = AtomHubbardU::from_block_rows(&rows).unwrap();
+        assert!(result.species.as_symbol().is_some());
+        assert!(result.ion_number.is_none());
+        assert_eq!(result.orbitals.len(), 0);
+    }
+
+    #[test]
+    fn test_atom_hubbard_u_with_ion_number() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::UInt(1),
+            ]),
+        ];
+        let result = AtomHubbardU::from_block_rows(&rows).unwrap();
+        assert_eq!(result.ion_number, Some(1));
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(AtomHubbardU::BLOCK_NAME, "ATOM_HUBBARD_U");
+    }
+}
+

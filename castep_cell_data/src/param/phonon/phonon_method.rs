@@ -3,7 +3,7 @@
 use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
 use castep_cell_io::parse::{FromCellValue, FromKeyValue};
 use castep_cell_io::{CResult, Error};
-use castep_cell_io::query::value_as_str;
+use castep_cell_io::query::value_as_string;
 use serde::{Deserialize, Serialize};
 
 /// Alias to `enum SeconddMethod`
@@ -39,7 +39,7 @@ pub enum SeconddMethod {
 
 impl FromCellValue for SeconddMethod {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
-        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+        match value_as_string(value)?.to_ascii_lowercase().as_str() {
             "linearresponse" | "dfpt" => Ok(Self::LinearResponse),
             "finitedisplacement" => Ok(Self::FiniteDisplacement),
             other => Err(Error::Message(format!("unknown SeconddMethod: {other}"))),
@@ -71,7 +71,7 @@ impl ToCellValue for SeconddMethod {
     fn to_cell_value(&self) -> CellValue {
         CellValue::String(
             match self {
-                SeconddMethod::LinearResponse => "LINEARRESPONSE", // Or "DFPT"
+                SeconddMethod::LinearResponse => "LINEARRESPONSE",
                 SeconddMethod::FiniteDisplacement => "FINITEDISPLACEMENT",
             }
             .to_string(),
@@ -79,4 +79,49 @@ impl ToCellValue for SeconddMethod {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(SeconddMethod::from_cell_value(&CellValue::Str("linearresponse")).unwrap(), SeconddMethod::LinearResponse);
+        assert_eq!(SeconddMethod::from_cell_value(&CellValue::Str("LINEARRESPONSE")).unwrap(), SeconddMethod::LinearResponse);
+        assert_eq!(SeconddMethod::from_cell_value(&CellValue::Str("dfpt")).unwrap(), SeconddMethod::LinearResponse);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(SeconddMethod::from_cell_value(&CellValue::Str("finitedisplacement")).unwrap(), SeconddMethod::FiniteDisplacement);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(SeconddMethod::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(SeconddMethod::KEY_NAME, "SECONDD_METHOD");
+    }
+
+    #[test]
+    fn test_round_trip_serialization() {
+        let method = SeconddMethod::LinearResponse;
+        let cell_value = method.to_cell_value();
+        let parsed = SeconddMethod::from_cell_value(&cell_value).unwrap();
+        assert_eq!(parsed, method);
+
+        let method = SeconddMethod::FiniteDisplacement;
+        let cell_value = method.to_cell_value();
+        let parsed = SeconddMethod::from_cell_value(&cell_value).unwrap();
+        assert_eq!(parsed, method);
+    }
+
+    #[test]
+    fn test_default_is_linear_response() {
+        assert_eq!(SeconddMethod::default(), SeconddMethod::LinearResponse);
+    }
+}
 

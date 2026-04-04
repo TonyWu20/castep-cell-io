@@ -41,4 +41,60 @@ impl ToCell for BSKpointList {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bs_kpoints_list_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.25),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.5),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.75),
+            ]),
+        ];
+        let result = BSKpointList::from_block_rows(&rows).unwrap();
+        assert_eq!(result.kpts.len(), 2);
+        assert_eq!(result.kpts[0].weight, 0.25);
+        assert_eq!(result.kpts[1].weight, 0.75);
+    }
+
+    #[test]
+    fn test_bs_kpoints_list_empty() {
+        let result = BSKpointList::from_block_rows(&[]).unwrap();
+        assert_eq!(result.kpts.len(), 0);
+    }
+
+    #[test]
+    fn test_bs_kpoints_list_block_name() {
+        assert_eq!(BSKpointList::BLOCK_NAME, "BS_KPOINTS_LIST");
+    }
+
+    #[test]
+    fn test_bs_kpoints_list_to_cell() {
+        let kpts = BSKpointList {
+            kpts: vec![Kpoint {
+                coord: [0.0, 0.0, 0.0],
+                weight: 1.0,
+            }],
+        };
+        let cell = kpts.to_cell();
+        match cell {
+            Cell::Block(name, values) => {
+                assert_eq!(name, "BS_KPOINT_LIST");
+                assert_eq!(values.len(), 1);
+            }
+            _ => panic!("Expected Block"),
+        }
+    }
+}
+
 

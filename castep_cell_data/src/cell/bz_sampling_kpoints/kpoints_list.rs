@@ -40,4 +40,60 @@ impl ToCell for KpointsList {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_kpoints_list_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.5),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.5),
+                CellValue::Float(0.5),
+                CellValue::Float(0.5),
+                CellValue::Float(0.5),
+            ]),
+        ];
+        let result = KpointsList::from_block_rows(&rows).unwrap();
+        assert_eq!(result.kpts.len(), 2);
+        assert_eq!(result.kpts[0].weight, 0.5);
+        assert_eq!(result.kpts[1].weight, 0.5);
+    }
+
+    #[test]
+    fn test_kpoints_list_empty() {
+        let result = KpointsList::from_block_rows(&[]).unwrap();
+        assert_eq!(result.kpts.len(), 0);
+    }
+
+    #[test]
+    fn test_kpoints_list_block_name() {
+        assert_eq!(KpointsList::BLOCK_NAME, "KPOINTS_LIST");
+    }
+
+    #[test]
+    fn test_kpoints_list_to_cell() {
+        let kpts = KpointsList {
+            kpts: vec![Kpoint {
+                coord: [0.0, 0.0, 0.0],
+                weight: 1.0,
+            }],
+        };
+        let cell = kpts.to_cell();
+        match cell {
+            Cell::Block(name, values) => {
+                assert_eq!(name, "KPOINTS_LIST");
+                assert_eq!(values.len(), 1);
+            }
+            _ => panic!("Expected Block"),
+        }
+    }
+}
+
 

@@ -75,3 +75,61 @@ impl ToCell for ExternalEfield {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_external_efield_empty() {
+        let result = ExternalEfield::from_block_rows(&[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_external_efield_with_unit() {
+        let rows = vec![
+            CellValue::Array(vec![CellValue::Str("eV/Ang/e")]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.1),
+            ]),
+        ];
+        let result = ExternalEfield::from_block_rows(&rows).unwrap();
+        assert!(result.unit.is_some());
+        assert_eq!(result.field_vector, [0.0, 0.0, 0.1]);
+    }
+
+    #[test]
+    fn test_external_efield_without_unit() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.1),
+            ]),
+        ];
+        let result = ExternalEfield::from_block_rows(&rows).unwrap();
+        assert!(result.unit.is_none());
+        assert_eq!(result.field_vector, [0.0, 0.0, 0.1]);
+    }
+
+    #[test]
+    fn test_external_efield_nonzero_field() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(0.1),
+                CellValue::Float(0.2),
+                CellValue::Float(0.3),
+            ]),
+        ];
+        let result = ExternalEfield::from_block_rows(&rows).unwrap();
+        assert_eq!(result.field_vector, [0.1, 0.2, 0.3]);
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(ExternalEfield::BLOCK_NAME, "EXTERNAL_EFIELD");
+    }
+}

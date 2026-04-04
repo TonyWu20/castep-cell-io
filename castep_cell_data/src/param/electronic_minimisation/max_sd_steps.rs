@@ -43,3 +43,20 @@ impl ToCellValue for MaxSdSteps {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Int(5);
+        let result = MaxSdSteps::from_cell_value_kv(&val).unwrap();
+        assert_eq!(result.0, 5);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MaxSdSteps::KEY_NAME, "MAX_SD_STEPS");
+    }
+}
+

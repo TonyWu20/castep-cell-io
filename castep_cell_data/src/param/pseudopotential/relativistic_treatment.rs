@@ -64,3 +64,31 @@ impl ToCellValue for RelativisticTreatment {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(RelativisticTreatment::from_cell_value(&CellValue::Str("schroedinger")).unwrap(), RelativisticTreatment::Schroedinger);
+        assert_eq!(RelativisticTreatment::from_cell_value(&CellValue::Str("SCHROEDINGER")).unwrap(), RelativisticTreatment::Schroedinger);
+        assert_eq!(RelativisticTreatment::from_cell_value(&CellValue::Str("zora")).unwrap(), RelativisticTreatment::Zora);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(RelativisticTreatment::from_cell_value(&CellValue::Str("koelling-harmon")).unwrap(), RelativisticTreatment::KoellingHarmon);
+        assert_eq!(RelativisticTreatment::from_cell_value(&CellValue::Str("dirac")).unwrap(), RelativisticTreatment::Dirac);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(RelativisticTreatment::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(RelativisticTreatment::KEY_NAME, "RELATIVISTIC_TREATMENT");
+    }
+}

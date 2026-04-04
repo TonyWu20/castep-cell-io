@@ -61,4 +61,31 @@ impl ToCellValue for MdThermostat {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MdThermostat::from_cell_value(&CellValue::Str("nose-hoover")).unwrap(), MdThermostat::NoseHoover);
+        assert_eq!(MdThermostat::from_cell_value(&CellValue::Str("NOSE-HOOVER")).unwrap(), MdThermostat::NoseHoover);
+        assert_eq!(MdThermostat::from_cell_value(&CellValue::Str("langevin")).unwrap(), MdThermostat::Langevin);
+    }
+
+    #[test]
+    fn test_unicode_variant() {
+        assert_eq!(MdThermostat::from_cell_value(&CellValue::Str("nosé-hoover")).unwrap(), MdThermostat::NoseHoover);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MdThermostat::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdThermostat::KEY_NAME, "MD_THERMOSTAT");
+    }
+}
 

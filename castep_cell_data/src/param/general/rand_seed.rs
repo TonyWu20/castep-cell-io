@@ -34,3 +34,20 @@ impl ToCellValue for RandSeed {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Int(-25);
+        let result = RandSeed::from_cell_value_kv(&val).unwrap();
+        assert_eq!(result.0, -25);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(RandSeed::KEY_NAME, "RAND_SEED");
+    }
+}
+

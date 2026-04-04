@@ -45,6 +45,7 @@ name = "castep_cell_data"
 version = "0.1.0"
 dependencies = [
  "castep_cell_io",
+ "derive_builder",
  "serde",
 ]
 

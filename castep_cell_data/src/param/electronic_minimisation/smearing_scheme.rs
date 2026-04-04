@@ -60,4 +60,33 @@ impl ToCellValue for SmearingScheme {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("gaussian")).unwrap(), SmearingScheme::Gaussian);
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("GAUSSIAN")).unwrap(), SmearingScheme::Gaussian);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("gaussiansplines")).unwrap(), SmearingScheme::GaussianSplines);
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("fermidirac")).unwrap(), SmearingScheme::FermiDirac);
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("hermitepolynomials")).unwrap(), SmearingScheme::HermitePolynomials);
+        assert_eq!(SmearingScheme::from_cell_value_kv(&CellValue::Str("coldsmearing")).unwrap(), SmearingScheme::ColdSmearing);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(SmearingScheme::from_cell_value_kv(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(SmearingScheme::KEY_NAME, "SMEARING_SCHEME");
+    }
+}
 

@@ -70,4 +70,27 @@ impl ToCellValue for Iprint {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_all_levels() {
+        assert_eq!(Iprint::from_cell_value(&CellValue::UInt(0)).unwrap(), Iprint::Level0);
+        assert_eq!(Iprint::from_cell_value(&CellValue::UInt(1)).unwrap(), Iprint::Level1);
+        assert_eq!(Iprint::from_cell_value(&CellValue::UInt(2)).unwrap(), Iprint::Level2);
+        assert_eq!(Iprint::from_cell_value(&CellValue::UInt(3)).unwrap(), Iprint::Level3);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(Iprint::from_cell_value(&CellValue::UInt(4)).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(Iprint::KEY_NAME, "IPRINT");
+    }
+}
 

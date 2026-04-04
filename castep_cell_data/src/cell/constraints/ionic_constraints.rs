@@ -103,4 +103,109 @@ impl ToCell for IonicConstraints {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::{CellValue, FromCellValue, parse::FromBlock};
+
+    #[test]
+    fn test_ionic_constraint_entry_basic() {
+        let val = CellValue::Array(vec![
+            CellValue::UInt(1),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Float(1.0),
+            CellValue::Float(0.0),
+            CellValue::Float(0.0),
+        ]);
+        let entry = IonicConstraintEntry::from_cell_value(&val).unwrap();
+        assert_eq!(entry.constraint_number, 1);
+        assert_eq!(entry.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(entry.ion_number, 1);
+        assert_eq!(entry.coefficients, [1.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_ionic_constraint_entry_all_coefficients() {
+        let val = CellValue::Array(vec![
+            CellValue::UInt(2),
+            CellValue::Str("O"),
+            CellValue::UInt(3),
+            CellValue::Float(0.5),
+            CellValue::Float(0.5),
+            CellValue::Float(1.0),
+        ]);
+        let entry = IonicConstraintEntry::from_cell_value(&val).unwrap();
+        assert_eq!(entry.constraint_number, 2);
+        assert_eq!(entry.coefficients, [0.5, 0.5, 1.0]);
+    }
+
+    #[test]
+    fn test_ionic_constraint_entry_insufficient_elements() {
+        let val = CellValue::Array(vec![
+            CellValue::UInt(1),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+        ]);
+        assert!(IonicConstraintEntry::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_ionic_constraint_entry_not_array() {
+        let val = CellValue::Str("invalid");
+        assert!(IonicConstraintEntry::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_ionic_constraints_single_entry() {
+        let rows = vec![CellValue::Array(vec![
+            CellValue::UInt(1),
+            CellValue::Str("Fe"),
+            CellValue::UInt(1),
+            CellValue::Float(1.0),
+            CellValue::Float(0.0),
+            CellValue::Float(0.0),
+        ])];
+        let result = IonicConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.constraints.len(), 1);
+        assert_eq!(result.constraints[0].constraint_number, 1);
+    }
+
+    #[test]
+    fn test_ionic_constraints_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::UInt(1),
+                CellValue::Str("Fe"),
+                CellValue::UInt(1),
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::UInt(2),
+                CellValue::Str("O"),
+                CellValue::UInt(2),
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+            ]),
+        ];
+        let result = IonicConstraints::from_block_rows(&rows).unwrap();
+        assert_eq!(result.constraints.len(), 2);
+        assert_eq!(result.constraints[0].constraint_number, 1);
+        assert_eq!(result.constraints[1].constraint_number, 2);
+    }
+
+    #[test]
+    fn test_ionic_constraints_empty() {
+        let result = IonicConstraints::from_block_rows(&[]).unwrap();
+        assert_eq!(result.constraints.len(), 0);
+    }
+
+    #[test]
+    fn test_ionic_constraints_block_name() {
+        assert_eq!(IonicConstraints::BLOCK_NAME, "IONIC_CONSTRAINTS");
+    }
+}
 

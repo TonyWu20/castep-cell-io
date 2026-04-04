@@ -48,3 +48,19 @@ impl ToCellValue for MixSpinAmp {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Float(1.754);
+        let result = MixSpinAmp::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 1.754);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MixSpinAmp::KEY_NAME, "MIX_SPIN_AMP");
+    }
+}

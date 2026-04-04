@@ -48,3 +48,19 @@ impl ToCellValue for BsMaxIter {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(50);
+        let result = BsMaxIter::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 50);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsMaxIter::KEY_NAME, "BS_MAX_ITER");
+    }
+}

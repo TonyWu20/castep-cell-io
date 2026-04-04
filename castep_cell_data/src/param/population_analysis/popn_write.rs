@@ -68,3 +68,32 @@ impl ToCellValue for PopnWrite {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("none")).unwrap(), PopnWrite::None);
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("NONE")).unwrap(), PopnWrite::None);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("minimal")).unwrap(), PopnWrite::Minimal);
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("summary")).unwrap(), PopnWrite::Summary);
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("enhanced")).unwrap(), PopnWrite::Enhanced);
+        assert_eq!(PopnWrite::from_cell_value(&CellValue::Str("verbose")).unwrap(), PopnWrite::Verbose);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(PopnWrite::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PopnWrite::KEY_NAME, "POPN_WRITE");
+    }
+}

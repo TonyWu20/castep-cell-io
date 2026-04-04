@@ -26,7 +26,7 @@ impl FromKeyValue for EFermiTol {
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         match value {
-            CellValue::Array(arr) if arr.len() >= 1 => {
+            CellValue::Array(arr) if !arr.is_empty() => {
                 let val = value_as_f64(&arr[0])?;
                 let unit = if arr.len() > 1 {
                     Some(EnergyUnit::from_cell_value(&arr[1])?)

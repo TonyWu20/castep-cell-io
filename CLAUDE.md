@@ -77,12 +77,12 @@ Each block line becomes a `CellValue::Array`. The parser strips inline comments 
 
 Four traits form a hierarchy from leaf to file level. Each domain type is responsible for knowing how to parse itself:
 
-| Trait            | Implemented by                          | Role                                                       |
-| ---------------- | --------------------------------------- | ---------------------------------------------------------- |
-| `FromCellValue`  | Scalars, unit enums, keyword enums      | Parse a single `CellValue` into a Rust type                |
-| `FromBlock`      | Block structs (e.g. `PositionsFrac`)    | Parse a block's row slice; provides `from_cells` for free  |
-| `FromKeyValue`   | Key-value types (e.g. `Task`)           | Parse the value at a known key; returns `Option` if absent |
-| `FromCellFile`   | Top-level aggregator structs            | Assemble a complete file struct from the full token slice  |
+| Trait           | Implemented by                       | Role                                                       |
+| --------------- | ------------------------------------ | ---------------------------------------------------------- |
+| `FromCellValue` | Scalars, unit enums, keyword enums   | Parse a single `CellValue` into a Rust type                |
+| `FromBlock`     | Block structs (e.g. `PositionsFrac`) | Parse a block's row slice; provides `from_cells` for free  |
+| `FromKeyValue`  | Key-value types (e.g. `Task`)        | Parse the value at a known key; returns `Option` if absent |
+| `FromCellFile`  | Top-level aggregator structs         | Assemble a complete file struct from the full token slice  |
 
 **Entry point:**
 
@@ -131,7 +131,6 @@ impl FromKeyValue for Task {
 ## Known Incomplete Areas
 
 - Top-level aggregator structs (`CellDocument`, `CastepParam`) do not yet exist in `castep_cell_data` — `FromCellFile` / `ToCellFile` have no implementations yet
-- Complex block types not yet migrated from serde-based intermediate repr to `FromBlock`
 - No `derive_builder` usage on `.cell` or `.param` domain types yet — public construction requires struct literals (fields must be `pub`) or explicit constructors
 - No in-place mutation helpers or "wither" methods for modifying existing structs
 - Integer support caps at `i32`/`u32` by design (`.cell` does not use larger integers)

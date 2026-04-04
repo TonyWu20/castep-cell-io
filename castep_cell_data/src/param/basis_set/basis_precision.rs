@@ -81,4 +81,33 @@ impl ToCellValue for BasisPrecision {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("coarse")).unwrap(), BasisPrecision::Coarse);
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("COARSE")).unwrap(), BasisPrecision::Coarse);
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("fine")).unwrap(), BasisPrecision::Fine);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("medium")).unwrap(), BasisPrecision::Medium);
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("precise")).unwrap(), BasisPrecision::Precise);
+        assert_eq!(BasisPrecision::from_cell_value(&CellValue::Str("extreme")).unwrap(), BasisPrecision::Extreme);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(BasisPrecision::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BasisPrecision::KEY_NAME, "BASIS_PRECISION");
+    }
+}
 

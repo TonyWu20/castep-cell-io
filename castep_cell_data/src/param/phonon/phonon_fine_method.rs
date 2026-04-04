@@ -70,4 +70,31 @@ impl ToCellValue for PhononFineMethod {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(PhononFineMethod::from_cell_value(&CellValue::Str("none")).unwrap(), PhononFineMethod::None);
+        assert_eq!(PhononFineMethod::from_cell_value(&CellValue::Str("NONE")).unwrap(), PhononFineMethod::None);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(PhononFineMethod::from_cell_value(&CellValue::Str("interpolate")).unwrap(), PhononFineMethod::Interpolate);
+        assert_eq!(PhononFineMethod::from_cell_value(&CellValue::Str("supercell")).unwrap(), PhononFineMethod::Supercell);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(PhononFineMethod::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononFineMethod::KEY_NAME, "PHONON_FINE_METHOD");
+    }
+}
 

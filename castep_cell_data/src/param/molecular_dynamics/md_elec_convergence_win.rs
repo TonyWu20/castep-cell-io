@@ -41,3 +41,20 @@ impl ToCellValue for MdElecConvergenceWin {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(4);
+        let result = MdElecConvergenceWin::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 4);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdElecConvergenceWin::KEY_NAME, "MD_ELEC_CONVERGENCE_WIN");
+    }
+}
+

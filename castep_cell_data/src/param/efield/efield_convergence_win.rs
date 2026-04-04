@@ -46,3 +46,19 @@ impl ToCellValue for EfieldConvergenceWin {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(30);
+        let result = EfieldConvergenceWin::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 30);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(EfieldConvergenceWin::KEY_NAME, "EFIELD_CONVERGENCE_WIN");
+    }
+}

@@ -42,3 +42,19 @@ impl ToCellValue for BsReEstKScrn {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Bool(true);
+        let result = BsReEstKScrn::from_cell_value(&val).unwrap();
+        assert!(result.0);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsReEstKScrn::KEY_NAME, "BS_RE_EST_K_SCRN");
+    }
+}

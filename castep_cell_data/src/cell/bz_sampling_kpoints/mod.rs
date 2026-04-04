@@ -1,6 +1,18 @@
 mod bs_kpoints_list;
 mod kpoint;
 mod kpoints_list;
+mod bs_kpoint_path_spacing;
+mod kpoints_mp_spacing;
+mod kpoints_mp_grid;
+mod bs_kpoint_path;
+mod magres_kpoints_list;
+mod optics_kpoints_list;
 pub use bs_kpoints_list::BSKpointList;
 pub use kpoint::Kpoint;
 pub use kpoints_list::KpointsList;
+pub use bs_kpoint_path_spacing::BsKpointPathSpacing;
+pub use kpoints_mp_spacing::KpointsMpSpacing;
+pub use kpoints_mp_grid::KpointsMpGrid;
+pub use bs_kpoint_path::BsKpointPath;
+pub use magres_kpoints_list::MagresKpointsList;
+pub use optics_kpoints_list::OpticsKpointsList;

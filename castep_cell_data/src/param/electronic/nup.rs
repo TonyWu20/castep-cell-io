@@ -43,3 +43,19 @@ impl ToCellValue for Nup {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Float(12.0);
+        let result = Nup::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 12.0);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(Nup::KEY_NAME, "NUP");
+    }
+}

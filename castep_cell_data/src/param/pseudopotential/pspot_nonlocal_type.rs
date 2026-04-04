@@ -61,3 +61,25 @@ impl ToCellValue for PspotNonlocalType {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(PspotNonlocalType::from_cell_value(&CellValue::Str("reciprocal")).unwrap(), PspotNonlocalType::Reciprocal);
+        assert_eq!(PspotNonlocalType::from_cell_value(&CellValue::Str("RECIPROCAL")).unwrap(), PspotNonlocalType::Reciprocal);
+        assert_eq!(PspotNonlocalType::from_cell_value(&CellValue::Str("real")).unwrap(), PspotNonlocalType::Real);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(PspotNonlocalType::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PspotNonlocalType::KEY_NAME, "PSPOT_NONLOCAL_TYPE");
+    }
+}

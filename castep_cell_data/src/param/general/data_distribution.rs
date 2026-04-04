@@ -59,4 +59,33 @@ impl ToCellValue for DataDistribution {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("kpoint")).unwrap(), DataDistribution::KPoint);
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("KPOINT")).unwrap(), DataDistribution::KPoint);
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("gvector")).unwrap(), DataDistribution::GVector);
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("GVECTOR")).unwrap(), DataDistribution::GVector);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("mixed")).unwrap(), DataDistribution::Mixed);
+        assert_eq!(DataDistribution::from_cell_value(&CellValue::Str("default")).unwrap(), DataDistribution::Default);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(DataDistribution::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(DataDistribution::KEY_NAME, "DATA_DISTRIBUTION");
+    }
+}
 

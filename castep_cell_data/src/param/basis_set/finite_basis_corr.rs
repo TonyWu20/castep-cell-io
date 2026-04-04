@@ -74,4 +74,26 @@ impl ToCellValue for FiniteBasisCorr {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(FiniteBasisCorr::from_cell_value(&CellValue::Int(0)).unwrap(), FiniteBasisCorr::None);
+        assert_eq!(FiniteBasisCorr::from_cell_value(&CellValue::Int(1)).unwrap(), FiniteBasisCorr::Manual);
+        assert_eq!(FiniteBasisCorr::from_cell_value(&CellValue::Int(2)).unwrap(), FiniteBasisCorr::Automatic);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(FiniteBasisCorr::from_cell_value(&CellValue::Int(3)).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(FiniteBasisCorr::KEY_NAME, "FINITE_BASIS_CORR");
+    }
+}
 

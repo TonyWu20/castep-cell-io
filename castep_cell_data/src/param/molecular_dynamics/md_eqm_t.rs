@@ -72,4 +72,21 @@ impl ToCellValue for MdEqmT {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(0.5);
+        let result = MdEqmT::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 0.5);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdEqmT::KEY_NAME, "MD_EQM_T");
+    }
+}
 

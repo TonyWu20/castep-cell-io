@@ -75,3 +75,31 @@ impl ToCellValue for MixingScheme {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MixingScheme::from_cell_value(&CellValue::Str("kerker")).unwrap(), MixingScheme::Kerker);
+        assert_eq!(MixingScheme::from_cell_value(&CellValue::Str("KERKER")).unwrap(), MixingScheme::Kerker);
+        assert_eq!(MixingScheme::from_cell_value(&CellValue::Str("broyden")).unwrap(), MixingScheme::Broyden);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(MixingScheme::from_cell_value(&CellValue::Str("linear")).unwrap(), MixingScheme::Linear);
+        assert_eq!(MixingScheme::from_cell_value(&CellValue::Str("pulay")).unwrap(), MixingScheme::Pulay);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MixingScheme::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MixingScheme::KEY_NAME, "MIXING_SCHEME");
+    }
+}

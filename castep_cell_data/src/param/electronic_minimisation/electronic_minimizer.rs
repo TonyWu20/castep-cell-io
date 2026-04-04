@@ -1,5 +1,5 @@
-use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromKeyValue, CResult};
 use castep_cell_io::query::value_as_str;
+use castep_cell_io::{CResult, Cell, CellValue, FromKeyValue, ToCell, ToCellValue};
 
 /// Controls the method used to minimize electronic states.
 ///
@@ -10,6 +10,7 @@ use castep_cell_io::query::value_as_str;
 /// Example:
 /// ELECTRONIC_MINIMIZER : SD
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ElectronicMinimizer {
     /// Minimizer takes up to 10 SD steps
     Sd,
@@ -33,7 +34,9 @@ impl FromKeyValue for ElectronicMinimizer {
             "sd" => Ok(Self::Sd),
             "cg" => Ok(Self::Cg),
             "rmm/diis" => Ok(Self::RmmDiis),
-            other => Err(castep_cell_io::Error::Message(format!("unknown ElectronicMinimizer: {other}"))),
+            other => Err(castep_cell_io::Error::Message(format!(
+                "unknown ElectronicMinimizer: {other}"
+            ))),
         }
     }
 }
@@ -50,11 +53,49 @@ impl ToCellValue for ElectronicMinimizer {
             match self {
                 ElectronicMinimizer::Sd => "SD",
                 ElectronicMinimizer::Cg => "CG",
-                ElectronicMinimizer::RmmDiis => "RMM/DIIS", // If added
+                ElectronicMinimizer::RmmDiis => "RMM/DIIS",
             }
             .to_string(),
         )
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
 
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(
+            ElectronicMinimizer::from_cell_value_kv(&CellValue::Str("sd")).unwrap(),
+            ElectronicMinimizer::Sd
+        );
+        assert_eq!(
+            ElectronicMinimizer::from_cell_value_kv(&CellValue::Str("SD")).unwrap(),
+            ElectronicMinimizer::Sd
+        );
+        assert_eq!(
+            ElectronicMinimizer::from_cell_value_kv(&CellValue::Str("cg")).unwrap(),
+            ElectronicMinimizer::Cg
+        );
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(
+            ElectronicMinimizer::from_cell_value_kv(&CellValue::Str("rmm/diis")).unwrap(),
+            ElectronicMinimizer::RmmDiis
+        );
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(ElectronicMinimizer::from_cell_value_kv(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(ElectronicMinimizer::KEY_NAME, "ELECTRONIC_MINIMIZER");
+    }
+}

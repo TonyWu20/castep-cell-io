@@ -73,3 +73,20 @@ impl ToCellValue for PopnBondCutoff {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(2.54);
+        let result = PopnBondCutoff::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 2.54);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PopnBondCutoff::KEY_NAME, "POPN_BOND_CUTOFF");
+    }
+}

@@ -65,3 +65,30 @@ impl ToCellValue for EfieldIgnoreMolModes {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("crystal")).unwrap(), EfieldIgnoreMolModes::Crystal);
+        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("CRYSTAL")).unwrap(), EfieldIgnoreMolModes::Crystal);
+    }
+
+    #[test]
+    fn test_all_variants() {
+        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("molecule")).unwrap(), EfieldIgnoreMolModes::Molecule);
+        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("linear_molecule")).unwrap(), EfieldIgnoreMolModes::LinearMolecule);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(EfieldIgnoreMolModes::KEY_NAME, "EFIELD_IGNORE_MOL_MODES");
+    }
+}

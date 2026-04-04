@@ -5,17 +5,19 @@ use serde::{Deserialize, Serialize};
 
 mod hubbard_u;
 mod quantization_axis;
+mod sedc_custom_params;
 mod species_lcao_states;
 mod species_mass;
 mod species_pot;
-// future
-// mod species_q;
+mod species_q;
 
 pub use hubbard_u::{AtomHubbardU, HubbardU, HubbardUUnit, OrbitalU};
 pub use quantization_axis::QuantizationAxis;
+pub use sedc_custom_params::{SedcCustomParams, SedcCustomParamsEntry, SedcParameter};
 pub use species_lcao_states::{SpeciesLcaoState, SpeciesLcaoStates};
 pub use species_mass::{SpeciesMass, SpeciesMassEntry};
 pub use species_pot::{SpeciesPot, SpeciesPotEntry};
+pub use species_q::{SpeciesQ, SpeciesQEntry};
 
 /// Represents the species identifier for an atom in a `POSITIONS_*` block.
 /// Can be either a chemical symbol (e.g., "Fe") or an atomic number (e.g., 26).
@@ -71,6 +73,15 @@ impl ToCellValue for Species {
         match self {
             Species::Symbol(s) => CellValue::String(s.clone()),
             Species::AtomicNumber(u) => CellValue::UInt(*u),
+        }
+    }
+}
+
+impl std::fmt::Display for Species {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Species::Symbol(s) => write!(f, "{s}"),
+            Species::AtomicNumber(n) => write!(f, "{n}"),
         }
     }
 }

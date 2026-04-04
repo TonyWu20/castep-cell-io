@@ -49,3 +49,20 @@ impl ToCellValue for GeomMaxIter {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(25);
+        let result = GeomMaxIter::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 25);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(GeomMaxIter::KEY_NAME, "GEOM_MAX_ITER");
+    }
+}
+

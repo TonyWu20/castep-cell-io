@@ -61,3 +61,25 @@ impl ToCellValue for EfieldCalculateNonlinear {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(EfieldCalculateNonlinear::from_cell_value(&CellValue::Str("chi2")).unwrap(), EfieldCalculateNonlinear::Chi2);
+        assert_eq!(EfieldCalculateNonlinear::from_cell_value(&CellValue::Str("CHI2")).unwrap(), EfieldCalculateNonlinear::Chi2);
+        assert_eq!(EfieldCalculateNonlinear::from_cell_value(&CellValue::Str("none")).unwrap(), EfieldCalculateNonlinear::None);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(EfieldCalculateNonlinear::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(EfieldCalculateNonlinear::KEY_NAME, "EFIELD_CALCULATE_NONLINEAR");
+    }
+}

@@ -47,3 +47,20 @@ impl ToCellValue for MdNumIter {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(125);
+        let result = MdNumIter::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 125);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdNumIter::KEY_NAME, "MD_NUM_ITER");
+    }
+}
+

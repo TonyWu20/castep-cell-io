@@ -76,4 +76,66 @@ impl ToCell for SpeciesLcaoStates {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_species_lcao_state_from_cell_value() {
+        let val = CellValue::Array(vec![
+            CellValue::Str("Fe"),
+            CellValue::UInt(9),
+        ]);
+        let state = SpeciesLcaoState::from_cell_value(&val).unwrap();
+        assert_eq!(state.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(state.num_states, 9);
+    }
+
+    #[test]
+    fn test_species_lcao_state_insufficient_elements() {
+        let val = CellValue::Array(vec![CellValue::Str("Fe")]);
+        assert!(SpeciesLcaoState::from_cell_value(&val).is_err());
+    }
+
+    #[test]
+    fn test_species_lcao_states_empty() {
+        let result = SpeciesLcaoStates::from_block_rows(&[]).unwrap();
+        assert_eq!(result.states.len(), 0);
+    }
+
+    #[test]
+    fn test_species_lcao_states_single_entry() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::UInt(9),
+            ]),
+        ];
+        let result = SpeciesLcaoStates::from_block_rows(&rows).unwrap();
+        assert_eq!(result.states.len(), 1);
+        assert_eq!(result.states[0].num_states, 9);
+    }
+
+    #[test]
+    fn test_species_lcao_states_multiple_entries() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Str("Fe"),
+                CellValue::UInt(9),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Str("O"),
+                CellValue::UInt(5),
+            ]),
+        ];
+        let result = SpeciesLcaoStates::from_block_rows(&rows).unwrap();
+        assert_eq!(result.states.len(), 2);
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(SpeciesLcaoStates::BLOCK_NAME, "SPECIES_LCAO_STATES");
+    }
+}
 

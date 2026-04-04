@@ -49,3 +49,20 @@ impl ToCellValue for PhononMaxCgSteps {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(10);
+        let result = PhononMaxCgSteps::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 10);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononMaxCgSteps::KEY_NAME, "PHONON_MAX_CG_STEPS");
+    }
+}
+

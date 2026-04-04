@@ -71,4 +71,21 @@ impl ToCellValue for PhononEnergyTol {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(0.00007);
+        let result = PhononEnergyTol::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 0.00007);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(PhononEnergyTol::KEY_NAME, "PHONON_ENERGY_TOL");
+    }
+}
 

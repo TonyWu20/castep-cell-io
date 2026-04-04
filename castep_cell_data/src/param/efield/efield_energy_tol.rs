@@ -95,4 +95,21 @@ impl ToCellValue for EfieldEnergyTol {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(0.000002);
+        let result = EfieldEnergyTol::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 0.000002);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(EfieldEnergyTol::KEY_NAME, "EFIELD_ENERGY_TOL");
+    }
+}
 

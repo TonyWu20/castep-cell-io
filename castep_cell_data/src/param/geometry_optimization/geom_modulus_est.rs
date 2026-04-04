@@ -71,4 +71,21 @@ impl ToCellValue for GeomModulusEst {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_float_only() {
+        let val = CellValue::Float(125.4);
+        let result = GeomModulusEst::from_cell_value(&val).unwrap();
+        assert_eq!(result.value, 125.4);
+        assert!(result.unit.is_none());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(GeomModulusEst::KEY_NAME, "GEOM_MODULUS_EST");
+    }
+}
 

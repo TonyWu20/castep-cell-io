@@ -87,4 +87,116 @@ impl ToCell for SymmetryOps {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_symmetry_ops_empty() {
+        let result = SymmetryOps::from_block_rows(&[]).unwrap();
+        assert_eq!(result.ops.len(), 0);
+    }
+
+    #[test]
+    fn test_symmetry_ops_single_operation() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+        ];
+        let result = SymmetryOps::from_block_rows(&rows).unwrap();
+        assert_eq!(result.ops.len(), 1);
+        assert_eq!(result.ops[0].rotation[0], [1.0, 0.0, 0.0]);
+        assert_eq!(result.ops[0].translation, [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_symmetry_ops_multiple_operations() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(-1.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(-1.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+        ];
+        let result = SymmetryOps::from_block_rows(&rows).unwrap();
+        assert_eq!(result.ops.len(), 2);
+    }
+
+    #[test]
+    fn test_symmetry_ops_incomplete_operation() {
+        let rows = vec![
+            CellValue::Array(vec![
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+                CellValue::Float(0.0),
+            ]),
+            CellValue::Array(vec![
+                CellValue::Float(0.0),
+                CellValue::Float(1.0),
+                CellValue::Float(0.0),
+            ]),
+        ];
+        let result = SymmetryOps::from_block_rows(&rows).unwrap();
+        assert_eq!(result.ops.len(), 0);
+    }
+
+    #[test]
+    fn test_block_name() {
+        assert_eq!(SymmetryOps::BLOCK_NAME, "SYMMETRY_OPS");
+    }
+}
 

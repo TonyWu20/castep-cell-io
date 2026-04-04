@@ -61,4 +61,26 @@ impl ToCellValue for MdEqmMethod {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::CellValue;
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(MdEqmMethod::from_cell_value(&CellValue::Str("none")).unwrap(), MdEqmMethod::None);
+        assert_eq!(MdEqmMethod::from_cell_value(&CellValue::Str("NONE")).unwrap(), MdEqmMethod::None);
+        assert_eq!(MdEqmMethod::from_cell_value(&CellValue::Str("berendsen")).unwrap(), MdEqmMethod::Berendsen);
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(MdEqmMethod::from_cell_value(&CellValue::Str("invalid")).is_err());
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(MdEqmMethod::KEY_NAME, "MD_EQM_METHOD");
+    }
+}
 

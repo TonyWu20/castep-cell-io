@@ -42,3 +42,19 @@ impl ToCellValue for BsNbands {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::UInt(64);
+        let result = BsNbands::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 64);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsNbands::KEY_NAME, "BS_NBANDS");
+    }
+}

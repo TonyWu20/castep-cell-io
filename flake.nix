@@ -40,6 +40,7 @@
               python313
               python313Packages.pip
               python313Packages.pynvim
+              uv
             ];
             env = {
               CLAUDE_CODE_NO_FLICKER = 1;

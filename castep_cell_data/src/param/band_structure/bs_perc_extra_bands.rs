@@ -42,3 +42,19 @@ impl ToCellValue for BsPercExtraBands {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Float(60.0);
+        let result = BsPercExtraBands::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 60.0);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(BsPercExtraBands::KEY_NAME, "BS_PERC_EXTRA_BANDS");
+    }
+}

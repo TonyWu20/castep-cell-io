@@ -46,3 +46,19 @@ impl ToCellValue for Charge {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value() {
+        let val = CellValue::Float(2.5);
+        let result = Charge::from_cell_value(&val).unwrap();
+        assert_eq!(result.0, 2.5);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(Charge::KEY_NAME, "CHARGE");
+    }
+}

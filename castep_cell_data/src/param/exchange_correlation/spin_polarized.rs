@@ -40,3 +40,25 @@ impl ToCellValue for SpinPolarized {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_cell_value_true() {
+        let val = CellValue::Bool(true);
+        assert_eq!(SpinPolarized::from_cell_value(&val).unwrap().0, true);
+    }
+
+    #[test]
+    fn test_from_cell_value_false() {
+        let val = CellValue::Bool(false);
+        assert_eq!(SpinPolarized::from_cell_value(&val).unwrap().0, false);
+    }
+
+    #[test]
+    fn test_key_name() {
+        assert_eq!(SpinPolarized::KEY_NAME, "SPIN_POLARIZED");
+    }
+}
+
