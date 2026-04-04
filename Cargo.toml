@@ -1,26 +1,5 @@
-[package]
-name = "castep-cell-io"
-version = "0.2.18"
-edition = "2021"
-author = ["TonyWu20"]
-description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
-readme = "README.md"
-homepage = "https://github.com/TonyWu20/castep-cell-io"
-repository ="https://github.com/TonyWu20/castep-cell-io" 
-license = "MIT"
-keywords = ["chemistry", "castep"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-castep-periodic-table = "0.5.2"
-winnow = "0.7.6"
-chemrust-core = "0.5.0"
-nalgebra = "0.33.*"
-crystallographic-group = "0.3.1"
-thiserror = "2.0.8"
-
-[features]
-default = ["template"]
-TS = []
-template = []
+[workspace]
+members = [
+"castep_cell_io",
+"castep_cell_data"]
+resolver= "3"
