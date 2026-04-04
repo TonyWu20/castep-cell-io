@@ -2,7 +2,13 @@
 name = "castep-cell-io"
 version = "0.3.0"
 edition = "2024"
+authors = ["TonyWu20"]
+description = "I/O library for CASTEP .cell and .param file formats"
 readme = "README.md"
+homepage = "https://github.com/TonyWu20/castep-cell-io"
+repository = "https://github.com/TonyWu20/castep-cell-io"
+license = "MIT"
+keywords = ["chemistry", "castep"]
 
 [dependencies]
 castep-cell-fmt = { version = "0.1.0", path = "../castep_cell_fmt" }
