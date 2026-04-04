@@ -1,0 +1,22 @@
+[package]
+name = "castep-cell-fmt"
+version = "0.1.0"
+edition = "2024"
+authors = ["TonyWu20"]
+description = "Parser and formatter backend for CASTEP .cell/.param file formats"
+readme = "README.md"
+homepage = "https://github.com/TonyWu20/castep-cell-io"
+repository = "https://github.com/TonyWu20/castep-cell-io"
+license = "MIT"
+keywords = ["chemistry", "castep"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chumsky = "0.10.1"
+thiserror = "2.0.8"
+derive_builder = "0.20.2"
+anyhow = "1.0.98"
+ariadne = { version = "0.5.1", features = ["auto-color"] }
+
+[dev-dependencies]
