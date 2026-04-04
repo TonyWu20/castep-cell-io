@@ -1,32 +1,55 @@
 # castep-cell-io
 
-A crate helping to parse, edit and save `.cell` of `Castep`.
+Parse, build, and format CASTEP `.cell` and `.param` input files in Rust.
 
-## Development
+## Quick start
 
-Currently, the parser can seek and parse the two required block entries in the `.cell` regardless of their appearance orders in the file: lattice parameters (`LATTICE_CART` or `LATTICE_ABC`) and ionic positions (`POSITIONS_FRAC` or `POSITIONS_ABS`).
-`POSITIONS_XXX_INTERMEDIATE` and `POSITIONS_XXX_PRODUCT` are supported if feature `TS` is turned on.
-
-Contents after comment marks (`#` or `!`) are supposed to be ignored. The comments should not break the valid format of the data. The parser fails when the comment cut the necessary data, just as how `castep` fails when accepting such input `.cell`.
-
-More keywords and data are supported in the future.
-
-## Usage
-
-Add the crate by `cargo`
-
-```shell
-cargo add castep-cell-parser
+```toml
+[dependencies]
+castep-cell-io = "0.3"
+castep-cell-fmt = "0.1"
 ```
-
-In your code:
 
 ```rust
-use std::{fs, path::Path};
-use castep_cell_parser::{CellParser, CellDocument};
+use castep_cell_fmt::{parse, ToCellFile, format::to_string_many_spaced};
+use castep_cell_io::CellDocument;
 
-let path = Path::new("SAC_GDY_V.cell");
-let input = fs::read_to_string(path).unwrap();
-let mut cell_parser = CellParser::from(&input.as_str());
-let cell_doc: CellDocument = cell_parser.parse().unwrap();
+let input = std::fs::read_to_string("structure.cell").unwrap();
+let doc: CellDocument = parse(&input).unwrap();
+
+// Round-trip back to text
+let output = to_string_many_spaced(&doc.to_cell_file());
+println!("{output}");
 ```
+
+## Building a `.cell` document
+
+```rust
+use castep_cell_io::{CellDocumentBuilder, Lattice, Positions};
+use castep_cell_io::cell::lattice_param::LatticeCart;
+use castep_cell_io::cell::positions::positions_frac::PositionsFrac;
+
+let doc = CellDocumentBuilder::default()
+    .lattice(Lattice::Cart(lattice))
+    .positions(Positions::Frac(positions))
+    .build()
+    .unwrap();
+```
+
+## Crate layout
+
+| Module | Contents |
+|--------|----------|
+| `cell::lattice_param` | `LatticeCart`, `LatticeABC` |
+| `cell::positions` | `PositionsFrac`, `PositionsAbs` |
+| `cell::bz_sampling_kpoints` | K-point types |
+| `cell::species` | Species mass, pot, LCAO, Hubbard U |
+| `cell::constraints` | Ionic / cell / nonlinear constraints |
+| `param` | All `.param` keyword types |
+| `units` | Unit enums (`LengthUnit`, `EnergyUnit`, …) |
+
+The parsing and formatting engine lives in [`castep-cell-fmt`](https://crates.io/crates/castep-cell-fmt).
+
+## License
+
+MIT

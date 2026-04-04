@@ -1,22 +1,10 @@
 [package]
-name = "castep_cell_io"
-version = "0.1.0"
+name = "castep-cell-io"
+version = "0.3.0"
 edition = "2024"
-authors = ["TonyWu20"]
-description = "A crate helping to parse, edit and save `castep` input file format `.cell`"
 readme = "README.md"
-homepage = "https://github.com/TonyWu20/castep-cell-io"
-repository = "https://github.com/TonyWu20/castep-cell-io"
-license = "MIT"
-keywords = ["chemistry", "castep"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chumsky = "0.10.1"
-thiserror = "2.0.8"
+castep-cell-fmt = { version = "0.1.0", path = "../castep_cell_fmt" }
 derive_builder = "0.20.2"
-anyhow = "1.0.98"
-ariadne = { version = "0.5.1", features = ["auto-color"] }
-
-[dev-dependencies]
+serde = { version = "1.0.219", features = ["derive"] }

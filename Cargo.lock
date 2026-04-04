@@ -41,16 +41,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
-name = "castep_cell_data"
-version = "0.1.0"
-dependencies = [
- "castep_cell_io",
- "derive_builder",
- "serde",
-]
-
-[[package]]
-name = "castep_cell_io"
+name = "castep-cell-fmt"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -58,6 +49,15 @@ dependencies = [
  "chumsky",
  "derive_builder",
  "thiserror",
+]
+
+[[package]]
+name = "castep-cell-io"
+version = "0.3.0"
+dependencies = [
+ "castep-cell-fmt",
+ "derive_builder",
+ "serde",
 ]
 
 [[package]]
