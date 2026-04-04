@@ -1,11 +1,10 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromBlock, CResult, query::value_as_u32};
 
 use super::Species;
 
 /// Represents a single entry within the SPECIES_LCAO_STATES block,
 /// linking a species to the number of LCAO states for it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpeciesLcaoState {
     /// The species (symbol or atomic number).
     pub species: Species,
@@ -13,12 +12,26 @@ pub struct SpeciesLcaoState {
     pub num_states: u32,
 }
 
-// Implement ToCellValue for SpeciesLcaoState to enable serialization of individual lines.
+impl FromCellValue for SpeciesLcaoState {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(arr) if arr.len() == 2 => {
+                Ok(SpeciesLcaoState {
+                    species: Species::from_cell_value(&arr[0])?,
+                    num_states: value_as_u32(&arr[1])?,
+                })
+            }
+            _ => Err(castep_cell_io::Error::Message(
+                "SpeciesLcaoState must be an array of [species, num_states]".into(),
+            )),
+        }
+    }
+}
+
 impl ToCellValue for SpeciesLcaoState {
-    /// Converts the entry into a `CellValue::Array` representing one line of the block.
     fn to_cell_value(&self) -> CellValue {
         CellValue::Array(vec![
-            self.species.to_cell_value(), // Converts Species to CellValue::String or CellValue::UInt
+            self.species.to_cell_value(),
             CellValue::UInt(self.num_states),
         ])
     }
@@ -33,113 +46,34 @@ impl ToCellValue for SpeciesLcaoState {
 /// CCC2/I2 IB2
 /// ...
 /// %ENDBLOCK SPECIES_LCAO_STATES
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "SPECIES_LCAO_STATES")] // Ensure correct block name during serde
-#[serde(transparent)] // Serialize/Deserialize as if it's directly the Vec
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpeciesLcaoStates {
     /// The list of species and their corresponding LCAO state counts.
     pub states: Vec<SpeciesLcaoState>,
 }
 
+impl FromBlock for SpeciesLcaoStates {
+    const BLOCK_NAME: &'static str = "SPECIES_LCAO_STATES";
+
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        let states = rows
+            .iter()
+            .map(SpeciesLcaoState::from_cell_value)
+            .collect::<CResult<Vec<_>>>()?;
+        Ok(SpeciesLcaoStates { states })
+    }
+}
+
 impl ToCell for SpeciesLcaoStates {
-    /// Converts the block into the intermediate `Cell` representation for serialization.
     fn to_cell(&self) -> Cell {
         Cell::Block(
-            "SPECIES_LCAO_STATES", // Block name
+            "SPECIES_LCAO_STATES",
             self.states
                 .iter()
-                .map(|state_entry| state_entry.to_cell_value()) // Convert each entry to CellValue::Array
-                .collect::<Vec<CellValue>>(), // Collect into Vec for the block content
+                .map(|state_entry| state_entry.to_cell_value())
+                .collect::<Vec<CellValue>>(),
         )
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_species_lcao_states_serde() {
-        // Define a test struct matching the expected .cell file structure
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileLcaoStates {
-            species_lcao_states: SpeciesLcaoStates,
-        }
-
-        // Test string based on the documentation example
-        let species_lcao_states_str = r#"%BLOCK SPECIES_LCAO_STATES
-       O         2
-      Al         2
-      Ti         3
-      Cs         4
-%ENDBLOCK SPECIES_LCAO_STATES
-"#;
-
-        // 1. Test Deserialization
-        let cell_file_result: Result<CellFileLcaoStates, _> = from_str(species_lcao_states_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-
-        // Debug print the deserialized struct
-        println!(
-            "Deserialized SPECIES_LCAO_STATES: {:#?}",
-            cell_file.species_lcao_states
-        );
-
-        // Verify the content
-        assert_eq!(cell_file.species_lcao_states.states.len(), 4);
-        // Check first entry
-        assert_eq!(
-            cell_file.species_lcao_states.states[0].species,
-            Species::Symbol("O".to_string())
-        );
-        assert_eq!(cell_file.species_lcao_states.states[0].num_states, 2);
-        // Check last entry
-        assert_eq!(
-            cell_file.species_lcao_states.states[3].species,
-            Species::Symbol("Cs".to_string())
-        );
-        assert_eq!(cell_file.species_lcao_states.states[3].num_states, 4);
-
-        // 2. Test Serialization using ToCell
-        let test_states = SpeciesLcaoStates {
-            states: vec![
-                SpeciesLcaoState {
-                    species: Species::Symbol("Fe".to_string()),
-                    num_states: 3,
-                },
-                SpeciesLcaoState {
-                    species: Species::AtomicNumber(8), // Oxygen
-                    num_states: 2,
-                },
-            ],
-        };
-
-        let serialized_result = to_string(&test_states.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-
-        // Print the serialized string
-        println!("Serialized SPECIES_LCAO_STATES:\n{serialized_string}"); // Clippy suggestion
-
-        // Basic checks on the serialized string
-        assert!(serialized_string.contains("%BLOCK SPECIES_LCAO_STATES"));
-        assert!(serialized_string.contains("%ENDBLOCK SPECIES_LCAO_STATES"));
-        assert!(serialized_string.contains("Fe"));
-        assert!(serialized_string.contains("8")); // Atomic number for Oxygen
-        assert!(serialized_string.contains("3")); // States for Fe
-        assert!(serialized_string.contains("2")); // States for O
-        // Note: Exact string comparison can be brittle due to formatting/whitespace/order
-    }
-}

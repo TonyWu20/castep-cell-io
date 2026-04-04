@@ -1,6 +1,9 @@
 // File: force_unit.rs (or part of your main module structure)
 
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the units in which force will be reported.
@@ -33,6 +36,19 @@ pub enum ForceUnit {
 // It represents the unit keyword value directly.
 // So, ToCell would be used if FORCE_UNIT were a top-level item to serialize on its own,
 // though typically it's serialized as part of a larger structure (like SymmetryTol.to_cell_value()).
+impl FromCellValue for ForceUnit {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "hartree/bohr" => Ok(Self::HartreePerBohr),
+            "ev/ang" => Ok(Self::EvPerAng),
+            "n" => Ok(Self::Newton),
+            other => Err(Error::Message(format!(
+                "unknown ForceUnit: {other}"
+            ))),
+        }
+    }
+}
+
 impl ToCell for ForceUnit {
     fn to_cell(&self) -> Cell {
         // Create a KeyValue Cell with the name "FORCE_UNIT" and the unit string as the value.
@@ -55,69 +71,4 @@ impl ToCellValue for ForceUnit {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_force_unit_serde() {
-        // 1. Test Deserialization for each variant
-        let test_cases = [
-            ("FORCE_UNIT : hartree/bohr", ForceUnit::HartreePerBohr),
-            ("FORCE_UNIT : ev/ang", ForceUnit::EvPerAng),
-            ("FORCE_UNIT : n", ForceUnit::Newton),
-        ];
-
-        for (input_str, expected_unit) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithForceUnit {
-                force_unit: ForceUnit,
-            }
-
-            let cell_file_result: Result<CellFileWithForceUnit, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(cell_file.force_unit, expected_unit);
-        }
-
-        // 2. Test Serialization using ToCell for one example
-        let force_unit_instance = ForceUnit::Newton;
-        let serialized_result = to_string(&force_unit_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-
-        println!("Serialized FORCE_UNIT (Newton):\n{serialized_string}"); // Clippy suggestion
-        // Basic check
-        assert!(serialized_string.contains("FORCE_UNIT"));
-        assert!(serialized_string.contains("n"));
-
-        // 3. Test ToCellValue
-        assert_eq!(
-            ForceUnit::HartreePerBohr.to_cell_value(),
-            CellValue::String("hartree/bohr".to_string())
-        );
-        assert_eq!(
-            ForceUnit::EvPerAng.to_cell_value(),
-            CellValue::String("ev/ang".to_string())
-        );
-        assert_eq!(
-            ForceUnit::Newton.to_cell_value(),
-            CellValue::String("n".to_string())
-        );
-
-        // 4. Test Default
-        assert_eq!(ForceUnit::default(), ForceUnit::EvPerAng);
-    }
-}

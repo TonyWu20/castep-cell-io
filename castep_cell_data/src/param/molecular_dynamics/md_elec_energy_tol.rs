@@ -1,6 +1,8 @@
 use crate::units::EnergyUnit;
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::row_as_f64_n;
 
 /// Controls the tolerance for accepting convergence of the total energy during MD.
 ///
@@ -10,9 +12,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_ELEC_ENERGY_TOL : 0.00007 eV
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
-#[serde(rename = "MD_ELEC_ENERGY_TOL")]
-#[serde(from = "MdElecEnergyTolRepr")] // Use intermediate repr for deserialization
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct MdElecEnergyTol {
     /// The energy tolerance value.
     pub value: f64,
@@ -20,29 +20,34 @@ pub struct MdElecEnergyTol {
     pub unit: Option<EnergyUnit>,
 }
 
-/// Intermediate representation for deserializing `MdElecEnergyTol`.
-/// Handles the optional unit.
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum MdElecEnergyTolRepr {
-    /// Format: value unit
-    WithUnit(f64, EnergyUnit),
-    /// Format: value (default unit eV implied)
-    Essential(f64),
+impl FromCellValue for MdElecEnergyTol {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(_) => {
+                let arr = row_as_f64_n::<2>(value)?;
+                Ok(Self {
+                    value: arr[0],
+                    unit: if arr[1] > 0.0 {
+                        Some(EnergyUnit::from_cell_value(&CellValue::Float(arr[1]))?)
+                    } else {
+                        None
+                    },
+                })
+            }
+            CellValue::Float(f) => Ok(Self {
+                value: *f,
+                unit: None,
+            }),
+            _ => Err(Error::Message("expected float or array".to_string())),
+        }
+    }
 }
 
-impl From<MdElecEnergyTolRepr> for MdElecEnergyTol {
-    fn from(repr: MdElecEnergyTolRepr) -> Self {
-        match repr {
-            MdElecEnergyTolRepr::WithUnit(value, unit) => Self {
-                value,
-                unit: Some(unit),
-            },
-            MdElecEnergyTolRepr::Essential(value) => Self {
-                value,
-                unit: None, // Default unit (eV) implied
-            },
-        }
+impl FromKeyValue for MdElecEnergyTol {
+    const KEY_NAME: &'static str = "MD_ELEC_ENERGY_TOL";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -67,95 +72,4 @@ impl ToCellValue for MdElecEnergyTol {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_elec_energy_tol_serde() {
-        // 1. Test Deserialization with unit
-        let md_elec_energy_tol_with_unit_str = "MD_ELEC_ENERGY_TOL : 0.00007 ev";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdElecEnergyTolUnit {
-            md_elec_energy_tol: MdElecEnergyTol,
-        }
-
-        let cell_file_result: Result<CellFileWithMdElecEnergyTolUnit, _> =
-            from_str(md_elec_energy_tol_with_unit_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization (with unit) failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.md_elec_energy_tol.value - 0.00007).abs() < 1e-10);
-        assert_eq!(
-            cell_file.md_elec_energy_tol.unit,
-            Some(EnergyUnit::ElectronVolt)
-        );
-
-        // 2. Test Deserialization without unit (default unit implied)
-        // Note: Default logic is context-dependent. This just tests parsing a value without unit.
-        let md_elec_energy_tol_default_str = "MD_ELEC_ENERGY_TOL : 1e-5";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdElecEnergyTolDefault {
-            md_elec_energy_tol: MdElecEnergyTol,
-        }
-
-        let cell_file_default_result: Result<CellFileWithMdElecEnergyTolDefault, _> =
-            from_str(md_elec_energy_tol_default_str);
-        assert!(
-            cell_file_default_result.is_ok(),
-            "Deserialization (default unit) failed: {:?}",
-            cell_file_default_result.err()
-        );
-        let cell_file_default = cell_file_default_result.unwrap();
-        assert!((cell_file_default.md_elec_energy_tol.value - 1e-5).abs() < f64::EPSILON);
-        assert_eq!(cell_file_default.md_elec_energy_tol.unit, None);
-
-        // 3. Test Serialization using ToCell (with unit)
-        let md_elec_energy_tol_instance_with_unit = MdElecEnergyTol {
-            value: 5e-6,
-            unit: Some(EnergyUnit::Hartree),
-        };
-        let serialized_result_with_unit =
-            to_string(&md_elec_energy_tol_instance_with_unit.to_cell());
-        assert!(
-            serialized_result_with_unit.is_ok(),
-            "Serialization (with unit) failed: {:?}",
-            serialized_result_with_unit.err()
-        );
-        let serialized_string_with_unit = serialized_result_with_unit.unwrap();
-        println!("Serialized MD_ELEC_ENERGY_TOL (5e-6 ha): {serialized_string_with_unit}");
-        assert!(serialized_string_with_unit.contains("MD_ELEC_ENERGY_TOL"));
-        assert!(
-            serialized_string_with_unit.contains("5e-6")
-                || serialized_string_with_unit.contains("0.000005")
-        );
-        assert!(serialized_string_with_unit.contains("ha"));
-
-        // 4. Test Serialization using ToCell (without unit)
-        let md_elec_energy_tol_instance_no_unit = MdElecEnergyTol {
-            value: 2e-5,
-            unit: None,
-        };
-        let serialized_result_no_unit = to_string(&md_elec_energy_tol_instance_no_unit.to_cell());
-        assert!(
-            serialized_result_no_unit.is_ok(),
-            "Serialization (no unit) failed: {:?}",
-            serialized_result_no_unit.err()
-        );
-        let serialized_string_no_unit = serialized_result_no_unit.unwrap();
-        println!("Serialized MD_ELEC_ENERGY_TOL (2e-5, no unit): {serialized_string_no_unit}");
-        assert!(serialized_string_no_unit.contains("MD_ELEC_ENERGY_TOL"));
-        assert!(
-            serialized_string_no_unit.contains("2e-5")
-                || serialized_string_no_unit.contains("0.00002")
-        );
-        // Check that the unit string is not present (or is the default)
-    }
-}

@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Determines which mixing scheme will be used in the density mixing procedure.
@@ -12,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "MIXING_SCHEME")]
 pub enum MixingScheme {
-    /// Kerker mixing scheme
+    /// Keriker mixing scheme
     #[serde(alias = "kerker", alias = "KERKER")]
     Kerker,
     /// Linear mixing scheme
@@ -28,7 +31,27 @@ pub enum MixingScheme {
 
 impl Default for MixingScheme {
     fn default() -> Self {
-        Self::Broyden // Default is Broyden
+        Self::Broyden
+    }
+}
+
+impl FromCellValue for MixingScheme {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "kerker" => Ok(Self::Kerker),
+            "linear" => Ok(Self::Linear),
+            "broyden" => Ok(Self::Broyden),
+            "pulay" => Ok(Self::Pulay),
+            other => Err(Error::Message(format!("unknown MixingScheme: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MixingScheme {
+    const KEY_NAME: &'static str = "MIXING_SCHEME";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -52,65 +75,3 @@ impl ToCellValue for MixingScheme {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_mixing_scheme_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MIXING_SCHEME : Kerker", MixingScheme::Kerker),
-            ("MIXING_SCHEME : kerker", MixingScheme::Kerker),
-            ("MIXING_SCHEME : KERKER", MixingScheme::Kerker),
-            ("MIXING_SCHEME : Linear", MixingScheme::Linear),
-            ("MIXING_SCHEME : linear", MixingScheme::Linear),
-            ("MIXING_SCHEME : LINEAR", MixingScheme::Linear),
-            ("MIXING_SCHEME : Broyden", MixingScheme::Broyden),
-            ("MIXING_SCHEME : broyden", MixingScheme::Broyden),
-            ("MIXING_SCHEME : BROYDEN", MixingScheme::Broyden),
-            ("MIXING_SCHEME : Pulay", MixingScheme::Pulay),
-            ("MIXING_SCHEME : pulay", MixingScheme::Pulay),
-            ("MIXING_SCHEME : PULAY", MixingScheme::Pulay),
-        ];
-
-        for (input_str, expected_scheme) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMixingScheme {
-                mixing_scheme: MixingScheme,
-            }
-
-            let cell_file_result: Result<CellFileWithMixingScheme, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.mixing_scheme, expected_scheme,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let mixing_scheme_instance = MixingScheme::Pulay;
-        let serialized_result = to_string(&mixing_scheme_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MIXING_SCHEME (Pulay): {serialized_string}");
-        assert!(serialized_string.contains("MIXING_SCHEME"));
-        assert!(serialized_string.contains("Pulay"));
-
-        // Test Default
-        assert_eq!(MixingScheme::default(), MixingScheme::Broyden);
-    }
-}

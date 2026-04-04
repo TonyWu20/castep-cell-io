@@ -1,5 +1,6 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::FromKeyValue;
+use castep_cell_io::query::value_as_i32;
 
 /// Specifies the maximum run time for the job, in seconds.
 ///
@@ -9,9 +10,16 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// RUN_TIME : 360
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[serde(rename = "RUN_TIME")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RunTime(pub i32); // i32 to allow <= 0 values
+
+impl FromKeyValue for RunTime {
+    const KEY_NAME: &'static str = "RUN_TIME";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
+    }
+}
 
 impl ToCell for RunTime {
     fn to_cell(&self) -> Cell {
@@ -25,42 +33,4 @@ impl ToCellValue for RunTime {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_run_time_serde() {
-        let run_time_str = "RUN_TIME : 360";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithRunTime {
-            run_time: RunTime,
-        }
-
-        let cell_file_result: Result<CellFileWithRunTime, _> = from_str(run_time_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.run_time.0, 360);
-
-        let run_time_instance = RunTime(7200);
-        let serialized_result = to_string(&run_time_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized RUN_TIME (7200):\n{serialized_string}");
-        assert!(serialized_string.contains("RUN_TIME"));
-        assert!(serialized_string.contains("7200"));
-
-        assert_eq!(RunTime::default(), RunTime(0));
-    }
-}

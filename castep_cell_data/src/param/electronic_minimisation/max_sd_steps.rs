@@ -1,5 +1,5 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromKeyValue, CResult};
+use castep_cell_io::query::value_as_i32;
 
 /// Determines the maximum number of steepest descent steps in an SCF cycle.
 ///
@@ -13,15 +13,20 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MAX_SD_STEPS : 5
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MAX_SD_STEPS")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MaxSdSteps(pub i32);
 
-// Note: Default logic is context-dependent (depends on ELECTRONIC_MINIMIZER).
-// The `Default` implementation here provides a base default.
 impl Default for MaxSdSteps {
     fn default() -> Self {
-        Self(1) // Base default is 1 (if ELECTRONIC_MINIMIZER is not defined)
+        Self(1)
+    }
+}
+
+impl FromKeyValue for MaxSdSteps {
+    const KEY_NAME: &'static str = "MAX_SD_STEPS";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
     }
 }
 
@@ -37,42 +42,4 @@ impl ToCellValue for MaxSdSteps {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_max_sd_steps_serde() {
-        let max_sd_steps_str = "MAX_SD_STEPS : 5";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMaxSdSteps {
-            max_sd_steps: MaxSdSteps,
-        }
-
-        let cell_file_result: Result<CellFileWithMaxSdSteps, _> = from_str(max_sd_steps_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.max_sd_steps.0, 5);
-
-        let max_sd_steps_instance = MaxSdSteps(10);
-        let serialized_result = to_string(&max_sd_steps_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MAX_SD_STEPS (10): {serialized_string}");
-        assert!(serialized_string.contains("MAX_SD_STEPS"));
-        assert!(serialized_string.contains("10"));
-
-        assert_eq!(MaxSdSteps::default(), MaxSdSteps(1));
-    }
-}

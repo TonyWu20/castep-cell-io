@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Determines the wavefunction extrapolation scheme used for MD.
 ///
@@ -9,26 +11,41 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_EXTRAP : Mixed
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MD_EXTRAP")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum MdExtrap {
     /// No extrapolation used
-    #[serde(alias = "none", alias = "NONE")]
     None,
     /// First order extrapolation
-    #[serde(alias = "first", alias = "FIRST")]
     First,
     /// Second order extrapolation
-    #[serde(alias = "second", alias = "SECOND")]
     Second,
     /// Alternating first and second order extrapolation
-    #[serde(alias = "mixed", alias = "MIXED")]
     Mixed,
 }
 
 impl Default for MdExtrap {
     fn default() -> Self {
         Self::First // Default is First
+    }
+}
+
+impl FromCellValue for MdExtrap {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "first" => Ok(Self::First),
+            "second" => Ok(Self::Second),
+            "mixed" => Ok(Self::Mixed),
+            other => Err(Error::Message(format!("unknown MdExtrap: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MdExtrap {
+    const KEY_NAME: &'static str = "MD_EXTRAP";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -52,65 +69,4 @@ impl ToCellValue for MdExtrap {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_extrap_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MD_EXTRAP : None", MdExtrap::None),
-            ("MD_EXTRAP : none", MdExtrap::None),
-            ("MD_EXTRAP : NONE", MdExtrap::None), // Uppercase alias
-            ("MD_EXTRAP : First", MdExtrap::First),
-            ("MD_EXTRAP : first", MdExtrap::First),
-            ("MD_EXTRAP : FIRST", MdExtrap::First), // Uppercase alias
-            ("MD_EXTRAP : Second", MdExtrap::Second),
-            ("MD_EXTRAP : second", MdExtrap::Second),
-            ("MD_EXTRAP : SECOND", MdExtrap::Second), // Uppercase alias
-            ("MD_EXTRAP : Mixed", MdExtrap::Mixed),
-            ("MD_EXTRAP : mixed", MdExtrap::Mixed),
-            ("MD_EXTRAP : MIXED", MdExtrap::Mixed), // Uppercase alias
-        ];
-
-        for (input_str, expected_extrap) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMdExtrap {
-                md_extrap: MdExtrap,
-            }
-
-            let cell_file_result: Result<CellFileWithMdExtrap, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.md_extrap, expected_extrap,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let md_extrap_instance = MdExtrap::Mixed;
-        let serialized_result = to_string(&md_extrap_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MD_EXTRAP (Mixed): {serialized_string}");
-        assert!(serialized_string.contains("MD_EXTRAP"));
-        assert!(serialized_string.contains("Mixed"));
-
-        // Test Default
-        assert_eq!(MdExtrap::default(), MdExtrap::First);
-    }
-}

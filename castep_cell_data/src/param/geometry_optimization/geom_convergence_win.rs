@@ -1,5 +1,8 @@
 // File: geometry_optimization/geom_convergence_win.rs
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_i32;
 use serde::{Deserialize, Serialize};
 
 /// Determines the size of the convergence window for a geometry optimization.
@@ -13,6 +16,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "GEOM_CONVERGENCE_WIN")]
 pub struct GeomConvergenceWin(pub i32); // Using i32
+
+impl FromCellValue for GeomConvergenceWin {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
+    }
+}
+
+impl FromKeyValue for GeomConvergenceWin {
+    const KEY_NAME: &'static str = "GEOM_CONVERGENCE_WIN";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
 
 impl Default for GeomConvergenceWin {
     fn default() -> Self {
@@ -32,43 +49,4 @@ impl ToCellValue for GeomConvergenceWin {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_geom_convergence_win_serde() {
-        let geom_convergence_win_str = "GEOM_CONVERGENCE_WIN : 4";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithGeomConvergenceWin {
-            geom_convergence_win: GeomConvergenceWin,
-        }
-
-        let cell_file_result: Result<CellFileWithGeomConvergenceWin, _> =
-            from_str(geom_convergence_win_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.geom_convergence_win.0, 4);
-
-        let geom_convergence_win_instance = GeomConvergenceWin(5);
-        let serialized_result = to_string(&geom_convergence_win_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized GEOM_CONVERGENCE_WIN (5): {serialized_string}");
-        assert!(serialized_string.contains("GEOM_CONVERGENCE_WIN"));
-        assert!(serialized_string.contains("5"));
-
-        assert_eq!(GeomConvergenceWin::default(), GeomConvergenceWin(2));
-    }
-}

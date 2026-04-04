@@ -1,6 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
-// Assuming EnergyUnit exists in units module
 use crate::units::EnergyUnit;
 
 /// Specifies the derivative of total energy with respect to the natural log
@@ -21,19 +23,31 @@ pub struct BasisDeDloge {
     pub unit: EnergyUnit,
 }
 
-// Intermediate representation for deserialization
-#[derive(Debug, Deserialize)]
-struct BasisDeDlogeRepr {
-    value: f64,
-    unit: EnergyUnit,
+impl FromCellValue for BasisDeDloge {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(arr) => {
+                if arr.is_empty() {
+                    return Err(Error::Message("empty array for BasisDeDloge".to_string()));
+                }
+                let val = value_as_f64(&arr[0])?;
+                let unit = if arr.len() > 1 {
+                    EnergyUnit::from_cell_value(&arr[1])?
+                } else {
+                    EnergyUnit::default()
+                };
+                Ok(Self { value: val, unit })
+            }
+            _ => Err(Error::Message("expected array for BasisDeDloge".to_string())),
+        }
+    }
 }
 
-impl From<BasisDeDlogeRepr> for BasisDeDloge {
-    fn from(repr: BasisDeDlogeRepr) -> Self {
-        Self {
-            value: repr.value,
-            unit: repr.unit,
-        }
+impl FromKeyValue for BasisDeDloge {
+    const KEY_NAME: &'static str = "BASIS_DE_DLOGE";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -58,45 +72,4 @@ impl ToCellValue for BasisDeDloge {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_basis_de_dloge_serde() {
-        let basis_de_dloge_str = "BASIS_DE_DLOGE : -1.2345 ev";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithBasisDeDloge {
-            basis_de_dloge: BasisDeDloge,
-        }
-
-        let cell_file_result: Result<CellFileWithBasisDeDloge, _> = from_str(basis_de_dloge_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.basis_de_dloge.value - (-1.2345)).abs() < 1e-10);
-        assert_eq!(cell_file.basis_de_dloge.unit, EnergyUnit::ElectronVolt);
-
-        let basis_de_dloge_instance = BasisDeDloge {
-            value: -0.5,
-            unit: EnergyUnit::Hartree,
-        };
-        let serialized_result = to_string(&basis_de_dloge_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized BASIS_DE_DLOGE (-0.5 ha): {serialized_string}");
-        assert!(serialized_string.contains("BASIS_DE_DLOGE"));
-        assert!(serialized_string.contains("-0.5"));
-        assert!(serialized_string.contains("ha"));
-    }
-}

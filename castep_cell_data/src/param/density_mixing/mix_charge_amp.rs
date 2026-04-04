@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
 
 /// Determines the mixing amplitude for the charge density in the density mixing procedure.
@@ -15,7 +18,21 @@ pub struct MixChargeAmp(pub f64);
 
 impl Default for MixChargeAmp {
     fn default() -> Self {
-        Self(0.8) // Default is 0.8
+        Self(0.8)
+    }
+}
+
+impl FromCellValue for MixChargeAmp {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_f64(value)?))
+    }
+}
+
+impl FromKeyValue for MixChargeAmp {
+    const KEY_NAME: &'static str = "MIX_CHARGE_AMP";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -31,42 +48,4 @@ impl ToCellValue for MixChargeAmp {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_mix_charge_amp_serde() {
-        let mix_charge_amp_str = "MIX_CHARGE_AMP : 0.5";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMixChargeAmp {
-            mix_charge_amp: MixChargeAmp,
-        }
-
-        let cell_file_result: Result<CellFileWithMixChargeAmp, _> = from_str(mix_charge_amp_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.mix_charge_amp.0 - 0.5).abs() < f64::EPSILON);
-
-        let mix_charge_amp_instance = MixChargeAmp(0.6);
-        let serialized_result = to_string(&mix_charge_amp_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MIX_CHARGE_AMP (0.6): {serialized_string}");
-        assert!(serialized_string.contains("MIX_CHARGE_AMP"));
-        assert!(serialized_string.contains("0.6"));
-
-        assert_eq!(MixChargeAmp::default(), MixChargeAmp(0.8));
-    }
-}

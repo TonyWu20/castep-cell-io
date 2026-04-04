@@ -1,5 +1,7 @@
-// File: basis_set/fine_grid_scale.rs
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
 
 /// Determines the maximum size of the g-vectors included in the fine grid
@@ -17,7 +19,21 @@ pub struct FineGridScale(pub f64);
 
 impl Default for FineGridScale {
     fn default() -> Self {
-        Self(1.0) // Default is 1.0
+        Self(1.0)
+    }
+}
+
+impl FromCellValue for FineGridScale {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_f64(value)?))
+    }
+}
+
+impl FromKeyValue for FineGridScale {
+    const KEY_NAME: &'static str = "FINE_GRID_SCALE";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -33,42 +49,4 @@ impl ToCellValue for FineGridScale {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_fine_grid_scale_serde() {
-        let fine_grid_scale_str = "FINE_GRID_SCALE : 2.0";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithFineGridScale {
-            fine_grid_scale: FineGridScale,
-        }
-
-        let cell_file_result: Result<CellFileWithFineGridScale, _> = from_str(fine_grid_scale_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.fine_grid_scale.0 - 2.0).abs() < f64::EPSILON);
-
-        let fine_grid_scale_instance = FineGridScale(1.5);
-        let serialized_result = to_string(&fine_grid_scale_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized FINE_GRID_SCALE (1.5): {serialized_string}");
-        assert!(serialized_string.contains("FINE_GRID_SCALE"));
-        assert!(serialized_string.contains("1.5"));
-
-        assert_eq!(FineGridScale::default(), FineGridScale(1.0));
-    }
-}

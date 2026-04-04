@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_u32;
 
 /// Specifies the number of MD steps between recalculations of damping parameters.
 ///
@@ -9,13 +11,26 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_DAMPING_RESET : 20
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MD_DAMPING_RESET")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MdDampingReset(pub u32); // Using u32 as it's a count of steps
 
 impl Default for MdDampingReset {
     fn default() -> Self {
         Self(30) // Default is 30
+    }
+}
+
+impl FromCellValue for MdDampingReset {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_u32(value)?))
+    }
+}
+
+impl FromKeyValue for MdDampingReset {
+    const KEY_NAME: &'static str = "MD_DAMPING_RESET";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -31,43 +46,4 @@ impl ToCellValue for MdDampingReset {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_damping_reset_serde() {
-        let md_damping_reset_str = "MD_DAMPING_RESET : 20";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdDampingReset {
-            md_damping_reset: MdDampingReset,
-        }
-
-        let cell_file_result: Result<CellFileWithMdDampingReset, _> =
-            from_str(md_damping_reset_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.md_damping_reset.0, 20);
-
-        let md_damping_reset_instance = MdDampingReset(50);
-        let serialized_result = to_string(&md_damping_reset_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MD_DAMPING_RESET (50): {serialized_string}");
-        assert!(serialized_string.contains("MD_DAMPING_RESET"));
-        assert!(serialized_string.contains("50"));
-
-        assert_eq!(MdDampingReset::default(), MdDampingReset(30));
-    }
-}

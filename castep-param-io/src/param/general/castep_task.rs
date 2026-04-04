@@ -1,5 +1,5 @@
 use crate::parser::span_into_str;
-use castep_cell_serde::{Cell, CellValue, ToCell};
+use castep_cell_io::{Cell, CellValue, ToCell};
 use castep_param_derive::{BuildFromPairs, KeywordDisplay, ParamEnumFromStr};
 use from_pest::FromPest;
 use pest::Parser;
@@ -78,7 +78,7 @@ impl CastepTask {
 }
 
 impl ToCell for CastepTask {
-    fn to_cell(&self) -> castep_cell_serde::Cell {
+    fn to_cell(&self) -> castep_cell_io::Cell {
         let value = match self {
             CastepTask::BandStructure => "BandStructure",
             CastepTask::GeometryOptimization => "GeometryOptimization",
@@ -100,10 +100,9 @@ impl ToCell for CastepTask {
 
 #[cfg(test)]
 mod test {
-    use castep_cell_serde::{from_str, to_string, ToCell};
+    use castep_cell_io::{to_string, ToCell};
     use from_pest::FromPest;
     use pest::Parser;
-    use serde::{Deserialize, Serialize};
 
     use crate::{
         param::KeywordDisplay,
@@ -124,20 +123,7 @@ mod test {
         let binding = magres.output();
         let mut parse = ParamParser::parse(Rule::task, &binding).unwrap();
         dbg!(&parse);
-        // parse.into_iter().for_each(|pair| {
-        //     let span = pair.as_span();
-        //     let mut inner = pair.clone().into_inner();
-        //     let inner = &mut inner;
-        //     dbg!(inner.next());
-        // });
-        let parsed_task = CastepTask::from_pest(&mut parse).unwrap();
-        #[derive(Deserialize, Serialize, Debug)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct Param {
-            task: CastepTask,
-        }
-        let geom_opt = from_str::<CastepTask>("TASK : SinglePoint").unwrap();
-        dbg!(&geom_opt);
-        println!("{}", to_string(&geom_opt.to_cell()).unwrap());
+        let _parsed_task = CastepTask::from_pest(&mut parse).unwrap();
+        println!("{}", to_string(&geom_opt.to_cell()));
     }
 }

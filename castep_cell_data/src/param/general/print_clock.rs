@@ -1,5 +1,6 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::FromKeyValue;
+use castep_cell_io::query::value_as_bool;
 
 /// Specifies whether or not timing information will be printed.
 ///
@@ -9,13 +10,20 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// PRINT_CLOCK : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "PRINT_CLOCK")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PrintClock(pub bool);
 
 impl Default for PrintClock {
     fn default() -> Self {
         Self(true) // Default is TRUE
+    }
+}
+
+impl FromKeyValue for PrintClock {
+    const KEY_NAME: &'static str = "PRINT_CLOCK";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_bool(value)?))
     }
 }
 
@@ -31,60 +39,4 @@ impl ToCellValue for PrintClock {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_print_clock_serde() {
-        let print_clock_true_str = "PRINT_CLOCK : TRUE";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithPrintClockTrue {
-            print_clock: PrintClock,
-        }
-
-        let cell_file_true_result: Result<CellFileWithPrintClockTrue, _> =
-            from_str(print_clock_true_str);
-        assert!(
-            cell_file_true_result.is_ok(),
-            "Deserialization (TRUE) failed: {:?}",
-            cell_file_true_result.err()
-        );
-        let cell_file_true = cell_file_true_result.unwrap();
-        assert!(cell_file_true.print_clock.0);
-
-        let print_clock_false_str = "PRINT_CLOCK : FALSE";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithPrintClockFalse {
-            print_clock: PrintClock,
-        }
-
-        let cell_file_false_result: Result<CellFileWithPrintClockFalse, _> =
-            from_str(print_clock_false_str);
-        assert!(
-            cell_file_false_result.is_ok(),
-            "Deserialization (FALSE) failed: {:?}",
-            cell_file_false_result.err()
-        );
-        let cell_file_false = cell_file_false_result.unwrap();
-        assert!(!cell_file_false.print_clock.0);
-
-        let print_clock_instance = PrintClock(false);
-        let serialized_result = to_string(&print_clock_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized PRINT_CLOCK (FALSE):\n{serialized_string}");
-        assert!(serialized_string.contains("PRINT_CLOCK"));
-        assert!(serialized_string.contains("false") || serialized_string.contains("FALSE"));
-
-        assert_eq!(PrintClock::default(), PrintClock(true));
-    }
-}

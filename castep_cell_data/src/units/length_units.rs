@@ -1,4 +1,7 @@
-use castep_cell_serde::{CellValue, ToCellValue};
+use castep_cell_io::{CellValue, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 #[derive(
     Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Default,
@@ -25,6 +28,22 @@ pub enum LengthUnit {
     #[default]
     #[serde(alias = "ANG", alias = "ang")]
     Ang,
+}
+
+impl FromCellValue for LengthUnit {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "bohr" => Ok(Self::Bohr),
+            "a0" => Ok(Self::BohrA0),
+            "m" => Ok(Self::Meter),
+            "cm" => Ok(Self::Centimeter),
+            "nm" => Ok(Self::Nanometer),
+            "ang" => Ok(Self::Ang),
+            other => Err(Error::Message(format!(
+                "unknown LengthUnit: {other}"
+            ))),
+        }
+    }
 }
 
 impl ToCellValue for LengthUnit {

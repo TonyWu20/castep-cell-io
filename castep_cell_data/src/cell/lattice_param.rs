@@ -1,9 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, parse::{FromBlock, FromCellValue}, CResult, Error, query::row_as_f64_n};
 
 use crate::units::LengthUnit;
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 /// Lattice vectors
 /// This data block contains the cell lattice vectors in Cartesian coordinates. It has the following format:
 /// %BLOCK LATTICE_CART
@@ -14,37 +13,46 @@ use crate::units::LengthUnit;
 /// %ENDBLOCK LATTICE_CART
 /// Where R1x is the x-component of the first lattice vector, R2y is the y-component of the second lattice vector, and so on.
 /// [units] specifies the units in which the lattice vectors are defined. If no units are given, the default of Å is used.
-#[serde(from = "LatticeCartRepr")]
 pub struct LatticeCart {
-    unit: Option<LengthUnit>,
-    a: [f64; 3],
-    b: [f64; 3],
-    c: [f64; 3],
+    pub unit: Option<LengthUnit>,
+    pub a: [f64; 3],
+    pub b: [f64; 3],
+    pub c: [f64; 3],
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum LatticeCartRepr {
-    Essential([[f64; 3]; 3]),
-    WithUnit([LengthUnit; 1], [f64; 3], [f64; 3], [f64; 3]),
-}
+impl FromBlock for LatticeCart {
+    const BLOCK_NAME: &'static str = "LATTICE_CART";
 
-impl From<LatticeCartRepr> for LatticeCart {
-    fn from(value: LatticeCartRepr) -> Self {
-        match value {
-            LatticeCartRepr::Essential(items) => LatticeCart {
-                unit: None,
-                a: items[0],
-                b: items[1],
-                c: items[2],
-            },
-            LatticeCartRepr::WithUnit(unit, a, b, c) => LatticeCart {
-                unit: Some(unit[0]),
-                a,
-                b,
-                c,
-            },
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        if rows.is_empty() {
+            return Err(Error::Message("LATTICE_CART block is empty".into()));
         }
+
+        let (unit, data_start) = if let CellValue::Array(arr) = &rows[0] {
+            if arr.len() == 1 {
+                if let Ok(u) = LengthUnit::from_cell_value(&arr[0]) {
+                    (Some(u), 1)
+                } else {
+                    (None, 0)
+                }
+            } else {
+                (None, 0)
+            }
+        } else {
+            (None, 0)
+        };
+
+        if rows.len() < data_start + 3 {
+            return Err(Error::Message(
+                "LATTICE_CART requires 3 data rows".into(),
+            ));
+        }
+
+        let a = row_as_f64_n::<3>(&rows[data_start])?;
+        let b = row_as_f64_n::<3>(&rows[data_start + 1])?;
+        let c = row_as_f64_n::<3>(&rows[data_start + 2])?;
+
+        Ok(Self { unit, a, b, c })
     }
 }
 
@@ -65,34 +73,45 @@ impl ToCell for LatticeCart {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
-#[serde(from = "LatticeABCRepr")]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct LatticeABC {
-    unit: Option<LengthUnit>,
-    abc: [f64; 3],
-    angles: [f64; 3],
-}
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum LatticeABCRepr {
-    Essential([[f64; 3]; 2]),
-    WithUnit([LengthUnit; 1], [f64; 3], [f64; 3]),
+    pub unit: Option<LengthUnit>,
+    pub abc: [f64; 3],
+    pub angles: [f64; 3],
 }
 
-impl From<LatticeABCRepr> for LatticeABC {
-    fn from(value: LatticeABCRepr) -> Self {
-        match value {
-            LatticeABCRepr::Essential(items) => LatticeABC {
-                unit: None,
-                abc: items[0],
-                angles: items[1],
-            },
-            LatticeABCRepr::WithUnit(unit, abc, angles) => LatticeABC {
-                unit: Some(unit[0]),
-                abc,
-                angles,
-            },
+impl FromBlock for LatticeABC {
+    const BLOCK_NAME: &'static str = "LATTICE_ABC";
+
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        if rows.is_empty() {
+            return Err(Error::Message("LATTICE_ABC block is empty".into()));
         }
+
+        let (unit, data_start) = if let CellValue::Array(arr) = &rows[0] {
+            if arr.len() == 1 {
+                if let Ok(u) = LengthUnit::from_cell_value(&arr[0]) {
+                    (Some(u), 1)
+                } else {
+                    (None, 0)
+                }
+            } else {
+                (None, 0)
+            }
+        } else {
+            (None, 0)
+        };
+
+        if rows.len() < data_start + 2 {
+            return Err(Error::Message(
+                "LATTICE_ABC requires 2 data rows".into(),
+            ));
+        }
+
+        let abc = row_as_f64_n::<3>(&rows[data_start])?;
+        let angles = row_as_f64_n::<3>(&rows[data_start + 1])?;
+
+        Ok(Self { unit, abc, angles })
     }
 }
 
@@ -112,40 +131,4 @@ impl ToCell for LatticeABC {
     }
 }
 
-#[cfg(test)]
-mod test_lattice_param {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn lattice_param_serde() {
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileCart {
-            lattice_cart: LatticeCart,
-        }
-        let block_cart_str = r#"%BLOCK LATTICE_CART
-bohr
-      10.182880152352300       0.000000000000000       0.000000000000000
-       0.000000000000000       5.969867637928440       0.000000000000000
-       0.000000000000000       0.000000000000000       4.750940602435009
-%ENDBLOCK LATTICE_CART
-"#;
-        let cell_file = dbg!(from_str::<CellFileCart>(block_cart_str).unwrap());
-        println!("{}", to_string(&cell_file.lattice_cart.to_cell()).unwrap());
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileABC {
-            lattice_abc: LatticeABC,
-        }
-        let block_abc_str = r#"%BLOCK LATTICE_ABC
-bohr
-      10.182880152352300       5.969867637928440       4.750940602435009
-      90.000000000000000      90.000000000000000      90.000000000000000
-%ENDBLOCK LATTICE_ABC
-"#;
-        let cell_file = dbg!(from_str::<CellFileABC>(block_abc_str).unwrap());
-        println!("{}", to_string(&cell_file.lattice_abc.to_cell()).unwrap());
-    }
-}

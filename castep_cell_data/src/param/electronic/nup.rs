@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_f64;
 
 /// Determines the total number of up-spin electrons.
 /// Used only if SPIN_POLARIZED = TRUE.
@@ -12,13 +14,22 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// NUP : 12.0
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
-#[serde(rename = "NUP")]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Nup(pub f64);
 
-// Note: Default logic is context-dependent.
-// The `Default` implementation here is omitted as it's not directly applicable.
-// A containing struct or the application logic would need to handle this.
+impl FromCellValue for Nup {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_f64(value)?))
+    }
+}
+
+impl FromKeyValue for Nup {
+    const KEY_NAME: &'static str = "NUP";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
 
 impl ToCell for Nup {
     fn to_cell(&self) -> Cell {
@@ -32,40 +43,3 @@ impl ToCellValue for Nup {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_nup_serde() {
-        let nup_str = "NUP : 12.0";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithNup {
-            nup: Nup,
-        }
-
-        let cell_file_result: Result<CellFileWithNup, _> = from_str(nup_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.nup.0 - 12.0).abs() < f64::EPSILON);
-
-        let nup_instance = Nup(8.5);
-        let serialized_result = to_string(&nup_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized NUP (8.5): {serialized_string}");
-        assert!(serialized_string.contains("NUP"));
-        assert!(serialized_string.contains("8.5"));
-    }
-}

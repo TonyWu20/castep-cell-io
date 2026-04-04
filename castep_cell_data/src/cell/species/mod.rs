@@ -1,4 +1,6 @@
-use castep_cell_serde::{CellValue, ToCellValue};
+use castep_cell_io::{CellValue, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
 use serde::{Deserialize, Serialize};
 
 mod hubbard_u;
@@ -40,6 +42,26 @@ impl Species {
             Some(v)
         } else {
             None
+        }
+    }
+}
+
+impl FromCellValue for Species {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Str(s) => {
+                if let Ok(n) = s.parse::<u32>() {
+                    Ok(Species::AtomicNumber(n))
+                } else {
+                    Ok(Species::Symbol(s.to_string()))
+                }
+            }
+            CellValue::UInt(n) => Ok(Species::AtomicNumber(*n)),
+            CellValue::String(s) => Ok(Species::Symbol(s.clone())),
+            other => Err(Error::UnexpectedType(
+                "Species".into(),
+                format!("{other:?}"),
+            )),
         }
     }
 }

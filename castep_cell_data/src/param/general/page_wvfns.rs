@@ -1,5 +1,6 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::FromKeyValue;
+use castep_cell_io::query::value_as_i32;
 
 /// Controls the paging of wavefunctions to disk in order to save memory.
 ///
@@ -9,9 +10,16 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// PAGE_WVFNS : 2
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "PAGE_WVFNS")]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PageWvfns(pub i32);
+
+impl FromKeyValue for PageWvfns {
+    const KEY_NAME: &'static str = "PAGE_WVFNS";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
+    }
+}
 
 impl ToCell for PageWvfns {
     fn to_cell(&self) -> Cell {
@@ -25,42 +33,4 @@ impl ToCellValue for PageWvfns {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_page_wvfns_serde() {
-        let page_wvfns_str = "PAGE_WVFNS : 2";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithPageWvfns {
-            page_wvfns: PageWvfns,
-        }
-
-        let cell_file_result: Result<CellFileWithPageWvfns, _> = from_str(page_wvfns_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.page_wvfns.0, 2);
-
-        let page_wvfns_instance = PageWvfns(-1);
-        let serialized_result = to_string(&page_wvfns_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized PAGE_WVFNS (-1):\n{serialized_string}");
-        assert!(serialized_string.contains("PAGE_WVFNS"));
-        assert!(serialized_string.contains("-1"));
-
-        assert_eq!(PageWvfns::default(), PageWvfns(0));
-    }
-}

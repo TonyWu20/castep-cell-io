@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::query::value_as_str;
+use castep_cell_io::Error;
 
 /// Determines the optimization strategy used when there are multiple strategies
 /// available for the selected algorithm.
@@ -10,19 +12,34 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// OPT_STRATEGY : Memory
-#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "OPT_STRATEGY")]
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum OptStrategy {
     /// Maximizes performance at the cost of additional memory usage.
-    #[serde(alias = "speed", alias = "SPEED")]
     Speed,
     /// Balances performance and memory usage.
-    #[serde(alias = "default", alias = "DEFAULT")]
     #[default]
     Default,
     /// Minimizes memory usage at a cost of decreased performance.
-    #[serde(alias = "memory", alias = "MEMEORY")]
     Memory,
+}
+
+impl FromCellValue for OptStrategy {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "speed" => Ok(Self::Speed),
+            "default" => Ok(Self::Default),
+            "memory" => Ok(Self::Memory),
+            other => Err(Error::Message(format!("unknown OptStrategy: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for OptStrategy {
+    const KEY_NAME: &'static str = "OPT_STRATEGY";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
 }
 
 impl ToCell for OptStrategy {
@@ -44,53 +61,4 @@ impl ToCellValue for OptStrategy {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_opt_strategy_serde() {
-        let test_cases = [
-            ("OPT_STRATEGY : Speed", OptStrategy::Speed),
-            ("OPT_STRATEGY : Default", OptStrategy::Default),
-            ("OPT_STRATEGY : Memory", OptStrategy::Memory),
-        ];
-
-        for (input_str, expected_strategy) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithOptStrategy {
-                opt_strategy: OptStrategy,
-            }
-
-            let cell_file_result: Result<CellFileWithOptStrategy, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.opt_strategy, expected_strategy,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        let opt_strategy_instance = OptStrategy::Memory;
-        let serialized_result = to_string(&opt_strategy_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized OPT_STRATEGY (Memory):\n{serialized_string}");
-        assert!(serialized_string.contains("OPT_STRATEGY"));
-        assert!(serialized_string.contains("Memory"));
-
-        assert_eq!(OptStrategy::default(), OptStrategy::Default);
-    }
-}

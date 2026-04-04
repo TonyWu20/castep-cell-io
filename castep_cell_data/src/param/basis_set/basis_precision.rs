@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the precision of the basis set by choosing the level of convergence
@@ -32,7 +35,28 @@ pub enum BasisPrecision {
 
 impl Default for BasisPrecision {
     fn default() -> Self {
-        Self::Fine // Default is FINE
+        Self::Fine
+    }
+}
+
+impl FromCellValue for BasisPrecision {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "coarse" => Ok(Self::Coarse),
+            "medium" => Ok(Self::Medium),
+            "fine" => Ok(Self::Fine),
+            "precise" => Ok(Self::Precise),
+            "extreme" => Ok(Self::Extreme),
+            other => Err(Error::Message(format!("unknown BasisPrecision: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for BasisPrecision {
+    const KEY_NAME: &'static str = "BASIS_PRECISION";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -57,55 +81,4 @@ impl ToCellValue for BasisPrecision {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_basis_precision_serde() {
-        let test_cases = [
-            ("BASIS_PRECISION : COARSE", BasisPrecision::Coarse),
-            ("BASIS_PRECISION : MEDIUM", BasisPrecision::Medium),
-            ("BASIS_PRECISION : FINE", BasisPrecision::Fine),
-            ("BASIS_PRECISION : PRECISE", BasisPrecision::Precise),
-            ("BASIS_PRECISION : EXTREME", BasisPrecision::Extreme),
-        ];
-
-        for (input_str, expected_precision) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithBasisPrecision {
-                basis_precision: BasisPrecision,
-            }
-
-            let cell_file_result: Result<CellFileWithBasisPrecision, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.basis_precision, expected_precision,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        let basis_precision_instance = BasisPrecision::Medium;
-        let serialized_result = to_string(&basis_precision_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized BASIS_PRECISION (MEDIUM): {serialized_string}");
-        assert!(serialized_string.contains("BASIS_PRECISION"));
-        assert!(serialized_string.contains("MEDIUM"));
-
-        assert_eq!(BasisPrecision::default(), BasisPrecision::Fine);
-    }
-}

@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
 
 /// Determines the size of the standard grid, relative to the diameter
@@ -16,7 +19,21 @@ pub struct GridScale(pub f64);
 
 impl Default for GridScale {
     fn default() -> Self {
-        Self(1.75) // Default is 1.75
+        Self(1.75)
+    }
+}
+
+impl FromCellValue for GridScale {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_f64(value)?))
+    }
+}
+
+impl FromKeyValue for GridScale {
+    const KEY_NAME: &'static str = "GRID_SCALE";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -32,42 +49,4 @@ impl ToCellValue for GridScale {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_grid_scale_serde() {
-        let grid_scale_str = "GRID_SCALE : 2.0";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithGridScale {
-            grid_scale: GridScale,
-        }
-
-        let cell_file_result: Result<CellFileWithGridScale, _> = from_str(grid_scale_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.grid_scale.0 - 2.0).abs() < f64::EPSILON);
-
-        let grid_scale_instance = GridScale(1.5);
-        let serialized_result = to_string(&grid_scale_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized GRID_SCALE (1.5): {serialized_string}");
-        assert!(serialized_string.contains("GRID_SCALE"));
-        assert!(serialized_string.contains("1.5"));
-
-        assert_eq!(GridScale::default(), GridScale(1.75));
-    }
-}

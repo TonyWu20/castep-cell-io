@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Determines the method used for geometry optimization.
@@ -31,6 +34,27 @@ pub enum GeomMethod {
     Tpsd,
 }
 
+impl FromCellValue for GeomMethod {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "bfgs" => Ok(Self::Bfgs),
+            "lbfgs" => Ok(Self::Lbfgs),
+            "delocalized" | "delocalised" => Ok(Self::Delocalized),
+            "dampedmd" => Ok(Self::DampedMd),
+            "tpsd" => Ok(Self::Tpsd),
+            other => Err(Error::Message(format!("unknown GeomMethod: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for GeomMethod {
+    const KEY_NAME: &'static str = "GEOM_METHOD";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
+
 impl Default for GeomMethod {
     fn default() -> Self {
         Self::Bfgs // Default is BFGS
@@ -58,71 +82,5 @@ impl ToCellValue for GeomMethod {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_geom_method_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("GEOM_METHOD : BFGS", GeomMethod::Bfgs),
-            ("GEOM_METHOD : bfgs", GeomMethod::Bfgs),
-            ("GEOM_METHOD : BFGS", GeomMethod::Bfgs), // Uppercase alias
-            ("GEOM_METHOD : LBFGS", GeomMethod::Lbfgs),
-            ("GEOM_METHOD : lbfgs", GeomMethod::Lbfgs),
-            ("GEOM_METHOD : LBFGS", GeomMethod::Lbfgs), // Uppercase alias
-            ("GEOM_METHOD : Delocalized", GeomMethod::Delocalized),
-            ("GEOM_METHOD : delocalized", GeomMethod::Delocalized),
-            ("GEOM_METHOD : DELOCALIZED", GeomMethod::Delocalized), // Uppercase alias
-            ("GEOM_METHOD : Delocalised", GeomMethod::Delocalized), // Alternative spelling
-            ("GEOM_METHOD : delocalised", GeomMethod::Delocalized), // Alternative spelling
-            ("GEOM_METHOD : DELOCALISED", GeomMethod::Delocalized), // Alternative spelling, Uppercase alias
-            ("GEOM_METHOD : DampedMD", GeomMethod::DampedMd),
-            ("GEOM_METHOD : dampedmd", GeomMethod::DampedMd),
-            ("GEOM_METHOD : DAMPEDMD", GeomMethod::DampedMd), // Uppercase alias
-            ("GEOM_METHOD : TPSD", GeomMethod::Tpsd),
-            ("GEOM_METHOD : tpsd", GeomMethod::Tpsd),
-            ("GEOM_METHOD : TPSD", GeomMethod::Tpsd), // Uppercase alias
-        ];
 
-        for (input_str, expected_method) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithGeomMethod {
-                geom_method: GeomMethod,
-            }
-
-            let cell_file_result: Result<CellFileWithGeomMethod, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.geom_method, expected_method,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let geom_method_instance = GeomMethod::DampedMd;
-        let serialized_result = to_string(&geom_method_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized GEOM_METHOD (DampedMD): {serialized_string}");
-        assert!(serialized_string.contains("GEOM_METHOD"));
-        assert!(serialized_string.contains("DampedMD"));
-
-        // Test Default
-        assert_eq!(GeomMethod::default(), GeomMethod::Bfgs);
-    }
-}

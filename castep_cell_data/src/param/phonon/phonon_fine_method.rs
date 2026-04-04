@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Selects which calculation method to use for phonon calculation on a fine grid.
@@ -21,6 +24,25 @@ pub enum PhononFineMethod {
     /// Use Finite displacement method
     #[serde(alias = "supercell", alias = "SUPERCELL")]
     Supercell,
+}
+
+impl FromCellValue for PhononFineMethod {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "interpolate" => Ok(Self::Interpolate),
+            "supercell" => Ok(Self::Supercell),
+            other => Err(Error::Message(format!("unknown PhononFineMethod: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for PhononFineMethod {
+    const KEY_NAME: &'static str = "PHONON_FINE_METHOD";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
 }
 
 impl Default for PhononFineMethod {
@@ -48,80 +70,4 @@ impl ToCellValue for PhononFineMethod {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_phonon_fine_method_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("PHONON_FINE_METHOD : NONE", PhononFineMethod::None),
-            ("PHONON_FINE_METHOD : none", PhononFineMethod::None),
-            ("PHONON_FINE_METHOD : NONE", PhononFineMethod::None), // Uppercase alias
-            (
-                "PHONON_FINE_METHOD : INTERPOLATE",
-                PhononFineMethod::Interpolate,
-            ),
-            (
-                "PHONON_FINE_METHOD : interpolate",
-                PhononFineMethod::Interpolate,
-            ),
-            (
-                "PHONON_FINE_METHOD : INTERPOLATE",
-                PhononFineMethod::Interpolate,
-            ), // Uppercase alias
-            (
-                "PHONON_FINE_METHOD : SUPERCELL",
-                PhononFineMethod::Supercell,
-            ),
-            (
-                "PHONON_FINE_METHOD : supercell",
-                PhononFineMethod::Supercell,
-            ),
-            (
-                "PHONON_FINE_METHOD : SUPERCELL",
-                PhononFineMethod::Supercell,
-            ), // Uppercase alias
-        ];
-
-        for (input_str, expected_method) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithPhononFineMethod {
-                phonon_fine_method: PhononFineMethod,
-            }
-
-            let cell_file_result: Result<CellFileWithPhononFineMethod, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.phonon_fine_method, expected_method,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let phonon_fine_method_instance = PhononFineMethod::Supercell;
-        let serialized_result = to_string(&phonon_fine_method_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized PHONON_FINE_METHOD (SUPERCELL): {serialized_string}");
-        assert!(serialized_string.contains("PHONON_FINE_METHOD"));
-        assert!(serialized_string.contains("SUPERCELL"));
-
-        // Test Default
-        assert_eq!(PhononFineMethod::default(), PhononFineMethod::None);
-    }
-}

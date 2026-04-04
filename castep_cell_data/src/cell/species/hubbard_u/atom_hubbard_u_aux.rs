@@ -2,171 +2,59 @@ use crate::cell::species::{
     Species,
     hubbard_u::{AtomHubbardU, OrbitalU},
 };
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{CellValue, parse::{FromBlock, FromCellValue}, CResult, Error, query::value_as_f64, query::value_as_u32};
 
-/// Represents the specification for Hubbard U values for a specific atom/ion.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub(super) enum AtomHubbardURepr<'a> {
-    NoIonOne(Species, &'a str, f64),
-    IonOne(Species, u32, &'a str, f64),
-    NoIonTwo(Species, &'a str, f64, &'a str, f64),
-    IonTwo(Species, u32, &'a str, f64, &'a str, f64),
-    NoIonThree(Species, &'a str, f64, &'a str, f64, &'a str, f64),
-    IonThree(Species, u32, &'a str, f64, &'a str, f64, &'a str, f64),
-    NoIonFour(
-        Species,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-    ),
-    IonFour(
-        Species,
-        u32,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-        &'a str,
-        f64,
-    ),
-}
+impl FromBlock for AtomHubbardU {
+    const BLOCK_NAME: &'static str = "ATOM_HUBBARD_U";
 
-impl AtomHubbardURepr<'_> {
-    /// Extracts the species, optional ion number, and orbitals.
-    fn decompose(self) -> (Species, Option<u32>, Vec<OrbitalU>) {
-        match self {
-            AtomHubbardURepr::NoIonOne(species, orb, val) => (
-                species,
-                None,
-                vec![OrbitalU::from_str_f64(orb, val).unwrap()],
-            ),
-            AtomHubbardURepr::IonOne(species, ion_number, orb, val) => (
-                species,
-                Some(ion_number),
-                vec![OrbitalU::from_str_f64(orb, val).unwrap()],
-            ),
-            AtomHubbardURepr::NoIonTwo(species, orb, val, orb1, val1) => (
-                species,
-                None,
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
-            AtomHubbardURepr::IonTwo(species, ion_number, orb, val, orb1, val1) => (
-                species,
-                Some(ion_number),
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
-            AtomHubbardURepr::NoIonThree(species, orb, val, orb1, val1, orb2, val2) => (
-                species,
-                None,
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                    OrbitalU::from_str_f64(orb2, val2),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
-            AtomHubbardURepr::IonThree(species, ion_number, orb, val, orb1, val1, orb2, val2) => (
-                species,
-                Some(ion_number),
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                    OrbitalU::from_str_f64(orb2, val2),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
-            AtomHubbardURepr::NoIonFour(species, orb, val, orb1, val1, orb2, val2, orb3, val3) => (
-                species,
-                None,
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                    OrbitalU::from_str_f64(orb2, val2),
-                    OrbitalU::from_str_f64(orb3, val3),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
-            AtomHubbardURepr::IonFour(
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        if rows.is_empty() {
+            return Err(Error::Message("AtomHubbardU row is empty".into()));
+        }
+
+        if let CellValue::Array(arr) = &rows[0] {
+            if arr.is_empty() {
+                return Err(Error::Message("AtomHubbardU array is empty".into()));
+            }
+
+            let species = Species::from_cell_value(&arr[0])?;
+            let mut idx = 1;
+            let mut ion_number = None;
+
+            // Check if second element is a u32 (ion number)
+            if idx < arr.len() {
+                if let Ok(ion_num) = value_as_u32(&arr[idx]) {
+                    ion_number = Some(ion_num);
+                    idx += 1;
+                }
+            }
+
+            // Parse remaining elements as orbital specifications
+            let mut orbitals = Vec::new();
+            while idx < arr.len() {
+                if let CellValue::String(orb_str) = &arr[idx] {
+                    if idx + 1 < arr.len() {
+                        let val = value_as_f64(&arr[idx + 1])?;
+                        if let Some(orbital) = OrbitalU::from_str_f64(orb_str, val) {
+                            orbitals.push(orbital);
+                        }
+                        idx += 2;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            Ok(Self {
                 species,
                 ion_number,
-                orb,
-                val,
-                orb1,
-                val1,
-                orb2,
-                val2,
-                orb3,
-                val3,
-            ) => (
-                species,
-                Some(ion_number),
-                [
-                    OrbitalU::from_str_f64(orb, val),
-                    OrbitalU::from_str_f64(orb1, val1),
-                    OrbitalU::from_str_f64(orb2, val2),
-                    OrbitalU::from_str_f64(orb3, val3),
-                ]
-                .into_iter()
-                .flatten()
-                .collect(),
-            ),
+                orbitals,
+            })
+        } else {
+            Err(Error::Message("AtomHubbardU row must be an array".into()))
         }
     }
 }
 
-impl<'a> From<AtomHubbardURepr<'a>> for AtomHubbardU {
-    fn from(value: AtomHubbardURepr) -> Self {
-        let (species, ion_number, orbitals) = value.decompose();
-        Self {
-            species,
-            ion_number,
-            orbitals,
-        }
-    }
-}
-#[cfg(test)]
-mod atom_hubbard_u {
-    use castep_cell_serde::{CellValue, CellValueDeserializer};
-    use serde::Deserialize;
-
-    use crate::cell::species::hubbard_u::AtomHubbardU;
-
-    #[test]
-    fn test_atom_hubbard_u() {
-        let atom_hubbard_u =
-            AtomHubbardU::deserialize(&mut CellValueDeserializer::new(&CellValue::Array(vec![
-                CellValue::Str("Fe"),
-                CellValue::Str("d:"),
-                CellValue::Float(3.0),
-            ])))
-            .unwrap();
-        dbg!(atom_hubbard_u);
-    }
-}

@@ -19,21 +19,3 @@ pub enum Error {
     /// expected: {0}, from {1}
     TryFromInt(TryFromIntError),
 }
-
-impl serde::ser::Error for Error {
-    fn custom<T>(msg: T) -> Self
-    where
-        T: std::fmt::Display,
-    {
-        Error::Message(msg.to_string())
-    }
-}
-
-impl serde::de::Error for Error {
-    fn custom<T>(msg: T) -> Self
-    where
-        T: std::fmt::Display,
-    {
-        Error::Message(msg.to_string())
-    }
-}

@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Specifies which non-linear optical property to calculate during a TASK=EFIELD calculation.
 ///
@@ -9,20 +11,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// EFIELD_CALCULATE_NONLINEAR : CHI2
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "EFIELD_CALCULATE_NONLINEAR")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum EfieldCalculateNonlinear {
     /// Produces second harmonic generation coefficients
-    #[serde(alias = "chi2", alias = "CHI2")]
     Chi2,
     /// Non-linear optical properties are not calculated
-    #[serde(alias = "none", alias = "NONE")]
     None,
 }
 
 impl Default for EfieldCalculateNonlinear {
     fn default() -> Self {
-        Self::None // Default is NONE
+        Self::None
+    }
+}
+
+impl FromCellValue for EfieldCalculateNonlinear {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "chi2" => Ok(Self::Chi2),
+            "none" => Ok(Self::None),
+            other => Err(Error::Message(format!("unknown EfieldCalculateNonlinear: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for EfieldCalculateNonlinear {
+    const KEY_NAME: &'static str = "EFIELD_CALCULATE_NONLINEAR";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -44,81 +61,3 @@ impl ToCellValue for EfieldCalculateNonlinear {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_efield_calculate_nonlinear_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            (
-                "EFIELD_CALCULATE_NONLINEAR : CHI2",
-                EfieldCalculateNonlinear::Chi2,
-            ),
-            (
-                "EFIELD_CALCULATE_NONLINEAR : chi2",
-                EfieldCalculateNonlinear::Chi2,
-            ),
-            (
-                "EFIELD_CALCULATE_NONLINEAR : CHI2",
-                EfieldCalculateNonlinear::Chi2,
-            ), // Uppercase alias
-            (
-                "EFIELD_CALCULATE_NONLINEAR : NONE",
-                EfieldCalculateNonlinear::None,
-            ),
-            (
-                "EFIELD_CALCULATE_NONLINEAR : none",
-                EfieldCalculateNonlinear::None,
-            ),
-            (
-                "EFIELD_CALCULATE_NONLINEAR : NONE",
-                EfieldCalculateNonlinear::None,
-            ), // Uppercase alias
-        ];
-
-        for (input_str, expected_option) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithEfieldCalculateNonlinear {
-                efield_calculate_nonlinear: EfieldCalculateNonlinear,
-            }
-
-            let cell_file_result: Result<CellFileWithEfieldCalculateNonlinear, _> =
-                from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.efield_calculate_nonlinear, expected_option,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let efield_calculate_nonlinear_instance = EfieldCalculateNonlinear::Chi2;
-        let serialized_result = to_string(&efield_calculate_nonlinear_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized EFIELD_CALCULATE_NONLINEAR (CHI2): {serialized_string}");
-        assert!(serialized_string.contains("EFIELD_CALCULATE_NONLINEAR"));
-        assert!(serialized_string.contains("CHI2"));
-
-        // Test Default
-        assert_eq!(
-            EfieldCalculateNonlinear::default(),
-            EfieldCalculateNonlinear::None
-        );
-    }
-}

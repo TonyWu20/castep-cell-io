@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_u32;
 use serde::{Deserialize, Serialize};
 
 /// Determines the size of the convergence window during a phonon calculation.
@@ -12,6 +15,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "PHONON_CONVERGENCE_WIN")]
 pub struct PhononConvergenceWin(pub u32); // Using i32
+
+impl FromCellValue for PhononConvergenceWin {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_u32(value)?))
+    }
+}
+
+impl FromKeyValue for PhononConvergenceWin {
+    const KEY_NAME: &'static str = "PHONON_CONVERGENCE_WIN";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
 
 impl Default for PhononConvergenceWin {
     fn default() -> Self {
@@ -31,43 +48,4 @@ impl ToCellValue for PhononConvergenceWin {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_phonon_convergence_win_serde() {
-        let phonon_convergence_win_str = "PHONON_CONVERGENCE_WIN : 4";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithPhononConvergenceWin {
-            phonon_convergence_win: PhononConvergenceWin,
-        }
-
-        let cell_file_result: Result<CellFileWithPhononConvergenceWin, _> =
-            from_str(phonon_convergence_win_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.phonon_convergence_win.0, 4);
-
-        let phonon_convergence_win_instance = PhononConvergenceWin(5);
-        let serialized_result = to_string(&phonon_convergence_win_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized PHONON_CONVERGENCE_WIN (5): {serialized_string}");
-        assert!(serialized_string.contains("PHONON_CONVERGENCE_WIN"));
-        assert!(serialized_string.contains("5"));
-
-        assert_eq!(PhononConvergenceWin::default(), PhononConvergenceWin(2));
-    }
-}

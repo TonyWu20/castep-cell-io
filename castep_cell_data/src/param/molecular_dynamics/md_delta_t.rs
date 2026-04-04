@@ -1,6 +1,8 @@
 use crate::units::TimeUnit;
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::row_as_f64_n;
 
 /// Determines the time step for a molecular dynamics calculation.
 ///
@@ -10,9 +12,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_DELTA_T : 1.54 fs
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
-#[serde(rename = "MD_DELTA_T")]
-#[serde(from = "MdDeltaTRepr")] // Use intermediate repr for deserialization
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct MdDeltaT {
     /// The time step value.
     pub value: f64,
@@ -20,29 +20,34 @@ pub struct MdDeltaT {
     pub unit: Option<TimeUnit>,
 }
 
-/// Intermediate representation for deserializing `MdDeltaT`.
-/// Handles the optional unit.
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum MdDeltaTRepr {
-    /// Format: value unit
-    WithUnit(f64, TimeUnit),
-    /// Format: value (default unit fs implied)
-    Essential(f64),
+impl FromCellValue for MdDeltaT {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(_) => {
+                let arr = row_as_f64_n::<2>(value)?;
+                Ok(Self {
+                    value: arr[0],
+                    unit: if arr[1] > 0.0 {
+                        Some(TimeUnit::from_cell_value(&CellValue::Float(arr[1]))?)
+                    } else {
+                        None
+                    },
+                })
+            }
+            CellValue::Float(f) => Ok(Self {
+                value: *f,
+                unit: None,
+            }),
+            _ => Err(Error::Message("expected float or array".to_string())),
+        }
+    }
 }
 
-impl From<MdDeltaTRepr> for MdDeltaT {
-    fn from(repr: MdDeltaTRepr) -> Self {
-        match repr {
-            MdDeltaTRepr::WithUnit(value, unit) => Self {
-                value,
-                unit: Some(unit),
-            },
-            MdDeltaTRepr::Essential(value) => Self {
-                value,
-                unit: None, // Default unit (fs) implied
-            },
-        }
+impl FromKeyValue for MdDeltaT {
+    const KEY_NAME: &'static str = "MD_DELTA_T";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -67,82 +72,4 @@ impl ToCellValue for MdDeltaT {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_delta_t_serde() {
-        // 1. Test Deserialization with unit
-        let md_delta_t_with_unit_str = "MD_DELTA_T : 1.54 fs";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdDeltaTUnit {
-            md_delta_t: MdDeltaT,
-        }
-
-        let cell_file_result: Result<CellFileWithMdDeltaTUnit, _> =
-            from_str(md_delta_t_with_unit_str);
-        // This test depends on TimeUnit correctly parsing "fs"
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization (with unit) failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.md_delta_t.value - 1.54).abs() < 1e-10);
-        // assert_eq!(cell_file.md_delta_t.unit, Some(TimeUnit::Femtosecond)); // If this variant exists
-
-        // 2. Test Deserialization without unit (default unit implied)
-        let md_delta_t_default_str = "MD_DELTA_T : 2.0";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdDeltaTDefault {
-            md_delta_t: MdDeltaT,
-        }
-
-        let cell_file_default_result: Result<CellFileWithMdDeltaTDefault, _> =
-            from_str(md_delta_t_default_str);
-        assert!(
-            cell_file_default_result.is_ok(),
-            "Deserialization (default unit) failed: {:?}",
-            cell_file_default_result.err()
-        );
-        let cell_file_default = cell_file_default_result.unwrap();
-        assert!((cell_file_default.md_delta_t.value - 2.0).abs() < f64::EPSILON);
-        assert_eq!(cell_file_default.md_delta_t.unit, None);
-
-        // 3. Test Serialization using ToCell (with unit)
-        // This depends on TimeUnit having a variant that serializes correctly.
-        // let md_delta_t_instance_with_unit = MdDeltaT {
-        //     value: 1.0,
-        //     unit: Some(TimeUnit::Femtosecond), // If this variant exists
-        // };
-        // let serialized_result_with_unit = to_string(&md_delta_t_instance_with_unit.to_cell());
-        // assert!(serialized_result_with_unit.is_ok(), "Serialization (with unit) failed: {:?}", serialized_result_with_unit.err());
-        // let serialized_string_with_unit = serialized_result_with_unit.unwrap();
-        // println!("Serialized MD_DELTA_T (1.0 fs): {serialized_string_with_unit}");
-        // assert!(serialized_string_with_unit.contains("MD_DELTA_T"));
-        // assert!(serialized_string_with_unit.contains("1.0"));
-        // assert!(serialized_string_with_unit.contains("fs"));
-
-        // 4. Test Serialization using ToCell (without unit)
-        let md_delta_t_instance_no_unit = MdDeltaT {
-            value: 3.0,
-            unit: None,
-        };
-        let serialized_result_no_unit = to_string(&md_delta_t_instance_no_unit.to_cell());
-        assert!(
-            serialized_result_no_unit.is_ok(),
-            "Serialization (no unit) failed: {:?}",
-            serialized_result_no_unit.err()
-        );
-        let serialized_string_no_unit = serialized_result_no_unit.unwrap();
-        println!("Serialized MD_DELTA_T (3.0, no unit): {serialized_string_no_unit}");
-        assert!(serialized_string_no_unit.contains("MD_DELTA_T"));
-        assert!(serialized_string_no_unit.contains("3.0"));
-        // Check that the unit string is not present (or is the default)
-    }
-}

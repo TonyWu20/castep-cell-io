@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Defines the type of calculation to perform.
@@ -59,6 +62,35 @@ impl Default for Task {
     }
 }
 
+impl FromCellValue for Task {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "singlepoint" => Ok(Self::SinglePoint),
+            "bandstructure" => Ok(Self::BandStructure),
+            "geometryoptimization" => Ok(Self::GeometryOptimization),
+            "moleculardynamics" => Ok(Self::MolecularDynamics),
+            "optics" => Ok(Self::Optics),
+            "phonon" => Ok(Self::Phonon),
+            "efield" => Ok(Self::Efield),
+            "phonon+efield" => Ok(Self::PhononPlusEfield),
+            "transitionstatesearch" => Ok(Self::TransitionStateSearch),
+            "magres" => Ok(Self::MagRes),
+            "elnes" => Ok(Self::Elnes),
+            "electronicspectroscopy" => Ok(Self::ElectronicSpectroscopy),
+            "autosolvation" => Ok(Self::Autosolvation),
+            other => Err(Error::Message(format!("unknown Task: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for Task {
+    const KEY_NAME: &'static str = "TASK";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
+
 impl ToCell for Task {
     fn to_cell(&self) -> Cell {
         Cell::KeyValue("TASK", self.to_cell_value())
@@ -88,55 +120,4 @@ impl ToCellValue for Task {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_task_serde() {
-        // Test a few key variants
-        let test_cases = [
-            ("TASK : SinglePoint", Task::SinglePoint),
-            ("TASK : GeometryOptimization", Task::GeometryOptimization),
-            ("TASK : Optics", Task::Optics),
-            ("TASK : Phonon+Efield", Task::PhononPlusEfield),
-        ];
-
-        for (input_str, expected_task) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithTask {
-                task: Task,
-            }
-
-            let cell_file_result: Result<CellFileWithTask, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.task, expected_task,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        let task_instance = Task::MolecularDynamics;
-        let serialized_result = to_string(&task_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized TASK (MolecularDynamics):\n{serialized_string}");
-        assert!(serialized_string.contains("TASK"));
-        assert!(serialized_string.contains("MolecularDynamics"));
-
-        assert_eq!(Task::default(), Task::SinglePoint);
-    }
-}

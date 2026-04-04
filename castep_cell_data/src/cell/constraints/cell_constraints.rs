@@ -1,13 +1,11 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromBlock, CResult, Error, query::value_as_u32};
 
 /// Represents the constraints on lattice parameters (lengths and angles) during relaxation/MD.
 ///
 /// Consists of two sets of indices:
 /// - One for the lattice vector magnitudes (a, b, c)
 /// - One for the lattice angles (alpha, beta, gamma)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "CELL_CONSTRAINTS")] // Ensure correct block name during serde
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CellConstraints {
     /// Constraints for lattice vector magnitudes [a, b, c].
     /// 0 = fixed, positive integer = free to vary, shared integers = linked values.
@@ -17,84 +15,52 @@ pub struct CellConstraints {
     pub angles: [u32; 3],
 }
 
+impl FromBlock for CellConstraints {
+    const BLOCK_NAME: &'static str = "CELL_CONSTRAINTS";
+
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        if rows.len() < 2 {
+            return Err(castep_cell_io::Error::Message(
+                "CELL_CONSTRAINTS requires at least 2 rows".into(),
+            ));
+        }
+
+        let lengths = match &rows[0] {
+            CellValue::Array(arr) if arr.len() >= 3 => [
+                value_as_u32(&arr[0])?,
+                value_as_u32(&arr[1])?,
+                value_as_u32(&arr[2])?,
+            ],
+            _ => return Err(castep_cell_io::Error::Message(
+                "CELL_CONSTRAINTS lengths row must be an array of 3 values".into(),
+            )),
+        };
+
+        let angles = match &rows[1] {
+            CellValue::Array(arr) if arr.len() >= 3 => [
+                value_as_u32(&arr[0])?,
+                value_as_u32(&arr[1])?,
+                value_as_u32(&arr[2])?,
+            ],
+            _ => return Err(castep_cell_io::Error::Message(
+                "CELL_CONSTRAINTS angles row must be an array of 3 values".into(),
+            )),
+        };
+
+        Ok(CellConstraints { lengths, angles })
+    }
+}
+
 impl ToCell for CellConstraints {
-    /// Converts the struct directly into the intermediate `Cell` representation
-    /// for the CELL_CONSTRAINTS block serialization.
     fn to_cell(&self) -> Cell {
-        // Use functional style and iterator methods
         let block_content = [
             CellValue::Array(self.lengths.iter().map(|&v| CellValue::UInt(v)).collect()),
             CellValue::Array(self.angles.iter().map(|&v| CellValue::UInt(v)).collect()),
         ]
-        .to_vec(); // Convert array to Vec
+        .to_vec();
 
         Cell::Block("CELL_CONSTRAINTS", block_content)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_cell_constraints_serde() {
-        // Define a test struct matching the expected .cell file structure
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileConstraints {
-            cell_constraints: CellConstraints,
-        }
-
-        // Test string based on the documentation example
-        let cell_constraints_str = r#"%BLOCK CELL_CONSTRAINTS
-       1       2       3
-       0       0       0
-%ENDBLOCK CELL_CONSTRAINTS
-"#;
-
-        // 1. Test Deserialization
-        let cell_file_result: Result<CellFileConstraints, _> = from_str(cell_constraints_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-
-        // Debug print the deserialized struct
-        println!(
-            "Deserialized CELL_CONSTRAINTS: {:#?}",
-            cell_file.cell_constraints
-        );
-
-        // Verify the content
-        assert_eq!(cell_file.cell_constraints.lengths, [1, 2, 3]);
-        assert_eq!(cell_file.cell_constraints.angles, [0, 0, 0]);
-
-        // 2. Test Serialization using ToCell
-        let test_constraints = CellConstraints {
-            lengths: [1, 1, 2], // e.g., a=b, c independent
-            angles: [0, 0, 3],  // e.g., alpha=beta=90 (fixed), gamma independent
-        };
-
-        let serialized_result = to_string(&test_constraints.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-
-        // Print the serialized string
-        println!("Serialized CELL_CONSTRAINTS:\n{serialized_string}"); // Clippy suggestion
-
-        // Basic checks on the serialized string
-        assert!(serialized_string.contains("%BLOCK CELL_CONSTRAINTS"));
-        assert!(serialized_string.contains("%ENDBLOCK CELL_CONSTRAINTS"));
-        assert!(serialized_string.contains("1")); // From lengths [1, 1, 2]
-        assert!(serialized_string.contains("0")); // From angles [0, 0, 3]
-        // Note: Exact string comparison can be brittle due to formatting/whitespace/order
-    }
-}

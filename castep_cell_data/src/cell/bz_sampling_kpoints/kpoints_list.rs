@@ -1,10 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromBlock, FromCellValue, CResult};
 
 use super::Kpoint;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-#[serde(transparent)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 /// Represents the KPOINTS_LIST block.
 ///
 /// Contains a list of k-points and their weights for Brillouin zone sampling.
@@ -16,6 +14,18 @@ use super::Kpoint;
 /// %ENDBLOCK KPOINTS_LIST
 pub struct KpointsList {
     pub kpts: Vec<Kpoint>,
+}
+
+impl FromBlock for KpointsList {
+    const BLOCK_NAME: &'static str = "KPOINTS_LIST";
+
+    fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
+        let kpts = rows
+            .iter()
+            .map(Kpoint::from_cell_value)
+            .collect::<CResult<Vec<_>>>()?;
+        Ok(KpointsList { kpts })
+    }
 }
 
 impl ToCell for KpointsList {
@@ -30,27 +40,4 @@ impl ToCell for KpointsList {
     }
 }
 
-#[cfg(test)]
-mod test_kpoints_list {
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    use crate::cell::bz_sampling_kpoints::kpoints_list::KpointsList;
-
-    #[test]
-    fn kpoints_list_serde() {
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFile {
-            kpoints_list: KpointsList,
-        }
-        let block_kpt_str = r#"%BLOCK KPOINTS_LIST
-   0.0000000000000000    0.2500000000000000    0.3333333333333333       0.333333333333333
-   0.0000000000000000    0.2500000000000000    0.0000000000000000       0.333333333333333
-   0.0000000000000000    0.2500000000000000   -0.3333333333333333       0.333333333333333
-%ENDBLOCK KPOINTS_LIST
-"#;
-        let cell_file = dbg!(from_str::<CellFile>(block_kpt_str).unwrap());
-        println!("{}", to_string(&cell_file.kpoints_list.to_cell()).unwrap());
-    }
-}

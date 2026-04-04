@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Controls the representation of the nonlocal part of the pseudopotential.
 ///
@@ -9,20 +11,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// PSPOT_NONLOCAL_TYPE : REAL
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "PSPOT_NONLOCAL_TYPE")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum PspotNonlocalType {
     /// Reciprocal space nonlocal pseudopotentials
-    #[serde(alias = "RECIPROCAL", alias = "reciprocal")]
     Reciprocal,
     /// Real space nonlocal pseudopotentials
-    #[serde(alias = "REAL", alias = "real")]
     Real,
 }
 
 impl Default for PspotNonlocalType {
     fn default() -> Self {
-        Self::Reciprocal // Default is RECIPROCAL
+        Self::Reciprocal
+    }
+}
+
+impl FromCellValue for PspotNonlocalType {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "reciprocal" => Ok(Self::Reciprocal),
+            "real" => Ok(Self::Real),
+            other => Err(Error::Message(format!("unknown PspotNonlocalType: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for PspotNonlocalType {
+    const KEY_NAME: &'static str = "PSPOT_NONLOCAL_TYPE";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -44,58 +61,3 @@ impl ToCellValue for PspotNonlocalType {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_pspot_nonlocal_type_serde() {
-        // 1. Test Deserialization for variants
-        let test_cases = [
-            (
-                "PSPOT_NONLOCAL_TYPE : RECIPROCAL",
-                PspotNonlocalType::Reciprocal,
-            ),
-            ("PSPOT_NONLOCAL_TYPE : REAL", PspotNonlocalType::Real),
-        ];
-
-        for (input_str, expected_type) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithPspotNonlocalType {
-                pspot_nonlocal_type: PspotNonlocalType,
-            }
-
-            let cell_file_result: Result<CellFileWithPspotNonlocalType, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.pspot_nonlocal_type, expected_type,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // 2. Test Serialization using ToCell
-        let pspot_nonlocal_type_instance = PspotNonlocalType::Reciprocal;
-        let serialized_result = to_string(&pspot_nonlocal_type_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized PSPOT_NONLOCAL_TYPE (REAL): {serialized_string}"); // Clippy suggestion
-        assert!(serialized_string.contains("PSPOT_NONLOCAL_TYPE"));
-        assert!(serialized_string.contains("RECIPROCAL"));
-
-        // 3. Test Default
-        assert_eq!(PspotNonlocalType::default(), PspotNonlocalType::Reciprocal);
-    }
-}

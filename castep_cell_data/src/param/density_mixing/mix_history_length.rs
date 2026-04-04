@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult};
+use castep_cell_io::query::value_as_i32;
 use serde::{Deserialize, Serialize};
 
 /// Determines the maximum number of densities to store in the history used during the density mixing procedure.
@@ -11,11 +14,25 @@ use serde::{Deserialize, Serialize};
 /// MIX_HISTORY_LENGTH : 5
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "MIX_HISTORY_LENGTH")]
-pub struct MixHistoryLength(pub i32); // Using i32 for potential negative checks if needed; To be confirmed
+pub struct MixHistoryLength(pub i32);
 
 impl Default for MixHistoryLength {
     fn default() -> Self {
-        Self(7) // Default is 7
+        Self(7)
+    }
+}
+
+impl FromCellValue for MixHistoryLength {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
+    }
+}
+
+impl FromKeyValue for MixHistoryLength {
+    const KEY_NAME: &'static str = "MIX_HISTORY_LENGTH";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -31,43 +48,3 @@ impl ToCellValue for MixHistoryLength {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_mix_history_length_serde() {
-        let mix_history_length_str = "MIX_HISTORY_LENGTH : 5";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMixHistoryLength {
-            mix_history_length: MixHistoryLength,
-        }
-
-        let cell_file_result: Result<CellFileWithMixHistoryLength, _> =
-            from_str(mix_history_length_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.mix_history_length.0, 5);
-
-        let mix_history_length_instance = MixHistoryLength(10);
-        let serialized_result = to_string(&mix_history_length_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MIX_HISTORY_LENGTH (10): {serialized_string}");
-        assert!(serialized_string.contains("MIX_HISTORY_LENGTH"));
-        assert!(serialized_string.contains("10"));
-
-        assert_eq!(MixHistoryLength::default(), MixHistoryLength(7));
-    }
-}

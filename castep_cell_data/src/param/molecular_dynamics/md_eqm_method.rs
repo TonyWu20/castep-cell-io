@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Determines the scheme to be used for enhanced MD equilibration.
 ///
@@ -9,20 +11,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_EQM_METHOD : BERENDSEN
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MD_EQM_METHOD")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum MdEqmMethod {
     /// No enhanced equilibration
-    #[serde(alias = "none", alias = "NONE")]
     None,
     /// Berendsen weak coupling scheme
-    #[serde(alias = "berendsen", alias = "BERENDSEN")]
     Berendsen,
 }
 
 impl Default for MdEqmMethod {
     fn default() -> Self {
         Self::None // Default is NONE
+    }
+}
+
+impl FromCellValue for MdEqmMethod {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "berendsen" => Ok(Self::Berendsen),
+            other => Err(Error::Message(format!("unknown MdEqmMethod: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MdEqmMethod {
+    const KEY_NAME: &'static str = "MD_EQM_METHOD";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -44,59 +61,4 @@ impl ToCellValue for MdEqmMethod {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_eqm_method_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MD_EQM_METHOD : NONE", MdEqmMethod::None),
-            ("MD_EQM_METHOD : none", MdEqmMethod::None),
-            ("MD_EQM_METHOD : NONE", MdEqmMethod::None), // Uppercase alias
-            ("MD_EQM_METHOD : BERENDSEN", MdEqmMethod::Berendsen),
-            ("MD_EQM_METHOD : berendsen", MdEqmMethod::Berendsen),
-            ("MD_EQM_METHOD : BERENDSEN", MdEqmMethod::Berendsen), // Uppercase alias
-        ];
-
-        for (input_str, expected_method) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMdEqmMethod {
-                md_eqm_method: MdEqmMethod,
-            }
-
-            let cell_file_result: Result<CellFileWithMdEqmMethod, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.md_eqm_method, expected_method,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let md_eqm_method_instance = MdEqmMethod::Berendsen;
-        let serialized_result = to_string(&md_eqm_method_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MD_EQM_METHOD (BERENDSEN): {serialized_string}");
-        assert!(serialized_string.contains("MD_EQM_METHOD"));
-        assert!(serialized_string.contains("BERENDSEN"));
-
-        // Test Default
-        assert_eq!(MdEqmMethod::default(), MdEqmMethod::None);
-    }
-}

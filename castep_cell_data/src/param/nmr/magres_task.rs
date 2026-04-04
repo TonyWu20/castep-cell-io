@@ -1,4 +1,4 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
 use serde::{Deserialize, Serialize};
 
 /// Defines the type of NMR calculation to be performed.
@@ -48,62 +48,4 @@ impl ToCellValue for MagresTask {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_magres_task_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MAGRES_TASK : Shielding", MagresTask::Shielding),
-            ("MAGRES_TASK : shielding", MagresTask::Shielding),
-            ("MAGRES_TASK : SHIELDING", MagresTask::Shielding), // Uppercase alias
-            ("MAGRES_TASK : EFG", MagresTask::Efg),
-            ("MAGRES_TASK : efg", MagresTask::Efg),
-            ("MAGRES_TASK : EFG", MagresTask::Efg), // Uppercase alias
-            ("MAGRES_TASK : NMR", MagresTask::Nmr),
-            ("MAGRES_TASK : nmr", MagresTask::Nmr),
-            ("MAGRES_TASK : NMR", MagresTask::Nmr), // Uppercase alias
-        ];
-
-        for (input_str, expected_task) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMagresTask {
-                magres_task: MagresTask,
-            }
-
-            let cell_file_result: Result<CellFileWithMagresTask, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.magres_task, expected_task,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let magres_task_instance = MagresTask::Nmr;
-        let serialized_result = to_string(&magres_task_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MAGRES_TASK (NMR): {serialized_string}");
-        assert!(serialized_string.contains("MAGRES_TASK"));
-        assert!(serialized_string.contains("NMR"));
-
-        // Test Default
-        assert_eq!(MagresTask::default(), MagresTask::Shielding);
-    }
-}

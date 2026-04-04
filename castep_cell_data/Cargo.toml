@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-castep_cell_serde = { version = "0.1.0", path = "../castep_cell_serde" }
+castep_cell_io = { version = "0.1.0", path = "../castep_cell_io" }
 serde = { version = "1.0.219", features = ["derive"] }

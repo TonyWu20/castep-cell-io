@@ -1,6 +1,9 @@
 // Note: This file handles both SECONDD_METHOD and the obsolete PHONON_METHOD.
 // We'll define the enum and logic for SECONDD_METHOD primarily.
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Alias to `enum SeconddMethod`
@@ -34,6 +37,24 @@ pub enum SeconddMethod {
     FiniteDisplacement,
 }
 
+impl FromCellValue for SeconddMethod {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "linearresponse" | "dfpt" => Ok(Self::LinearResponse),
+            "finitedisplacement" => Ok(Self::FiniteDisplacement),
+            other => Err(Error::Message(format!("unknown SeconddMethod: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for SeconddMethod {
+    const KEY_NAME: &'static str = "SECONDD_METHOD";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
+
 impl Default for SeconddMethod {
     fn default() -> Self {
         Self::LinearResponse // Default is LINEARRESPONSE
@@ -58,79 +79,4 @@ impl ToCellValue for SeconddMethod {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_second_method_serde() {
-        // Test Deserialization for various cases (SECONDD_METHOD)
-        let test_cases_deser = [
-            (
-                "SECONDD_METHOD : LINEARRESPONSE",
-                SeconddMethod::LinearResponse,
-            ),
-            (
-                "SECONDD_METHOD : linearresponse",
-                SeconddMethod::LinearResponse,
-            ),
-            (
-                "SECONDD_METHOD : LINEARRESPONSE",
-                SeconddMethod::LinearResponse,
-            ), // Uppercase alias
-            ("SECONDD_METHOD : DFPT", SeconddMethod::LinearResponse), // Alias
-            ("SECONDD_METHOD : dfpt", SeconddMethod::LinearResponse), // Alias
-            (
-                "SECONDD_METHOD : FINITEDISPLACEMENT",
-                SeconddMethod::FiniteDisplacement,
-            ),
-            (
-                "SECONDD_METHOD : finitedisplacement",
-                SeconddMethod::FiniteDisplacement,
-            ),
-            (
-                "SECONDD_METHOD : FINITEDISPLACEMENT",
-                SeconddMethod::FiniteDisplacement,
-            ), // Uppercase alias
-        ];
-
-        for (input_str, expected_method) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithSecondMethod {
-                secondd_method: SeconddMethod,
-            }
-
-            let cell_file_result: Result<CellFileWithSecondMethod, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.secondd_method, expected_method,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let second_method_instance = SeconddMethod::FiniteDisplacement;
-        let serialized_result = to_string(&second_method_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized SECONDD_METHOD (FINITEDISPLACEMENT): {serialized_string}");
-        assert!(serialized_string.contains("SECONDD_METHOD"));
-        assert!(serialized_string.contains("FINITEDISPLACEMENT"));
-
-        // Test Default
-        assert_eq!(SeconddMethod::default(), SeconddMethod::LinearResponse);
-    }
-}

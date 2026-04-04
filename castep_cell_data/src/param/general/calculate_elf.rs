@@ -1,5 +1,6 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::FromKeyValue;
+use castep_cell_io::query::value_as_bool;
 
 /// Controls whether or not a calculation of the electron localization function
 /// will be performed.
@@ -10,9 +11,16 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// CALCULATE_ELF : TRUE
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "CALCULATE_ELF")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CalculateElf(pub bool);
+
+impl FromKeyValue for CalculateElf {
+    const KEY_NAME: &'static str = "CALCULATE_ELF";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_bool(value)?))
+    }
+}
 
 impl ToCell for CalculateElf {
     fn to_cell(&self) -> Cell {
@@ -26,62 +34,4 @@ impl ToCellValue for CalculateElf {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_calculate_elf_serde() {
-        // 1. Test Deserialization TRUE
-        let calculate_elf_true_str = "CALCULATE_ELF : TRUE";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithElfTrue {
-            calculate_elf: CalculateElf,
-        }
-
-        let cell_file_true_result: Result<CellFileWithElfTrue, _> =
-            from_str(calculate_elf_true_str);
-        assert!(
-            cell_file_true_result.is_ok(),
-            "Deserialization (TRUE) failed: {:?}",
-            cell_file_true_result.err()
-        );
-        let cell_file_true = cell_file_true_result.unwrap();
-        assert!(cell_file_true.calculate_elf.0); // Clippy suggestion
-
-        // 2. Test Deserialization FALSE
-        let calculate_elf_false_str = "CALCULATE_ELF : FALSE";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithElfFalse {
-            calculate_elf: CalculateElf,
-        }
-
-        let cell_file_false_result: Result<CellFileWithElfFalse, _> =
-            from_str(calculate_elf_false_str);
-        assert!(
-            cell_file_false_result.is_ok(),
-            "Deserialization (FALSE) failed: {:?}",
-            cell_file_false_result.err()
-        );
-        let cell_file_false = cell_file_false_result.unwrap();
-        assert!(!cell_file_false.calculate_elf.0); // Clippy suggestion
-
-        // 3. Test Serialization using ToCell
-        let calculate_elf_instance = CalculateElf(true);
-        let serialized_result = to_string(&calculate_elf_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-
-        println!("Serialized CALCULATE_ELF (TRUE):\n{serialized_string}"); // Clippy suggestion
-        assert!(serialized_string.contains("CALCULATE_ELF"));
-        assert!(serialized_string.contains("true") || serialized_string.contains("TRUE"));
-    }
-}

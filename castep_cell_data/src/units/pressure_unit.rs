@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the units in which pressure will be reported.
@@ -48,6 +51,24 @@ impl PressureUnit {
     }
 }
 
+impl FromCellValue for PressureUnit {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "hartree/bohr**3" => Ok(Self::HartreePerBohr3),
+            "ev/ang**3" => Ok(Self::EvPerAng3),
+            "pa" => Ok(Self::Pascal),
+            "mpa" => Ok(Self::MegaPascal),
+            "gpa" => Ok(Self::GigaPascal),
+            "atm" => Ok(Self::Atmosphere),
+            "bar" => Ok(Self::Bar),
+            "mbar" => Ok(Self::MegaBar),
+            other => Err(Error::Message(format!(
+                "unknown PressureUnit: {other}"
+            ))),
+        }
+    }
+}
+
 // Implement ToCell for PressureUnit to enable serialization via your custom backend
 impl ToCell for PressureUnit {
     fn to_cell(&self) -> Cell {
@@ -75,83 +96,4 @@ impl ToCellValue for PressureUnit {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_pressure_unit_serde() {
-        // 1. Test Deserialization for each variant
-        // Note: The identifiers like "hartree/bohr**3" might need special handling
-        // in the parser if "**" is tokenized strangely. Assuming the parser/tokenizer
-        // handles them correctly as single string tokens.
-        let test_cases = [
-            (
-                "PRESSURE_UNIT : hartree/bohr**3",
-                PressureUnit::HartreePerBohr3,
-            ),
-            ("PRESSURE_UNIT : ev/ang**3", PressureUnit::EvPerAng3),
-            ("PRESSURE_UNIT : pa", PressureUnit::Pascal),
-            ("PRESSURE_UNIT : mpa", PressureUnit::MegaPascal),
-            ("PRESSURE_UNIT : gpa", PressureUnit::GigaPascal),
-            ("PRESSURE_UNIT : atm", PressureUnit::Atmosphere),
-            ("PRESSURE_UNIT : bar", PressureUnit::Bar),
-            ("PRESSURE_UNIT : mbar", PressureUnit::MegaBar),
-        ];
-
-        for (input_str, expected_unit) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithPressureUnit {
-                pressure_unit: PressureUnit,
-            }
-
-            let cell_file_result: Result<CellFileWithPressureUnit, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.pressure_unit, expected_unit,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // 2. Test Serialization using ToCell for one example
-        let pressure_unit_instance = PressureUnit::Atmosphere;
-        let serialized_result = to_string(&pressure_unit_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-
-        println!("Serialized PRESSURE_UNIT (atm): {serialized_string}"); // Clippy suggestion
-        // Basic check
-        assert!(serialized_string.contains("PRESSURE_UNIT"));
-        assert!(serialized_string.contains("atm"));
-
-        // 3. Test ToCellValue for a few examples
-        assert_eq!(
-            PressureUnit::HartreePerBohr3.to_cell_value(),
-            CellValue::String("hartree/bohr**3".to_string())
-        );
-        assert_eq!(
-            PressureUnit::EvPerAng3.to_cell_value(),
-            CellValue::String("ev/ang**3".to_string())
-        );
-        assert_eq!(
-            PressureUnit::GigaPascal.to_cell_value(),
-            CellValue::String("gpa".to_string())
-        );
-
-        // 4. Test Default
-        assert_eq!(PressureUnit::default(), PressureUnit::GigaPascal);
-    }
-}

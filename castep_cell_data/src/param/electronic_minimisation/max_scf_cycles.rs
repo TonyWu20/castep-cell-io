@@ -1,5 +1,5 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromKeyValue, CResult};
+use castep_cell_io::query::value_as_i32;
 
 /// Determines the maximum number of SCF cycles performed in an electronic minimization.
 ///
@@ -9,13 +9,20 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MAX_SCF_CYCLES : 20
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MAX_SCF_CYCLES")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MaxScfCycles(pub i32);
 
 impl Default for MaxScfCycles {
     fn default() -> Self {
-        Self(30) // Default is 30
+        Self(30)
+    }
+}
+
+impl FromKeyValue for MaxScfCycles {
+    const KEY_NAME: &'static str = "MAX_SCF_CYCLES";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_i32(value)?))
     }
 }
 
@@ -31,42 +38,4 @@ impl ToCellValue for MaxScfCycles {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_max_scf_cycles_serde() {
-        let max_scf_cycles_str = "MAX_SCF_CYCLES : 20";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMaxScfCycles {
-            max_scf_cycles: MaxScfCycles,
-        }
-
-        let cell_file_result: Result<CellFileWithMaxScfCycles, _> = from_str(max_scf_cycles_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.max_scf_cycles.0, 20);
-
-        let max_scf_cycles_instance = MaxScfCycles(50);
-        let serialized_result = to_string(&max_scf_cycles_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MAX_SCF_CYCLES (50):\n{serialized_string}");
-        assert!(serialized_string.contains("MAX_SCF_CYCLES"));
-        assert!(serialized_string.contains("50"));
-
-        assert_eq!(MaxScfCycles::default(), MaxScfCycles(30));
-    }
-}

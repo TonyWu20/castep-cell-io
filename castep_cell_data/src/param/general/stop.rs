@@ -1,5 +1,5 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, CResult};
+use castep_cell_io::parse::FromKeyValue;
 
 /// If present, will cause the current run to be aborted.
 /// Implemented as a newtype wrapper around bool.
@@ -10,8 +10,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// STOP
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "STOP")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Stop(pub bool);
 
 impl Stop {
@@ -29,6 +28,14 @@ impl Stop {
 impl Default for Stop {
     fn default() -> Self {
         Self::not_present() // Default is not present (false)
+    }
+}
+
+impl FromKeyValue for Stop {
+    const KEY_NAME: &'static str = "STOP";
+
+    fn from_cell_value_kv(_value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(true))
     }
 }
 
@@ -55,7 +62,7 @@ impl ToCellValue for Stop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use castep_cell_serde::{ToCell, to_string};
+    use castep_cell_io::{ToCell, to_string};
 
     #[test]
     fn test_stop_serde() {
@@ -67,24 +74,12 @@ mod tests {
         // For testing ToCell directly:
 
         let stop_present = Stop::new(); // true
-        let serialized_result = to_string(&stop_present.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
+        let serialized_string = to_string(&stop_present.to_cell());
         println!("Serialized STOP (present):\n{serialized_string}");
         assert!(serialized_string.trim() == "STOP"); // Should be just the flag name
 
         let stop_not_present = Stop::not_present(); // false
-        let serialized_result_not_present = to_string(&stop_not_present.to_cell());
-        assert!(
-            serialized_result_not_present.is_ok(),
-            "Serialization (not present) failed: {:?}",
-            serialized_result_not_present.err()
-        );
-        let serialized_string_not_present = serialized_result_not_present.unwrap();
+        let serialized_string_not_present = to_string(&stop_not_present.to_cell());
         println!("Serialized STOP (not present):\n{serialized_string_not_present}");
         // The behavior for serializing Stop(false) is debatable.
         // It produces the flag name, which might not be the intended semantics.

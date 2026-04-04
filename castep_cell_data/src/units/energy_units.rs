@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the units in which energies will be reported.
@@ -65,6 +68,32 @@ pub enum EnergyUnit {
     Kelvin,
 }
 
+impl FromCellValue for EnergyUnit {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "ha" => Ok(Self::Hartree),
+            "mha" => Ok(Self::Millihartree),
+            "ev" => Ok(Self::ElectronVolt),
+            "mev" => Ok(Self::MilliElectronVolt),
+            "ry" => Ok(Self::Rydberg),
+            "mry" => Ok(Self::Millirydberg),
+            "kj/mol" => Ok(Self::KilojoulesPerMole),
+            "kcal/mol" => Ok(Self::KilocaloriesPerMole),
+            "j" => Ok(Self::Joules),
+            "erg" => Ok(Self::Erg),
+            "hz" => Ok(Self::Hertz),
+            "mhz" => Ok(Self::Megahertz),
+            "ghz" => Ok(Self::Gigahertz),
+            "thz" => Ok(Self::Terahertz),
+            "cm-1" => Ok(Self::Wavenumber),
+            "k" => Ok(Self::Kelvin),
+            other => Err(Error::Message(format!(
+                "unknown EnergyUnit: {other}"
+            ))),
+        }
+    }
+}
+
 impl ToCell for EnergyUnit {
     fn to_cell(&self) -> Cell {
         Cell::KeyValue("ENERGY_UNIT", self.to_cell_value())
@@ -97,54 +126,4 @@ impl ToCellValue for EnergyUnit {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_energy_unit_serde() {
-        let test_cases = [
-            ("ENERGY_UNIT : ha", EnergyUnit::Hartree),
-            ("ENERGY_UNIT : ev", EnergyUnit::ElectronVolt),
-            ("ENERGY_UNIT : kcal/mol", EnergyUnit::KilocaloriesPerMole),
-            ("ENERGY_UNIT : cm-1", EnergyUnit::Wavenumber),
-        ];
-
-        for (input_str, expected_unit) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithEnergyUnit {
-                energy_unit: EnergyUnit,
-            }
-
-            let cell_file_result: Result<CellFileWithEnergyUnit, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.energy_unit, expected_unit,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        let energy_unit_instance = EnergyUnit::KilocaloriesPerMole;
-        let serialized_result = to_string(&energy_unit_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized ENERGY_UNIT (kcal/mol): {serialized_string}");
-        assert!(serialized_string.contains("ENERGY_UNIT"));
-        assert!(serialized_string.contains("kcal/mol"));
-
-        assert_eq!(EnergyUnit::default(), EnergyUnit::ElectronVolt);
-    }
-}

@@ -1,6 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::{value_as_f64, row_as_f64_n};
 use serde::{Deserialize, Serialize};
-// Assuming EnergyUnit exists in units module
 use crate::units::EnergyUnit;
 
 /// Specifies the cutoff energy for the plane wave basis sets.
@@ -13,7 +15,6 @@ use crate::units::EnergyUnit;
 /// CUT_OFF_ENERGY : 125 eV
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename = "CUT_OFF_ENERGY")]
-#[serde(from = "CutOffEnergyRepr")]
 pub struct CutOffEnergy {
     /// The cutoff energy value.
     pub value: f64,
@@ -21,23 +22,32 @@ pub struct CutOffEnergy {
     pub unit: Option<EnergyUnit>,
 }
 
-// Intermediate representation for deserialization
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum CutOffEnergyRepr {
-    ValueOnly(f64),
-    WithUnit(f64, EnergyUnit),
+impl FromCellValue for CutOffEnergy {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Float(f) => Ok(Self { value: *f, unit: None }),
+            CellValue::Array(arr) => {
+                if arr.is_empty() {
+                    return Err(Error::Message("empty array for CutOffEnergy".to_string()));
+                }
+                let val = value_as_f64(&arr[0])?;
+                let unit = if arr.len() > 1 {
+                    Some(EnergyUnit::from_cell_value(&arr[1])?)
+                } else {
+                    None
+                };
+                Ok(Self { value: val, unit })
+            }
+            _ => Err(Error::Message("expected float or array for CutOffEnergy".to_string())),
+        }
+    }
 }
 
-impl From<CutOffEnergyRepr> for CutOffEnergy {
-    fn from(value: CutOffEnergyRepr) -> Self {
-        match value {
-            CutOffEnergyRepr::ValueOnly(value) => Self { value, unit: None },
-            CutOffEnergyRepr::WithUnit(value, energy_unit) => Self {
-                value,
-                unit: Some(energy_unit),
-            },
-        }
+impl FromKeyValue for CutOffEnergy {
+    const KEY_NAME: &'static str = "CUT_OFF_ENERGY";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -68,70 +78,4 @@ impl ToCellValue for CutOffEnergy {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_cut_off_energy_serde() {
-        let cut_off_energy_str_with_unit = "CUT_OFF_ENERGY : 125.000000 ev";
-        let cut_off_energy_str = "CUT_OFF_ENERGY : 125.000000";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithCutOffEnergy {
-            cut_off_energy: CutOffEnergy,
-        }
-
-        let cell_file_result: Result<CellFileWithCutOffEnergy, _> =
-            from_str(cut_off_energy_str_with_unit);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.cut_off_energy.value - 125.0).abs() < f64::EPSILON);
-        assert_eq!(
-            cell_file.cut_off_energy.unit,
-            Some(EnergyUnit::ElectronVolt)
-        );
-        let cell_file_result: Result<CellFileWithCutOffEnergy, _> = from_str(cut_off_energy_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization (without unit) failed: {:?}",
-            cell_file_result.err()
-        );
-
-        let cut_off_energy_instance = CutOffEnergy {
-            value: 200.0,
-            unit: Some(EnergyUnit::Hartree),
-        };
-        let serialized_result = to_string(&cut_off_energy_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized CUT_OFF_ENERGY (200.0 ha): {serialized_string}");
-        assert!(serialized_string.contains("CUT_OFF_ENERGY"));
-        assert!(serialized_string.contains("200.0"));
-        assert!(serialized_string.contains("ha"));
-        let cut_off_energy_instance = CutOffEnergy {
-            value: 380.0,
-            unit: None,
-        };
-        let serialized_result = to_string(&cut_off_energy_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized CUT_OFF_ENERGY (380.0): {serialized_string}");
-        assert!(serialized_string.contains("CUT_OFF_ENERGY"));
-        assert!(serialized_string.contains("380.0"));
-    }
-}

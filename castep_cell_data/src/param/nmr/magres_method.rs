@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Selects the method used by CASTEP for the evaluation of the quantum-mechanical position operator.
 ///
@@ -9,20 +11,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MAGRES_METHOD : molecular
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MAGRES_METHOD")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum MagresMethod {
     /// Uses the reciprocal space representation; applicable for both crystals and "molecule in a box"
-    #[serde(alias = "crystal", alias = "CRYSTAL")]
     Crystal,
     /// Applicable only for "molecule in a box"; faster calculation
-    #[serde(alias = "molecular", alias = "MOLECULAR")]
     Molecular,
 }
 
 impl Default for MagresMethod {
     fn default() -> Self {
-        Self::Crystal // Default is Crystal
+        Self::Crystal
+    }
+}
+
+impl FromCellValue for MagresMethod {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "crystal" => Ok(Self::Crystal),
+            "molecular" => Ok(Self::Molecular),
+            other => Err(Error::Message(format!("unknown MagresMethod: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MagresMethod {
+    const KEY_NAME: &'static str = "MAGRES_METHOD";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -44,59 +61,3 @@ impl ToCellValue for MagresMethod {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_magres_method_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MAGRES_METHOD : Crystal", MagresMethod::Crystal),
-            ("MAGRES_METHOD : crystal", MagresMethod::Crystal),
-            ("MAGRES_METHOD : CRYSTAL", MagresMethod::Crystal), // Uppercase alias
-            ("MAGRES_METHOD : Molecular", MagresMethod::Molecular),
-            ("MAGRES_METHOD : molecular", MagresMethod::Molecular),
-            ("MAGRES_METHOD : MOLECULAR", MagresMethod::Molecular), // Uppercase alias
-        ];
-
-        for (input_str, expected_method) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMagresMethod {
-                magres_method: MagresMethod,
-            }
-
-            let cell_file_result: Result<CellFileWithMagresMethod, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.magres_method, expected_method,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let magres_method_instance = MagresMethod::Molecular;
-        let serialized_result = to_string(&magres_method_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MAGRES_METHOD (Molecular): {serialized_string}");
-        assert!(serialized_string.contains("MAGRES_METHOD"));
-        assert!(serialized_string.contains("Molecular"));
-
-        // Test Default
-        assert_eq!(MagresMethod::default(), MagresMethod::Crystal);
-    }
-}

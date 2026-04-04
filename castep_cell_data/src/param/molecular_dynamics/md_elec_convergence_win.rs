@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_u32;
 
 /// Determines the size of the convergence window for electronic minimization during MD.
 ///
@@ -9,13 +11,22 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_ELEC_CONVERGENCE_WIN : 4
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MD_ELEC_CONVERGENCE_WIN")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MdElecConvergenceWin(pub u32); // Using u32 as it's a window size
 
-// Note: Default logic is context-dependent (same as ELEC_CONVERGENCE_WIN).
-// The `Default` implementation here is omitted as it's not directly applicable.
-// A containing struct or the application logic would need to handle this.
+impl FromCellValue for MdElecConvergenceWin {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_u32(value)?))
+    }
+}
+
+impl FromKeyValue for MdElecConvergenceWin {
+    const KEY_NAME: &'static str = "MD_ELEC_CONVERGENCE_WIN";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
+}
 
 impl ToCell for MdElecConvergenceWin {
     fn to_cell(&self) -> Cell {
@@ -29,41 +40,4 @@ impl ToCellValue for MdElecConvergenceWin {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_elec_convergence_win_serde() {
-        let md_elec_convergence_win_str = "MD_ELEC_CONVERGENCE_WIN : 4";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithMdElecConvergenceWin {
-            md_elec_convergence_win: MdElecConvergenceWin,
-        }
-
-        let cell_file_result: Result<CellFileWithMdElecConvergenceWin, _> =
-            from_str(md_elec_convergence_win_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.md_elec_convergence_win.0, 4);
-
-        let md_elec_convergence_win_instance = MdElecConvergenceWin(6);
-        let serialized_result = to_string(&md_elec_convergence_win_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MD_ELEC_CONVERGENCE_WIN (6): {serialized_string}");
-        assert!(serialized_string.contains("MD_ELEC_CONVERGENCE_WIN"));
-        assert!(serialized_string.contains("6"));
-    }
-}

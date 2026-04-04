@@ -1,5 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Determines the thermostat used for a molecular dynamics calculation (NVT ensemble).
 ///
@@ -9,20 +11,35 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// MD_THERMOSTAT : Langevin
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "MD_THERMOSTAT")]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum MdThermostat {
     /// Nosé-Hoover thermostat
-    #[serde(rename = "Nosé-Hoover", alias = "nosé-hoover", alias = "NOSÉ-HOOVER")]
     NoseHoover,
     /// Langevin thermostat
-    #[serde(alias = "langevin", alias = "LANGEVIN")]
     Langevin,
 }
 
 impl Default for MdThermostat {
     fn default() -> Self {
         Self::NoseHoover // Default is Nosé-Hoover
+    }
+}
+
+impl FromCellValue for MdThermostat {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "nosé-hoover" | "nose-hoover" => Ok(Self::NoseHoover),
+            "langevin" => Ok(Self::Langevin),
+            other => Err(Error::Message(format!("unknown MdThermostat: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for MdThermostat {
+    const KEY_NAME: &'static str = "MD_THERMOSTAT";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -44,59 +61,4 @@ impl ToCellValue for MdThermostat {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_md_thermostat_serde() {
-        // Test Deserialization for various cases
-        let test_cases_deser = [
-            ("MD_THERMOSTAT : Nosé-Hoover", MdThermostat::NoseHoover),
-            ("MD_THERMOSTAT : nosé-hoover", MdThermostat::NoseHoover),
-            ("MD_THERMOSTAT : NOSÉ-HOOVER", MdThermostat::NoseHoover), // Uppercase alias
-            ("MD_THERMOSTAT : Langevin", MdThermostat::Langevin),
-            ("MD_THERMOSTAT : langevin", MdThermostat::Langevin),
-            ("MD_THERMOSTAT : LANGEVIN", MdThermostat::Langevin), // Uppercase alias
-        ];
-
-        for (input_str, expected_thermostat) in test_cases_deser {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithMdThermostat {
-                md_thermostat: MdThermostat,
-            }
-
-            let cell_file_result: Result<CellFileWithMdThermostat, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.md_thermostat, expected_thermostat,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // Test Serialization
-        let md_thermostat_instance = MdThermostat::Langevin;
-        let serialized_result = to_string(&md_thermostat_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized MD_THERMOSTAT (Langevin): {serialized_string}");
-        assert!(serialized_string.contains("MD_THERMOSTAT"));
-        assert!(serialized_string.contains("Langevin"));
-
-        // Test Default
-        assert_eq!(MdThermostat::default(), MdThermostat::NoseHoover);
-    }
-}

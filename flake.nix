@@ -37,7 +37,13 @@
               ])
               stdenv
               fish
+              python313
+              python313Packages.pip
+              python313Packages.pynvim
             ];
+            env = {
+              CLAUDE_CODE_NO_FLICKER = 1;
+            };
           };
         }
       );

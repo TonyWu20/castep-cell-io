@@ -1,14 +1,12 @@
-use castep_cell_serde::{CellValue, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{CellValue, ToCellValue, FromCellValue, CResult, query::value_as_f64};
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 /// A line of block `KpointsList`
 /// The first three entries on a line are the fractional positions of the
 /// k-point relative to the reciprocal space lattice vectors.
 ///
 /// The final entry on a line is the weight of the k-point relative to the
 /// others specified. The sum of the weights must be equal to 1.
-#[serde(from = "[f64;4]")]
 pub struct Kpoint {
     pub coord: [f64; 3],
     pub weight: f64,
@@ -31,11 +29,21 @@ impl PartialOrd for Kpoint {
     }
 }
 
-impl From<[f64; 4]> for Kpoint {
-    fn from(value: [f64; 4]) -> Self {
-        Kpoint {
-            coord: value[0..3].try_into().unwrap(),
-            weight: value[3],
+impl FromCellValue for Kpoint {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(arr) if arr.len() == 4 => {
+                let coord = [
+                    value_as_f64(&arr[0])?,
+                    value_as_f64(&arr[1])?,
+                    value_as_f64(&arr[2])?,
+                ];
+                let weight = value_as_f64(&arr[3])?;
+                Ok(Kpoint { coord, weight })
+            }
+            _ => Err(castep_cell_io::Error::Message(
+                "Kpoint must be an array of 4 floats".into(),
+            )),
         }
     }
 }

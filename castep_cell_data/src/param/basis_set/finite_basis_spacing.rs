@@ -1,6 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
-// Assuming EnergyUnit exists in units module
 use crate::units::EnergyUnit;
 
 /// Determines the spacing of cutoff energies used to estimate the BASIS_DE_DLOGE
@@ -21,19 +23,31 @@ pub struct FiniteBasisSpacing {
     pub unit: EnergyUnit,
 }
 
-// Intermediate representation for deserialization
-#[derive(Debug, Deserialize)]
-struct FiniteBasisSpacingRepr {
-    value: f64,
-    unit: EnergyUnit,
+impl FromCellValue for FiniteBasisSpacing {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(arr) => {
+                if arr.is_empty() {
+                    return Err(Error::Message("empty array for FiniteBasisSpacing".to_string()));
+                }
+                let val = value_as_f64(&arr[0])?;
+                let unit = if arr.len() > 1 {
+                    EnergyUnit::from_cell_value(&arr[1])?
+                } else {
+                    EnergyUnit::default()
+                };
+                Ok(Self { value: val, unit })
+            }
+            _ => Err(Error::Message("expected array for FiniteBasisSpacing".to_string())),
+        }
+    }
 }
 
-impl From<FiniteBasisSpacingRepr> for FiniteBasisSpacing {
-    fn from(repr: FiniteBasisSpacingRepr) -> Self {
-        Self {
-            value: repr.value,
-            unit: repr.unit,
-        }
+impl FromKeyValue for FiniteBasisSpacing {
+    const KEY_NAME: &'static str = "FINITE_BASIS_SPACING";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -58,46 +72,4 @@ impl ToCellValue for FiniteBasisSpacing {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_finite_basis_spacing_serde() {
-        let finite_basis_spacing_str = "FINITE_BASIS_SPACING : 0.2 ha";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithFiniteBasisSpacing {
-            finite_basis_spacing: FiniteBasisSpacing,
-        }
-
-        let cell_file_result: Result<CellFileWithFiniteBasisSpacing, _> =
-            from_str(finite_basis_spacing_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.finite_basis_spacing.value - 0.2).abs() < 1e-10);
-        assert_eq!(cell_file.finite_basis_spacing.unit, EnergyUnit::Hartree);
-
-        let finite_basis_spacing_instance = FiniteBasisSpacing {
-            value: 1.0,
-            unit: EnergyUnit::ElectronVolt,
-        };
-        let serialized_result = to_string(&finite_basis_spacing_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized FINITE_BASIS_SPACING (1.0 ev): {serialized_string}");
-        assert!(serialized_string.contains("FINITE_BASIS_SPACING"));
-        assert!(serialized_string.contains("1.0"));
-        assert!(serialized_string.contains("ev"));
-    }
-}

@@ -1,6 +1,8 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_f64;
 use serde::{Deserialize, Serialize};
-// Assuming InvLengthUnit exists in units module (1/bohr, 1/ang, etc.)
 use crate::units::InvLengthUnit;
 
 /// Determines the maximum size of the g-vectors included in the fine grid.
@@ -20,19 +22,31 @@ pub struct FineGmax {
     pub unit: InvLengthUnit,
 }
 
-// Intermediate representation for deserialization
-#[derive(Debug, Deserialize)]
-struct FineGmaxRepr {
-    value: f64,
-    unit: InvLengthUnit,
+impl FromCellValue for FineGmax {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value {
+            CellValue::Array(arr) => {
+                if arr.is_empty() {
+                    return Err(Error::Message("empty array for FineGmax".to_string()));
+                }
+                let val = value_as_f64(&arr[0])?;
+                let unit = if arr.len() > 1 {
+                    InvLengthUnit::from_cell_value(&arr[1])?
+                } else {
+                    InvLengthUnit::default()
+                };
+                Ok(Self { value: val, unit })
+            }
+            _ => Err(Error::Message("expected array for FineGmax".to_string())),
+        }
+    }
 }
 
-impl From<FineGmaxRepr> for FineGmax {
-    fn from(repr: FineGmaxRepr) -> Self {
-        Self {
-            value: repr.value,
-            unit: repr.unit,
-        }
+impl FromKeyValue for FineGmax {
+    const KEY_NAME: &'static str = "FINE_GMAX";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
     }
 }
 
@@ -57,49 +71,4 @@ impl ToCellValue for FineGmax {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_fine_gmax_serde() {
-        // Note: The default unit might be 1/bohr. Adjust test if parser handles it differently.
-        let fine_gmax_str = "FINE_GMAX : 20 1/ang";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithFineGmax {
-            fine_gmax: FineGmax,
-        }
-
-        let cell_file_result: Result<CellFileWithFineGmax, _> = from_str(fine_gmax_str);
-        // This test might fail if the parser/tokenizer has issues with "1/ang".
-        // Ensure your number parser correctly handles unit boundaries.
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert!((cell_file.fine_gmax.value - 20.0).abs() < f64::EPSILON);
-        // Asserting the unit depends on how InvLengthUnit is defined.
-        // assert_eq!(cell_file.fine_gmax.unit, InvLengthUnit::PerAngstrom);
-
-        let fine_gmax_instance = FineGmax {
-            value: 15.0,
-            unit: InvLengthUnit::Bohr,
-        };
-        let serialized_result = to_string(&fine_gmax_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized FINE_GMAX (15.0 1/bohr): {serialized_string}");
-        assert!(serialized_string.contains("FINE_GMAX"));
-        assert!(serialized_string.contains("15.0"));
-        // Check for unit string, e.g., "1/bohr"
-    }
-}

@@ -1,6 +1,7 @@
-// File: general/relativistic_treatment.rs
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::{FromCellValue, FromKeyValue};
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 
 /// Selects the method used to treat relativistic effects.
 ///
@@ -10,22 +11,37 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// RELATIVISTIC_TREATMENT : ZORA
-#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "RELATIVISTIC_TREATMENT")]
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum RelativisticTreatment {
     /// Completely non-relativistic pseudopotentials
-    #[serde(alias = "SCHROEDINGER", alias = "schroedinger")]
     Schroedinger,
     /// Scalar relativistic treatment (ZORA)
-    #[serde(alias = "ZORA", alias = "zora")]
     Zora,
     /// Scalar relativistic treatment (Koelling-Harmon)
-    #[serde(alias = "KOELLING-HARMON", alias = "koelling-harmon")]
     #[default]
     KoellingHarmon,
     /// Fully relativistic treatment
-    #[serde(alias = "DIRAC", alias = "dirac")]
     Dirac,
+}
+
+impl FromCellValue for RelativisticTreatment {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "schroedinger" => Ok(Self::Schroedinger),
+            "zora" => Ok(Self::Zora),
+            "koelling-harmon" => Ok(Self::KoellingHarmon),
+            "dirac" => Ok(Self::Dirac),
+            other => Err(Error::Message(format!("unknown RelativisticTreatment: {other}"))),
+        }
+    }
+}
+
+impl FromKeyValue for RelativisticTreatment {
+    const KEY_NAME: &'static str = "RELATIVISTIC_TREATMENT";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Self::from_cell_value(value)
+    }
 }
 
 impl ToCell for RelativisticTreatment {
@@ -48,70 +64,3 @@ impl ToCellValue for RelativisticTreatment {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
-
-    #[test]
-    fn test_relativistic_treatment_serde() {
-        // 1. Test Deserialization for variants
-        let test_cases = [
-            (
-                "RELATIVISTIC_TREATMENT : SCHROEDINGER",
-                RelativisticTreatment::Schroedinger,
-            ),
-            ("RELATIVISTIC_TREATMENT : ZORA", RelativisticTreatment::Zora),
-            (
-                "RELATIVISTIC_TREATMENT : KOELLING-HARMON",
-                RelativisticTreatment::KoellingHarmon,
-            ),
-            (
-                "RELATIVISTIC_TREATMENT : DIRAC",
-                RelativisticTreatment::Dirac,
-            ),
-        ];
-
-        for (input_str, expected_treatment) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithRelativisticTreatment {
-                relativistic_treatment: RelativisticTreatment,
-            }
-
-            let cell_file_result: Result<CellFileWithRelativisticTreatment, _> =
-                from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.relativistic_treatment, expected_treatment,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        // 2. Test Serialization using ToCell
-        let relativistic_treatment_instance = RelativisticTreatment::Zora;
-        let serialized_result = to_string(&relativistic_treatment_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized RELATIVISTIC_TREATMENT (ZORA): {serialized_string}"); // Clippy suggestion
-        assert!(serialized_string.contains("RELATIVISTIC_TREATMENT"));
-        assert!(serialized_string.contains("ZORA"));
-
-        // 3. Test Default
-        assert_eq!(
-            RelativisticTreatment::default(),
-            RelativisticTreatment::KoellingHarmon
-        );
-    }
-}

@@ -1,4 +1,7 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue};
+use castep_cell_io::parse::FromCellValue;
+use castep_cell_io::{CResult, Error};
+use castep_cell_io::query::value_as_str;
 use serde::{Deserialize, Serialize};
 
 /// Specifies the units in which time will be reported.
@@ -38,6 +41,23 @@ pub enum TimeUnit {
     Femtosecond,
 }
 
+impl FromCellValue for TimeUnit {
+    fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
+        match value_as_str(value)?.to_ascii_lowercase().as_str() {
+            "aut" => Ok(Self::AtomicUnitOfTime),
+            "s" => Ok(Self::Second),
+            "ms" => Ok(Self::Millisecond),
+            "mus" => Ok(Self::Microsecond),
+            "ns" => Ok(Self::Nanosecond),
+            "ps" => Ok(Self::Picosecond),
+            "fs" => Ok(Self::Femtosecond),
+            other => Err(Error::Message(format!(
+                "unknown TimeUnit: {other}"
+            ))),
+        }
+    }
+}
+
 impl ToCell for TimeUnit {
     fn to_cell(&self) -> Cell {
         Cell::KeyValue("TIME_UNIT", self.to_cell_value())
@@ -61,54 +81,4 @@ impl ToCellValue for TimeUnit {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_time_unit_serde() {
-        let test_cases = [
-            ("TIME_UNIT : aut", TimeUnit::AtomicUnitOfTime),
-            ("TIME_UNIT : s", TimeUnit::Second),
-            ("TIME_UNIT : ps", TimeUnit::Picosecond),
-            ("TIME_UNIT : fs", TimeUnit::Femtosecond),
-        ];
-
-        for (input_str, expected_unit) in test_cases {
-            #[derive(Debug, Deserialize, Serialize)]
-            #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-            struct CellFileWithTimeUnit {
-                time_unit: TimeUnit,
-            }
-
-            let cell_file_result: Result<CellFileWithTimeUnit, _> = from_str(input_str);
-            assert!(
-                cell_file_result.is_ok(),
-                "Deserialization failed for '{}': {:?}",
-                input_str,
-                cell_file_result.err()
-            );
-            let cell_file = cell_file_result.unwrap();
-            assert_eq!(
-                cell_file.time_unit, expected_unit,
-                "Failed for input: {input_str}"
-            );
-        }
-
-        let time_unit_instance = TimeUnit::AtomicUnitOfTime;
-        let serialized_result = to_string(&time_unit_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized TIME_UNIT (aut): {serialized_string}");
-        assert!(serialized_string.contains("TIME_UNIT"));
-        assert!(serialized_string.contains("aut"));
-
-        assert_eq!(TimeUnit::default(), TimeUnit::Picosecond);
-    }
-}

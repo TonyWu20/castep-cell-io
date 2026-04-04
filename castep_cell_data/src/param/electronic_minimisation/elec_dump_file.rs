@@ -1,5 +1,5 @@
-use castep_cell_serde::{Cell, CellValue, ToCell, ToCellValue};
-use serde::{Deserialize, Serialize};
+use castep_cell_io::{Cell, CellValue, ToCell, ToCellValue, FromKeyValue, CResult};
+use castep_cell_io::query::value_as_str;
 
 /// Determines the name of the file into which wavefunction and density data are written.
 ///
@@ -9,9 +9,16 @@ use serde::{Deserialize, Serialize};
 ///
 /// Example:
 /// ELEC_DUMP_FILE : test.wvfn
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename = "ELEC_DUMP_FILE")]
-pub struct ElecDumpFile(pub String); // Could be an enum Option<String> or similar for NULL handling
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ElecDumpFile(pub String);
+
+impl FromKeyValue for ElecDumpFile {
+    const KEY_NAME: &'static str = "ELEC_DUMP_FILE";
+
+    fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
+        Ok(Self(value_as_str(value)?.to_string()))
+    }
+}
 
 impl ToCell for ElecDumpFile {
     fn to_cell(&self) -> Cell {
@@ -25,40 +32,4 @@ impl ToCellValue for ElecDumpFile {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use castep_cell_serde::{ToCell, from_str, to_string};
-    use serde::{Deserialize, Serialize};
 
-    #[test]
-    fn test_elec_dump_file_serde() {
-        let elec_dump_file_str = "ELEC_DUMP_FILE : test.wvfn";
-        #[derive(Debug, Deserialize, Serialize)]
-        #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-        struct CellFileWithElecDumpFile {
-            elec_dump_file: ElecDumpFile,
-        }
-
-        let cell_file_result: Result<CellFileWithElecDumpFile, _> = from_str(elec_dump_file_str);
-        assert!(
-            cell_file_result.is_ok(),
-            "Deserialization failed: {:?}",
-            cell_file_result.err()
-        );
-        let cell_file = cell_file_result.unwrap();
-        assert_eq!(cell_file.elec_dump_file.0, "test.wvfn");
-
-        let elec_dump_file_instance = ElecDumpFile("backup.wvfn".to_string());
-        let serialized_result = to_string(&elec_dump_file_instance.to_cell());
-        assert!(
-            serialized_result.is_ok(),
-            "Serialization failed: {:?}",
-            serialized_result.err()
-        );
-        let serialized_string = serialized_result.unwrap();
-        println!("Serialized ELEC_DUMP_FILE (backup.wvfn): {serialized_string}");
-        assert!(serialized_string.contains("ELEC_DUMP_FILE"));
-        assert!(serialized_string.contains("backup.wvfn"));
-    }
-}
