@@ -100,22 +100,12 @@ impl FromBlock for IonicVelocities {
 impl ToCell for IonicVelocities {
     /// Converts the block into the intermediate `Cell` representation for serialization.
     fn to_cell(&self) -> Cell {
-        Cell::Block(
-            "IONIC_VELOCITIES",
-            [
-                self.unit
-                    .as_ref()
-                    .map(|u| CellValue::Array(vec![u.to_cell_value()]))
-                    .unwrap_or(CellValue::Null),
-            ]
-            .into_iter()
-            .chain(
-                self.velocities
-                    .iter()
-                    .map(|entry| entry.to_cell_value())
-            )
-            .collect(),
-        )
+        let mut block_content = Vec::new();
+        if let Some(u) = &self.unit {
+            block_content.push(CellValue::Array(vec![u.to_cell_value()]));
+        }
+        block_content.extend(self.velocities.iter().map(|entry| entry.to_cell_value()));
+        Cell::Block("IONIC_VELOCITIES", block_content)
     }
 }
 
@@ -250,8 +240,7 @@ mod tests {
         match cell {
             Cell::Block(name, values) => {
                 assert_eq!(name, "IONIC_VELOCITIES");
-                // When no unit, we get CellValue::Null + 1 velocity = 2 values
-                assert_eq!(values.len(), 2);
+                assert_eq!(values.len(), 1);
             }
             _ => panic!("Expected Block"),
         }

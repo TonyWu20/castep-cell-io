@@ -57,20 +57,13 @@ impl FromBlock for ExternalEfield {
 
 impl ToCell for ExternalEfield {
     fn to_cell(&self) -> Cell {
-        let block_content = [
-            self.unit
-                .as_ref()
-                .map(|u| CellValue::Array(vec![u.to_cell_value()]))
-                .unwrap_or(CellValue::Null),
-            CellValue::Array(
-                self.field_vector
-                    .into_iter()
-                    .map(CellValue::Float)
-                    .collect(),
-            ),
-        ]
-        .to_vec();
-
+        let mut block_content = Vec::new();
+        if let Some(u) = &self.unit {
+            block_content.push(CellValue::Array(vec![u.to_cell_value()]));
+        }
+        block_content.push(CellValue::Array(
+            self.field_vector.into_iter().map(CellValue::Float).collect(),
+        ));
         Cell::Block("EXTERNAL_EFIELD", block_content)
     }
 }

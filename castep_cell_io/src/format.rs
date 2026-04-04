@@ -62,6 +62,16 @@ pub fn to_string_many(cells: &[Cell<'_>]) -> String {
     buf
 }
 
+/// Format a slice of `Cell` IR entries with blank lines between each entry.
+pub fn to_string_many_spaced(cells: &[Cell<'_>]) -> String {
+    let mut buf = String::new();
+    for cell in cells {
+        buf.push_str(&to_string(cell));
+        buf.push('\n');
+    }
+    buf
+}
+
 fn fmt_cell(cell: &Cell<'_>, buf: &mut String) {
     match cell {
         Cell::KeyValue(key, value) => {

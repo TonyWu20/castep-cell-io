@@ -58,18 +58,14 @@ impl FromBlock for LatticeCart {
 
 impl ToCell for LatticeCart {
     fn to_cell(&self) -> Cell {
-        Cell::Block(
-            "LATTICE_CART",
-            vec![
-                self.unit
-                    .as_ref()
-                    .map(|u| CellValue::Array(vec![u.to_cell_value()]))
-                    .unwrap_or(CellValue::Null),
-                CellValue::Array(self.a.into_iter().map(CellValue::Float).collect()),
-                CellValue::Array(self.b.into_iter().map(CellValue::Float).collect()),
-                CellValue::Array(self.c.into_iter().map(CellValue::Float).collect()),
-            ],
-        )
+        let mut block_content = Vec::new();
+        if let Some(u) = &self.unit {
+            block_content.push(CellValue::Array(vec![u.to_cell_value()]));
+        }
+        block_content.push(CellValue::Array(self.a.into_iter().map(CellValue::Float).collect()));
+        block_content.push(CellValue::Array(self.b.into_iter().map(CellValue::Float).collect()));
+        block_content.push(CellValue::Array(self.c.into_iter().map(CellValue::Float).collect()));
+        Cell::Block("LATTICE_CART", block_content)
     }
 }
 
@@ -117,17 +113,13 @@ impl FromBlock for LatticeABC {
 
 impl ToCell for LatticeABC {
     fn to_cell(&self) -> Cell {
-        Cell::Block(
-            "LATTICE_ABC",
-            vec![
-                self.unit
-                    .as_ref()
-                    .map(|u| CellValue::Array(vec![u.to_cell_value()]))
-                    .unwrap_or(CellValue::Null),
-                CellValue::Array(self.abc.into_iter().map(CellValue::Float).collect()),
-                CellValue::Array(self.angles.into_iter().map(CellValue::Float).collect()),
-            ],
-        )
+        let mut block_content = Vec::new();
+        if let Some(u) = &self.unit {
+            block_content.push(CellValue::Array(vec![u.to_cell_value()]));
+        }
+        block_content.push(CellValue::Array(self.abc.into_iter().map(CellValue::Float).collect()));
+        block_content.push(CellValue::Array(self.angles.into_iter().map(CellValue::Float).collect()));
+        Cell::Block("LATTICE_ABC", block_content)
     }
 }
 
@@ -203,7 +195,7 @@ mod tests {
         match cell {
             Cell::Block(name, values) => {
                 assert_eq!(name, "LATTICE_CART");
-                assert_eq!(values.len(), 4);
+                assert_eq!(values.len(), 3);
             }
             _ => panic!("Expected Cell::Block"),
         }

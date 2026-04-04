@@ -851,3 +851,22 @@ impl ToCellFile for ParamDocument {
         cells
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use castep_cell_io::parse;
+
+    #[test]
+    fn test_parse_co3o4_2_param() {
+        let input = std::fs::read_to_string("../Co3O4_2.param").unwrap();
+        let doc: ParamDocument = parse(&input).unwrap();
+
+        assert_eq!(doc.task.unwrap(), crate::param::general::Task::GeometryOptimization);
+        assert_eq!(doc.xc_functional.unwrap(), crate::param::exchange_correlation::XcFunctional::Pbe);
+        assert_eq!(doc.spin_polarized.unwrap().0, false);
+        assert_eq!(doc.cutoff_energy.unwrap().value, 900.0);
+        assert_eq!(doc.max_scf_cycles.unwrap().0, 400);
+        assert_eq!(doc.geom_method.unwrap(), crate::param::geometry_optimization::GeomMethod::Bfgs);
+    }
+}
