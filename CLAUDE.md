@@ -126,11 +126,11 @@ impl FromKeyValue for Task {
 }
 ```
 
-**Migration status**: Leaf types (unit enums, keyword enums) in `castep_cell_data/src/units/` and simple `.param` key-value types already implement the new `FromCellValue`/`FromKeyValue` traits. Complex block types with multi-row parsing (e.g. `LatticeCart`, `PositionsFrac`) still carry old `#[serde(from = "...")]` intermediate-repr patterns and are **pending migration** to `FromBlock`.
+**Migration status**: All block types (`LatticeCart`, `LatticeABC`, `PositionsFrac`, `PositionsAbs`, etc.) have been migrated to `FromBlock`. Top-level `CellDocument` implements `FromCellFile` / `ToCellFile` and uses `derive_builder`. Intermediate serde repr files for positions (`positions_frac_intermediate.rs`, `positions_abs_intermediate.rs`, etc.) still exist and are pending removal.
 
 ## Known Incomplete Areas
 
-- Top-level aggregator structs (`CellDocument`, `CastepParam`) do not yet exist in `castep_cell_data` — `FromCellFile` / `ToCellFile` have no implementations yet
-- No `derive_builder` usage on `.cell` or `.param` domain types yet — public construction requires struct literals (fields must be `pub`) or explicit constructors
+- Intermediate serde repr files in `castep_cell_data/src/cell/positions/` (`*_intermediate.rs`, `*_product.rs`) are leftover from the old serde migration and should be cleaned up
+- No `derive_builder` usage on `.param` domain types yet — public construction requires struct literals or explicit constructors
 - No in-place mutation helpers or "wither" methods for modifying existing structs
 - Integer support caps at `i32`/`u32` by design (`.cell` does not use larger integers)
