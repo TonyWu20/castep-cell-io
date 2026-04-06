@@ -6,11 +6,10 @@ use crate::{
 /// Find a block by name (case-insensitive). Returns its rows slice on success.
 pub fn find_block<'a>(tokens: &'a [Cell<'a>], name: &str) -> CResult<&'a [CellValue<'a>]> {
     for token in tokens {
-        if let Cell::Block(blk_name, rows) = token {
-            if blk_name.eq_ignore_ascii_case(name) {
+        if let Cell::Block(blk_name, rows) = token
+            && blk_name.eq_ignore_ascii_case(name) {
                 return Ok(rows.as_slice());
             }
-        }
     }
     Err(Error::KeyNotFound(name.to_string()))
 }
@@ -18,11 +17,10 @@ pub fn find_block<'a>(tokens: &'a [Cell<'a>], name: &str) -> CResult<&'a [CellVa
 /// Find a key-value entry by key (case-insensitive). Returns reference to its CellValue.
 pub fn find_keyvalue<'a>(tokens: &'a [Cell<'a>], key: &str) -> CResult<&'a CellValue<'a>> {
     for token in tokens {
-        if let Cell::KeyValue(k, v) = token {
-            if k.eq_ignore_ascii_case(key) {
+        if let Cell::KeyValue(k, v) = token
+            && k.eq_ignore_ascii_case(key) {
                 return Ok(v);
             }
-        }
     }
     Err(Error::KeyNotFound(key.to_string()))
 }

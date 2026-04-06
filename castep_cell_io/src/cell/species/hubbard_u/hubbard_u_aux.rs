@@ -1,5 +1,8 @@
-use castep_cell_fmt::{CellValue, parse::{FromBlock, FromCellValue}, CResult, Error};
 use super::{AtomHubbardU, HubbardU, HubbardUUnit};
+use castep_cell_fmt::{
+    CResult, CellValue, Error,
+    parse::{FromBlock, FromCellValue},
+};
 
 impl FromBlock for HubbardU {
     const BLOCK_NAME: &'static str = "HUBBARD_U";
@@ -28,7 +31,7 @@ impl FromBlock for HubbardU {
 
         let atom_u_values = rows[data_start..]
             .iter()
-            .map(|row| AtomHubbardU::from_block_rows(&[row.clone()]))
+            .map(|row| AtomHubbardU::from_block_rows(std::slice::from_ref(row)))
             .collect::<CResult<Vec<_>>>()?;
 
         Ok(Self {
@@ -54,10 +57,7 @@ mod tests {
     fn test_hubbard_u_with_unit() {
         let rows = vec![
             CellValue::Array(vec![CellValue::Str("eV")]),
-            CellValue::Array(vec![
-                CellValue::Str("Fe"),
-                CellValue::Float(5.0),
-            ]),
+            CellValue::Array(vec![CellValue::Str("Fe"), CellValue::Float(5.0)]),
         ];
         let result = HubbardU::from_block_rows(&rows).unwrap();
         assert!(result.unit.is_some());
@@ -66,12 +66,10 @@ mod tests {
 
     #[test]
     fn test_hubbard_u_without_unit() {
-        let rows = vec![
-            CellValue::Array(vec![
-                CellValue::Str("Fe"),
-                CellValue::Float(5.0),
-            ]),
-        ];
+        let rows = vec![CellValue::Array(vec![
+            CellValue::Str("Fe"),
+            CellValue::Float(5.0),
+        ])];
         let result = HubbardU::from_block_rows(&rows).unwrap();
         assert!(result.unit.is_none());
         assert_eq!(result.atom_u_values.len(), 1);
@@ -81,14 +79,8 @@ mod tests {
     fn test_hubbard_u_multiple_entries() {
         let rows = vec![
             CellValue::Array(vec![CellValue::Str("eV")]),
-            CellValue::Array(vec![
-                CellValue::Str("Fe"),
-                CellValue::Float(5.0),
-            ]),
-            CellValue::Array(vec![
-                CellValue::Str("O"),
-                CellValue::Float(3.0),
-            ]),
+            CellValue::Array(vec![CellValue::Str("Fe"), CellValue::Float(5.0)]),
+            CellValue::Array(vec![CellValue::Str("O"), CellValue::Float(3.0)]),
         ];
         let result = HubbardU::from_block_rows(&rows).unwrap();
         assert_eq!(result.atom_u_values.len(), 2);
