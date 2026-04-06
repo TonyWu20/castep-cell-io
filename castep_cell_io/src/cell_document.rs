@@ -1,20 +1,24 @@
 use bon::Builder;
 use castep_cell_fmt::{
-    parse::{FromCellFile, FromBlock},
-    Cell, CellValue, ToCell, ToCellFile, CResult, Error, query::find_block,
+    CResult, Cell, CellValue, Error, ToCell, ToCellFile,
+    parse::{FromBlock, FromCellFile},
+    query::find_block,
 };
 
 use crate::cell::{
-    lattice_param::LatticeCart,
-    positions::{PositionsFrac, PositionsAbs},
     bz_sampling_kpoints::{
-        KpointsList, BsKpointPath, BSKpointList, OpticsKpointsList, MagresKpointsList,
+        BSKpointList, BsKpointPath, KpointsList, MagresKpointsList, OpticsKpointsList,
     },
-    symmetry::SymmetryOps,
-    constraints::{FixCOM, IonicConstraints, NonlinearConstraints, FixAllIons, FixAllCell},
+    constraints::{FixAllCell, FixAllIons, FixCOM, IonicConstraints, NonlinearConstraints},
     external_fields::{ExternalEfield, ExternalPressure},
-    species::{SpeciesMass, SpeciesPot, SpeciesLcaoStates, SpeciesQ, HubbardU, SedcCustomParams},
-    phonon::{PhononKpointList, PhononKpointPath, PhononGammaDirections, PhononFineKpointList, PhononSupercellMatrix, SupercellKpointListCastep},
+    lattice_param::LatticeCart,
+    phonon::{
+        PhononFineKpointList, PhononGammaDirections, PhononKpointList, PhononKpointPath,
+        PhononSupercellMatrix, SupercellKpointListCastep,
+    },
+    positions::{PositionsAbs, PositionsFrac},
+    species::{HubbardU, SedcCustomParams, SpeciesLcaoStates, SpeciesMass, SpeciesPot, SpeciesQ},
+    symmetry::SymmetryOps,
     velocities::IonicVelocities,
 };
 
@@ -46,6 +50,7 @@ impl ToCell for Positions {
     }
 }
 
+#[allow(clippy::duplicated_attributes)]
 #[derive(Debug, Clone, Builder)]
 #[builder(on(Lattice, into), on(Positions, into))]
 pub struct CellDocument {
@@ -85,9 +90,15 @@ impl FromCellFile for CellDocument {
         let lattice = Lattice::Cart(LatticeCart::from_block_rows(lattice_rows)?);
 
         let positions = if find_block(cells, "POSITIONS_FRAC").is_ok() {
-            Positions::Frac(PositionsFrac::from_block_rows(find_block(cells, "POSITIONS_FRAC")?)?)
+            Positions::Frac(PositionsFrac::from_block_rows(find_block(
+                cells,
+                "POSITIONS_FRAC",
+            )?)?)
         } else {
-            Positions::Abs(PositionsAbs::from_block_rows(find_block(cells, "POSITIONS_ABS")?)?)
+            Positions::Abs(PositionsAbs::from_block_rows(find_block(
+                cells,
+                "POSITIONS_ABS",
+            )?)?)
         };
 
         let kpoints_list = find_block(cells, "KPOINTS_LIST")
@@ -120,15 +131,14 @@ impl FromCellFile for CellDocument {
             .map(|rows| SymmetryOps::from_block_rows(rows))
             .transpose()?;
 
-        let fix_com = cells
-            .iter()
-            .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c
-                    && k.eq_ignore_ascii_case("FIX_COM") {
-                        return Some(FixCOM(true));
-                    }
-                None
-            });
+        let fix_com = cells.iter().find_map(|c| {
+            if let Cell::KeyValue(k, _v) = c
+                && k.eq_ignore_ascii_case("FIX_COM")
+            {
+                return Some(FixCOM(true));
+            }
+            None
+        });
 
         let ionic_constraints = find_block(cells, "IONIC_CONSTRAINTS")
             .ok()
@@ -140,25 +150,23 @@ impl FromCellFile for CellDocument {
             .map(|rows| NonlinearConstraints::from_block_rows(rows))
             .transpose()?;
 
-        let fix_all_ions = cells
-            .iter()
-            .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c
-                    && k.eq_ignore_ascii_case("FIX_ALL_IONS") {
-                        return Some(FixAllIons(true));
-                    }
-                None
-            });
+        let fix_all_ions = cells.iter().find_map(|c| {
+            if let Cell::KeyValue(k, _v) = c
+                && k.eq_ignore_ascii_case("FIX_ALL_IONS")
+            {
+                return Some(FixAllIons(true));
+            }
+            None
+        });
 
-        let fix_all_cell = cells
-            .iter()
-            .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c
-                    && k.eq_ignore_ascii_case("FIX_ALL_CELL") {
-                        return Some(FixAllCell(true));
-                    }
-                None
-            });
+        let fix_all_cell = cells.iter().find_map(|c| {
+            if let Cell::KeyValue(k, _v) = c
+                && k.eq_ignore_ascii_case("FIX_ALL_CELL")
+            {
+                return Some(FixAllCell(true));
+            }
+            None
+        });
 
         let external_efield = find_block(cells, "EXTERNAL_EFIELD")
             .ok()
