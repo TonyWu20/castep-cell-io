@@ -1,3 +1,60 @@
+//! Top-level document structure for CASTEP `.cell` files.
+//!
+//! This module provides [`CellDocument`], the primary type for representing a complete
+//! CASTEP cell file in memory. It handles both parsing from text format and serialization
+//! back to the CASTEP format.
+//!
+//! # Structure
+//!
+//! A cell document consists of:
+//! - **Required fields**: lattice vectors and atomic positions
+//! - **Optional blocks**: k-point sampling, constraints, external fields, species properties,
+//!   phonon calculations, and more
+//!
+//! # Usage
+//!
+//! ## Parsing from text
+//!
+//! ```no_run
+//! use castep_cell_io::CellDocument;
+//!
+//! let input = std::fs::read_to_string("structure.cell")?;
+//! let doc = castep_cell_fmt::parse::<CellDocument>(&input)?;
+//!
+//! // Access required fields
+//! println!("Lattice: {:?}", doc.lattice);
+//! println!("Positions: {:?}", doc.positions);
+//!
+//! // Check optional blocks
+//! if let Some(kpoints) = &doc.kpoints_list {
+//!     println!("K-points defined: {:?}", kpoints);
+//! }
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ## Building programmatically
+//!
+//! ```ignore
+//! use castep_cell_io::CellDocument;
+//!
+//! let doc = CellDocument::builder()
+//!     .lattice(todo!()) // LatticeCart instance
+//!     .positions(todo!()) // PositionsFrac or PositionsAbs instance
+//!     .build();
+//! ```
+//!
+//! ## Serializing to text
+//!
+//! ```ignore
+//! use castep_cell_io::CellDocument;
+//! use castep_cell_fmt::{ToCellFile, format::to_string_many_spaced};
+//!
+//! // Assuming you have a CellDocument instance
+//! let doc = todo!(); // Your CellDocument instance
+//! let cells = doc.to_cell_file();
+//! let output = to_string_many_spaced(&cells);
+//! ```
+
 use bon::Builder;
 use castep_cell_fmt::{
     CResult, Cell, CellValue, Error, ToCell, ToCellFile,
@@ -22,8 +79,25 @@ use crate::cell::{
     velocities::IonicVelocities,
 };
 
+/// Lattice vector specification for the simulation cell.
+///
+/// Defines the periodic boundary conditions of the crystal structure.
+/// Currently supports Cartesian coordinates; future versions may add
+/// fractional or ABC+angles representations.
+///
+/// # Example
+///
+/// ```no_run
+/// use castep_cell_io::Lattice;
+///
+/// // Use builder to construct LatticeCart, then wrap in enum
+/// let lattice = Lattice::Cart(todo!());
+/// ```
 #[derive(Debug, Clone)]
 pub enum Lattice {
+    /// Lattice vectors in Cartesian coordinates (Angstroms).
+    ///
+    /// Corresponds to the `%BLOCK LATTICE_CART` section in CASTEP input files.
     Cart(LatticeCart),
 }
 
@@ -35,9 +109,32 @@ impl ToCell for Lattice {
     }
 }
 
+/// Atomic positions within the simulation cell.
+///
+/// Positions can be specified in either fractional (relative to lattice vectors)
+/// or absolute Cartesian coordinates. CASTEP requires exactly one position block
+/// per cell file.
+///
+/// # Coordinate Systems
+///
+/// - **Fractional**: Coordinates relative to lattice vectors (0.0 to 1.0 range).
+///   Most common for periodic systems. Corresponds to `%BLOCK POSITIONS_FRAC`.
+/// - **Absolute**: Cartesian coordinates in Angstroms. Useful for non-periodic
+///   or mixed systems. Corresponds to `%BLOCK POSITIONS_ABS`.
+///
+/// # Example
+///
+/// ```no_run
+/// use castep_cell_io::Positions;
+///
+/// // Use builder to construct PositionsFrac, then wrap in enum
+/// let positions = Positions::Frac(todo!());
+/// ```
 #[derive(Debug, Clone)]
 pub enum Positions {
+    /// Fractional coordinates relative to lattice vectors.
     Frac(PositionsFrac),
+    /// Absolute Cartesian coordinates in Angstroms.
     Abs(PositionsAbs),
 }
 
@@ -50,41 +147,226 @@ impl ToCell for Positions {
     }
 }
 
+/// Complete representation of a CASTEP `.cell` file.
+///
+/// This is the primary type for working with CASTEP cell files. It contains all
+/// structural information, calculation parameters, and optional blocks that can
+/// appear in a cell file.
+///
+/// # Required Fields
+///
+/// - [`lattice`](Self::lattice): Periodic boundary conditions
+/// - [`positions`](Self::positions): Atomic coordinates
+///
+/// All other fields are optional and correspond to specific CASTEP features.
+///
+/// # Construction
+///
+/// Use the builder pattern (via [`bon`](https://docs.rs/bon)) for ergonomic construction:
+///
+/// ```ignore
+/// use castep_cell_io::CellDocument;
+///
+/// let doc = CellDocument::builder()
+///     .lattice(todo!())  // LatticeCart - automatically wrapped in Lattice::Cart
+///     .positions(todo!())  // PositionsFrac/PositionsAbs - automatically wrapped
+///     .build();
+/// ```
+///
+/// # Parsing and Serialization
+///
+/// Implements [`FromCellFile`] for parsing and [`ToCellFile`] for serialization:
+///
+/// ```no_run
+/// use castep_cell_io::CellDocument;
+/// use castep_cell_fmt::{ToCellFile, format::to_string_many_spaced};
+///
+/// // Parse from string
+/// let input = std::fs::read_to_string("input.cell")?;
+/// let doc = castep_cell_fmt::parse::<CellDocument>(&input)?;
+///
+/// // Serialize back to CASTEP format
+/// let cells = doc.to_cell_file();
+/// let output = to_string_many_spaced(&cells);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+///
+/// # Optional Blocks
+///
+/// The document supports all standard CASTEP cell file blocks:
+///
+/// - **K-point sampling**: [`kpoints_list`](Self::kpoints_list), [`bs_kpoint_path`](Self::bs_kpoint_path),
+///   [`bs_kpoints_list`](Self::bs_kpoints_list), [`optics_kpoints_list`](Self::optics_kpoints_list),
+///   [`magres_kpoints_list`](Self::magres_kpoints_list)
+/// - **Constraints**: [`ionic_constraints`](Self::ionic_constraints), [`nonlinear_constraints`](Self::nonlinear_constraints),
+///   [`fix_all_ions`](Self::fix_all_ions), [`fix_all_cell`](Self::fix_all_cell), [`fix_com`](Self::fix_com)
+/// - **External fields**: [`external_efield`](Self::external_efield), [`external_pressure`](Self::external_pressure)
+/// - **Species properties**: [`species_mass`](Self::species_mass), [`species_pot`](Self::species_pot),
+///   [`species_lcao_states`](Self::species_lcao_states), [`species_q`](Self::species_q),
+///   [`hubbard_u`](Self::hubbard_u), [`sedc_custom_params`](Self::sedc_custom_params)
+/// - **Phonon calculations**: [`phonon_kpoint_list`](Self::phonon_kpoint_list), [`phonon_kpoint_path`](Self::phonon_kpoint_path),
+///   [`phonon_gamma_directions`](Self::phonon_gamma_directions), [`phonon_fine_kpoint_list`](Self::phonon_fine_kpoint_list),
+///   [`phonon_supercell_matrix`](Self::phonon_supercell_matrix), [`supercell_kpoint_list`](Self::supercell_kpoint_list)
+/// - **Dynamics**: [`ionic_velocities`](Self::ionic_velocities)
+/// - **Symmetry**: [`symmetry_ops`](Self::symmetry_ops)
 #[allow(clippy::duplicated_attributes)]
 #[derive(Debug, Clone, Builder)]
 #[builder(on(Lattice, into), on(Positions, into))]
 pub struct CellDocument {
+    /// Lattice vectors defining the simulation cell.
+    ///
+    /// Required field. Defines the periodic boundary conditions.
     pub lattice: Lattice,
+    /// Atomic positions within the cell.
+    ///
+    /// Required field. Can be fractional or absolute coordinates.
     pub positions: Positions,
+    /// K-point sampling grid for electronic structure calculations.
+    ///
+    /// Corresponds to `%BLOCK KPOINTS_LIST` in CASTEP.
     pub kpoints_list: Option<KpointsList>,
+    /// K-point path for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK BS_KPOINT_PATH` in CASTEP.
     pub bs_kpoint_path: Option<BsKpointPath>,
+    /// Explicit k-points for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK BS_KPOINTS_LIST` in CASTEP.
     pub bs_kpoints_list: Option<BSKpointList>,
+    /// K-points for optical property calculations.
+    ///
+    /// Corresponds to `%BLOCK OPTICS_KPOINTS_LIST` in CASTEP.
     pub optics_kpoints_list: Option<OpticsKpointsList>,
+    /// K-points for magnetic resonance calculations.
+    ///
+    /// Corresponds to `%BLOCK MAGRES_KPOINTS_LIST` in CASTEP.
     pub magres_kpoints_list: Option<MagresKpointsList>,
+    /// Explicit symmetry operations.
+    ///
+    /// Overrides automatic symmetry detection. Corresponds to `%BLOCK SYMMETRY_OPS`.
     pub symmetry_ops: Option<SymmetryOps>,
+    /// Fix center of mass during geometry optimization.
+    ///
+    /// Corresponds to `FIX_COM : TRUE` in CASTEP.
     pub fix_com: Option<FixCOM>,
+    /// Linear constraints on ionic positions.
+    ///
+    /// Corresponds to `%BLOCK IONIC_CONSTRAINTS` in CASTEP.
     pub ionic_constraints: Option<IonicConstraints>,
+    /// Nonlinear constraints on ionic positions.
+    ///
+    /// Corresponds to `%BLOCK NONLINEAR_CONSTRAINTS` in CASTEP.
     pub nonlinear_constraints: Option<NonlinearConstraints>,
+    /// Prevent all ions from moving during optimization.
+    ///
+    /// Corresponds to `FIX_ALL_IONS : TRUE` in CASTEP.
     pub fix_all_ions: Option<FixAllIons>,
+    /// Prevent cell parameters from changing during optimization.
+    ///
+    /// Corresponds to `FIX_ALL_CELL : TRUE` in CASTEP.
     pub fix_all_cell: Option<FixAllCell>,
+    /// External electric field applied to the system.
+    ///
+    /// Corresponds to `%BLOCK EXTERNAL_EFIELD` in CASTEP.
     pub external_efield: Option<ExternalEfield>,
+    /// External pressure applied to the cell.
+    ///
+    /// Corresponds to `%BLOCK EXTERNAL_PRESSURE` in CASTEP.
     pub external_pressure: Option<ExternalPressure>,
+    /// Custom atomic masses for isotope calculations.
+    ///
+    /// Corresponds to `%BLOCK SPECIES_MASS` in CASTEP.
     pub species_mass: Option<SpeciesMass>,
+    /// Pseudopotential files for each species.
+    ///
+    /// Corresponds to `%BLOCK SPECIES_POT` in CASTEP.
     pub species_pot: Option<SpeciesPot>,
+    /// LCAO basis states for each species.
+    ///
+    /// Corresponds to `%BLOCK SPECIES_LCAO_STATES` in CASTEP.
     pub species_lcao_states: Option<SpeciesLcaoStates>,
+    /// Ionic charges for each species.
+    ///
+    /// Corresponds to `%BLOCK SPECIES_Q` in CASTEP.
     pub species_q: Option<SpeciesQ>,
+    /// Hubbard U parameters for DFT+U calculations.
+    ///
+    /// Corresponds to `%BLOCK HUBBARD_U` in CASTEP.
     pub hubbard_u: Option<HubbardU>,
+    /// Custom parameters for semi-empirical dispersion correction.
+    ///
+    /// Corresponds to `%BLOCK SEDC_CUSTOM_PARAMS` in CASTEP.
     pub sedc_custom_params: Option<SedcCustomParams>,
+    /// K-points for phonon calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_KPOINT_LIST` in CASTEP.
     pub phonon_kpoint_list: Option<PhononKpointList>,
+    /// K-point path for phonon dispersion calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_KPOINT_PATH` in CASTEP.
     pub phonon_kpoint_path: Option<PhononKpointPath>,
+    /// Directions for Gamma-point phonon calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_GAMMA_DIRECTIONS` in CASTEP.
     pub phonon_gamma_directions: Option<PhononGammaDirections>,
+    /// Fine k-point grid for phonon interpolation.
+    ///
+    /// Corresponds to `%BLOCK PHONON_FINE_KPOINT_LIST` in CASTEP.
     pub phonon_fine_kpoint_list: Option<PhononFineKpointList>,
+    /// Supercell matrix for phonon calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_SUPERCELL_MATRIX` in CASTEP.
     pub phonon_supercell_matrix: Option<PhononSupercellMatrix>,
+    /// K-points for supercell calculations.
+    ///
+    /// Corresponds to `%BLOCK SUPERCELL_KPOINT_LIST` in CASTEP.
     pub supercell_kpoint_list: Option<SupercellKpointListCastep>,
+    /// Initial ionic velocities for molecular dynamics.
+    ///
+    /// Corresponds to `%BLOCK IONIC_VELOCITIES` in CASTEP.
     pub ionic_velocities: Option<IonicVelocities>,
 }
 
 impl FromCellFile for CellDocument {
+    /// Parse a [`CellDocument`] from a slice of parsed [`Cell`] tokens.
+    ///
+    /// This method is called by [`castep_cell_fmt::parse`] after tokenizing the input text.
+    /// It extracts all recognized blocks and keywords from the token stream.
+    ///
+    /// # Required Blocks
+    ///
+    /// - `%BLOCK LATTICE_CART` — must be present
+    /// - Either `%BLOCK POSITIONS_FRAC` or `%BLOCK POSITIONS_ABS` — must have exactly one
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if:
+    /// - Required blocks are missing
+    /// - Block content is malformed
+    /// - Multiple position blocks are present
+    /// - Any block fails to parse according to its schema
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use castep_cell_io::CellDocument;
+    ///
+    /// let input = r#"
+    /// %BLOCK LATTICE_CART
+    ///   10.0  0.0  0.0
+    ///    0.0 10.0  0.0
+    ///    0.0  0.0 10.0
+    /// %ENDBLOCK LATTICE_CART
+    ///
+    /// %BLOCK POSITIONS_FRAC
+    /// Si  0.0  0.0  0.0
+    /// Si  0.25 0.25 0.25
+    /// %ENDBLOCK POSITIONS_FRAC
+    /// "#;
+    ///
+    /// let doc = castep_cell_fmt::parse::<CellDocument>(input)?;
+    /// # Ok::<(), castep_cell_fmt::Error>(())
+    /// ```
     fn from_cell_file(cells: &[Cell<'_>]) -> CResult<Self> {
         let lattice_rows = find_block(cells, "LATTICE_CART")?;
         let lattice = Lattice::Cart(LatticeCart::from_block_rows(lattice_rows)?);
@@ -277,6 +559,36 @@ impl FromCellFile for CellDocument {
 }
 
 impl ToCellFile for CellDocument {
+    /// Serialize this document to a vector of [`Cell`] tokens.
+    ///
+    /// Converts the structured document back to the token representation used by
+    /// [`castep_cell_fmt`]. The tokens can then be formatted to text with
+    /// [`castep_cell_fmt::format`].
+    ///
+    /// # Block Order
+    ///
+    /// Blocks are emitted in a standard order:
+    /// 1. Lattice and positions (required)
+    /// 2. K-point sampling blocks
+    /// 3. Constraints and flags
+    /// 4. External fields
+    /// 5. Species properties
+    /// 6. Phonon calculation blocks
+    /// 7. Dynamics (ionic velocities)
+    ///
+    /// Optional blocks that are `None` are omitted from the output.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use castep_cell_io::CellDocument;
+    /// use castep_cell_fmt::{ToCellFile, format::to_string_many_spaced};
+    ///
+    /// // Assuming you have a CellDocument instance
+    /// let doc = todo!(); // Your CellDocument instance
+    /// let cells = doc.to_cell_file();
+    /// let output = to_string_many_spaced(&cells);
+    /// ```
     fn to_cell_file(&self) -> Vec<Cell<'_>> {
         let mut cells = vec![self.lattice.to_cell(), self.positions.to_cell()];
 

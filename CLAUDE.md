@@ -25,6 +25,8 @@ cargo clippy
 cargo clippy --fix
 ```
 
+Use `fd`, `sd` and `rg` to replace `find`, `sed` and `grep`
+
 ## Code style and principles
 
 - **Modular architecture** strictly following the **Single Responsibility Principle (SRP)**: each module, struct, and function has exactly one reason to change.
@@ -35,8 +37,8 @@ cargo clippy --fix
 - Unit test coverage target: ≥ 85% for `lib/` modules
 - Integration tests for CLI and plugin entry points
 - **Builder pattern** **must** be used for all complex struct creation.
-  - Use the **`derive_builder`** crate (`#[derive(Builder)]`) for all non-trivial structs.
-  - This provides clean, ergonomic, immutable builders with method chaining.
+  - Use the **`bon`** crate (`#[derive(bon::Builder)]`) for all non-trivial structs.
+  - This provides clean, ergonomic builders with method chaining and automatic collection helpers.
 - **Functional programming style** must be used as much as possible:
   - Prefer iterators (`iter()`, `map`, `filter`, `filter_map`, `flat_map`, `fold`, `collect`, etc.) over imperative `for` loops.
   - Minimize mutable state; favor immutable transformations and method chaining.
