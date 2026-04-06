@@ -55,7 +55,7 @@ impl FromCellFile for BandStructureParams {
             .maybe_bs_xc_functional(BsXcFunctional::from_cells(tokens).ok().flatten())
             .build()
             .validate()
-            .map_err(|e| Error::Message(e))
+            .map_err(Error::Message)
     }
 }
 

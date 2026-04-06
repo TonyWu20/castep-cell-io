@@ -47,7 +47,7 @@ impl FromCellFile for PhononParams {
             .maybe_phonon_sum_rule(PhononSumRule::from_cells(tokens).ok().flatten())
             .build()
             .validate()
-            .map_err(|e| Error::Message(e))
+            .map_err(Error::Message)
     }
 }
 

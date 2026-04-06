@@ -12,8 +12,10 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MD_DAMPING_SCHEME : Coupled
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MdDampingScheme {
     /// Calculates optimal damping parameters according to the independent modes algorithm
+    #[default]
     Independent,
     /// Calculates optimal damping parameters according to the coupled modes algorithm
     Coupled,
@@ -21,11 +23,6 @@ pub enum MdDampingScheme {
     SteepestDescents,
 }
 
-impl Default for MdDampingScheme {
-    fn default() -> Self {
-        Self::Independent // Default is Independent
-    }
-}
 
 impl FromCellValue for MdDampingScheme {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

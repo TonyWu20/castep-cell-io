@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 /// FINITE_BASIS_CORR : 1
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "FINITE_BASIS_CORR")]
+#[derive(Default)]
 pub enum FiniteBasisCorr {
     /// No correction.
     #[serde(rename = "0")]
@@ -24,14 +25,10 @@ pub enum FiniteBasisCorr {
     Manual,
     /// Automatic correction using FINITE_BASIS_NPOINTS and FINITE_BASIS_SPACING.
     #[serde(rename = "2")]
+    #[default]
     Automatic,
 }
 
-impl Default for FiniteBasisCorr {
-    fn default() -> Self {
-        Self::Automatic
-    }
-}
 
 impl FromCellValue for FiniteBasisCorr {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

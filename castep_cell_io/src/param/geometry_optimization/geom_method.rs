@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 /// GEOM_METHOD : DampedMD
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "GEOM_METHOD")]
+#[derive(Default)]
 pub enum GeomMethod {
     /// BFGS minimization
     #[serde(alias = "bfgs", alias = "BFGS")]
+    #[default]
     Bfgs,
     /// Low-memory BFGS minimization
     #[serde(alias = "lbfgs", alias = "LBFGS")]
@@ -55,11 +57,6 @@ impl FromKeyValue for GeomMethod {
     }
 }
 
-impl Default for GeomMethod {
-    fn default() -> Self {
-        Self::Bfgs // Default is BFGS
-    }
-}
 
 impl ToCell for GeomMethod {
     fn to_cell(&self) -> Cell<'_> {

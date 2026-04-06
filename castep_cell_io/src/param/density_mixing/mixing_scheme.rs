@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// MIXING_SCHEME : Pulay
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "MIXING_SCHEME")]
+#[derive(Default)]
 pub enum MixingScheme {
     /// Keriker mixing scheme
     #[serde(alias = "kerker", alias = "KERKER")]
@@ -23,17 +24,13 @@ pub enum MixingScheme {
     Linear,
     /// Broyden mixing scheme
     #[serde(alias = "broyden", alias = "BROYDEN")]
+    #[default]
     Broyden,
     /// Pulay mixing scheme
     #[serde(alias = "pulay", alias = "PULAY")]
     Pulay,
 }
 
-impl Default for MixingScheme {
-    fn default() -> Self {
-        Self::Broyden
-    }
-}
 
 impl FromCellValue for MixingScheme {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

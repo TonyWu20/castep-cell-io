@@ -43,7 +43,7 @@ impl FromCellFile for BasisSetParams {
             .maybe_grid_scale(GridScale::from_cells(tokens).ok().flatten())
             .build()
             .validate()
-            .map_err(|e| Error::Message(e))
+            .map_err(Error::Message)
     }
 }
 

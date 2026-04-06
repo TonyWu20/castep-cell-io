@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// PSPOT_NONLOCAL_TYPE : REAL
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum PspotNonlocalType {
     /// Reciprocal space nonlocal pseudopotentials
+    #[default]
     Reciprocal,
     /// Real space nonlocal pseudopotentials
     Real,
 }
 
-impl Default for PspotNonlocalType {
-    fn default() -> Self {
-        Self::Reciprocal
-    }
-}
 
 impl FromCellValue for PspotNonlocalType {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

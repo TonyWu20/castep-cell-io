@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MAGRES_METHOD : molecular
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MagresMethod {
     /// Uses the reciprocal space representation; applicable for both crystals and "molecule in a box"
+    #[default]
     Crystal,
     /// Applicable only for "molecule in a box"; faster calculation
     Molecular,
 }
 
-impl Default for MagresMethod {
-    fn default() -> Self {
-        Self::Crystal
-    }
-}
 
 impl FromCellValue for MagresMethod {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 /// PHONON_FINE_METHOD : SUPERCELL
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "PHONON_FINE_METHOD")]
+#[derive(Default)]
 pub enum PhononFineMethod {
     /// No interpolation, direct calculations
     #[serde(alias = "none", alias = "NONE")]
+    #[default]
     None,
     /// Use Linear response (density functional perturbation theory) method
     #[serde(alias = "interpolate", alias = "INTERPOLATE")]
@@ -45,11 +47,6 @@ impl FromKeyValue for PhononFineMethod {
     }
 }
 
-impl Default for PhononFineMethod {
-    fn default() -> Self {
-        Self::None // Default is NONE
-    }
-}
 
 impl ToCell for PhononFineMethod {
     fn to_cell(&self) -> Cell<'_> {

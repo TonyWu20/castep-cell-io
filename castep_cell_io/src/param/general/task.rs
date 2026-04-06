@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 /// TASK : optics
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "TASK")]
+#[derive(Default)]
 pub enum Task {
     /// Performs a single-point energy calculation.
     #[serde(alias = "SINGLEPOINT", alias = "singlepoint")]
+    #[default]
     SinglePoint,
     /// Calculates band structure properties.
     #[serde(alias = "BANDSTRUCTURE", alias = "bandstructure")]
@@ -56,11 +58,6 @@ pub enum Task {
     Autosolvation,
 }
 
-impl Default for Task {
-    fn default() -> Self {
-        Self::SinglePoint // Default is SinglePoint
-    }
-}
 
 impl FromCellValue for Task {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

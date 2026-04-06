@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// TDDFT_POSITION_METHOD : CRYSTAL
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum TddftPositionMethod {
     /// Appropriate for the "molecule in a box" geometry
+    #[default]
     Molecular,
     /// The only option applicable for calculating optical matrix elements for true periodic solids
     Crystal,
 }
 
-impl Default for TddftPositionMethod {
-    fn default() -> Self {
-        Self::Molecular
-    }
-}
 
 impl FromCellValue for TddftPositionMethod {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

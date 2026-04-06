@@ -123,11 +123,10 @@ impl FromCellFile for CellDocument {
         let fix_com = cells
             .iter()
             .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c {
-                    if k.eq_ignore_ascii_case("FIX_COM") {
+                if let Cell::KeyValue(k, _v) = c
+                    && k.eq_ignore_ascii_case("FIX_COM") {
                         return Some(FixCOM(true));
                     }
-                }
                 None
             });
 
@@ -144,22 +143,20 @@ impl FromCellFile for CellDocument {
         let fix_all_ions = cells
             .iter()
             .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c {
-                    if k.eq_ignore_ascii_case("FIX_ALL_IONS") {
+                if let Cell::KeyValue(k, _v) = c
+                    && k.eq_ignore_ascii_case("FIX_ALL_IONS") {
                         return Some(FixAllIons(true));
                     }
-                }
                 None
             });
 
         let fix_all_cell = cells
             .iter()
             .find_map(|c| {
-                if let Cell::KeyValue(k, _v) = c {
-                    if k.eq_ignore_ascii_case("FIX_ALL_CELL") {
+                if let Cell::KeyValue(k, _v) = c
+                    && k.eq_ignore_ascii_case("FIX_ALL_CELL") {
                         return Some(FixAllCell(true));
                     }
-                }
                 None
             });
 

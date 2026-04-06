@@ -11,20 +11,17 @@ use castep_cell_fmt::{CResult, Cell, CellValue, FromKeyValue, ToCell, ToCellValu
 /// ELECTRONIC_MINIMIZER : SD
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[non_exhaustive]
+#[derive(Default)]
 pub enum ElectronicMinimizer {
     /// Minimizer takes up to 10 SD steps
     Sd,
     /// Minimizer takes one SD step followed by up to 4 CG steps
+    #[default]
     Cg,
     #[doc(hidden)]
     RmmDiis,
 }
 
-impl Default for ElectronicMinimizer {
-    fn default() -> Self {
-        Self::Cg
-    }
-}
 
 impl FromKeyValue for ElectronicMinimizer {
     const KEY_NAME: &'static str = "ELECTRONIC_MINIMIZER";

@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 /// BASIS_PRECISION : MEDIUM
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "BASIS_PRECISION")]
+#[derive(Default)]
 pub enum BasisPrecision {
     /// Convergence of about 1 eV/atom
     #[serde(alias = "coarse", alias = "COARSE")]
@@ -24,6 +25,7 @@ pub enum BasisPrecision {
     Medium,
     /// Convergence of about 0.1 eV/atom
     #[serde(alias = "fine", alias = "FINE")]
+    #[default]
     Fine,
     /// 1.2 × FINE cutoff energy
     #[serde(alias = "precise", alias = "PRECISE")]
@@ -33,11 +35,6 @@ pub enum BasisPrecision {
     Extreme,
 }
 
-impl Default for BasisPrecision {
-    fn default() -> Self {
-        Self::Fine
-    }
-}
 
 impl FromCellValue for BasisPrecision {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

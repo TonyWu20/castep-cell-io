@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 /// GEOM_PRECONDITIONER : EXP
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "GEOM_PRECONDITIONER")]
+#[derive(Default)]
 pub enum GeomPreconditioner {
     /// Identity; LBFGS is used without a preconditioner
     #[serde(alias = "id", alias = "ID")]
+    #[default]
     Id,
     /// Exponential preconditioner
     #[serde(alias = "exp", alias = "EXP")]
@@ -45,11 +47,6 @@ impl FromKeyValue for GeomPreconditioner {
     }
 }
 
-impl Default for GeomPreconditioner {
-    fn default() -> Self {
-        Self::Id // Default is ID
-    }
-}
 
 impl ToCell for GeomPreconditioner {
     fn to_cell(&self) -> Cell<'_> {

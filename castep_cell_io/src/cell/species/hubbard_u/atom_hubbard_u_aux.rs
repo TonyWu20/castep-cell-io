@@ -22,12 +22,11 @@ impl FromBlock for AtomHubbardU {
             let mut ion_number = None;
 
             // Check if second element is a u32 (ion number)
-            if idx < arr.len() {
-                if let Ok(ion_num) = value_as_u32(&arr[idx]) {
+            if idx < arr.len()
+                && let Ok(ion_num) = value_as_u32(&arr[idx]) {
                     ion_number = Some(ion_num);
                     idx += 1;
                 }
-            }
 
             // Parse remaining elements as orbital specifications
             let mut orbitals = Vec::new();

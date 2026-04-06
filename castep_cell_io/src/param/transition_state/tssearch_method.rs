@@ -14,20 +14,17 @@ use serde::{Deserialize, Serialize};
 /// TSSEARCH_METHOD : LSTQST
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "TSSEARCH_METHOD")]
+#[derive(Default)]
 pub enum TssearchMethod {
     /// Identifies a transition state using the LSTQST method.
     #[serde(alias = "LSTQST", alias = "lstqst")]
+    #[default]
     Lstqst,
     /// Confirms a transition state using the nudged elastic band method.
     #[serde(alias = "NEB", alias = "neb")]
     Neb,
 }
 
-impl Default for TssearchMethod {
-    fn default() -> Self {
-        Self::Lstqst
-    }
-}
 
 impl FromCellValue for TssearchMethod {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

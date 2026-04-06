@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// EFIELD_CALCULATE_NONLINEAR : CHI2
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum EfieldCalculateNonlinear {
     /// Produces second harmonic generation coefficients
     Chi2,
     /// Non-linear optical properties are not calculated
+    #[default]
     None,
 }
 
-impl Default for EfieldCalculateNonlinear {
-    fn default() -> Self {
-        Self::None
-    }
-}
 
 impl FromCellValue for EfieldCalculateNonlinear {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

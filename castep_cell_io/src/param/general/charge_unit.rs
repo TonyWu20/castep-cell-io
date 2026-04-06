@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// CHARGE_UNIT : c
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum ChargeUnit {
     /// Elementary charge
+    #[default]
     E,
     /// Coulomb
     C,
 }
 
-impl Default for ChargeUnit {
-    fn default() -> Self {
-        Self::E
-    }
-}
 
 impl FromCellValue for ChargeUnit {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

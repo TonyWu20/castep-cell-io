@@ -12,10 +12,12 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MD_EXTRAP : Mixed
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MdExtrap {
     /// No extrapolation used
     None,
     /// First order extrapolation
+    #[default]
     First,
     /// Second order extrapolation
     Second,
@@ -23,11 +25,6 @@ pub enum MdExtrap {
     Mixed,
 }
 
-impl Default for MdExtrap {
-    fn default() -> Self {
-        Self::First // Default is First
-    }
-}
 
 impl FromCellValue for MdExtrap {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

@@ -12,8 +12,10 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// EFIELD_IGNORE_MOL_MODES : Molecule
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum EfieldIgnoreMolModes {
     /// Ignore the three lowest lying modes
+    #[default]
     Crystal,
     /// Ignore the six lowest lying modes
     Molecule,
@@ -21,11 +23,6 @@ pub enum EfieldIgnoreMolModes {
     LinearMolecule,
 }
 
-impl Default for EfieldIgnoreMolModes {
-    fn default() -> Self {
-        Self::Crystal
-    }
-}
 
 impl FromCellValue for EfieldIgnoreMolModes {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

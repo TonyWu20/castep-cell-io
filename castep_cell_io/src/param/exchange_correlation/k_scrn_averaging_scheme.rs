@@ -14,8 +14,10 @@ use castep_cell_fmt::query::value_as_str;
 ///
 /// Note: NLXC_K_SCRN_AVERAGING_SCHEME is the latest form; K_SCRN_AVERAGING_SCHEME is supported for backward compatibility.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum KScrnAveragingScheme {
     /// Use averaged charge density
+    #[default]
     AveDen,
     /// Self-weighted average charge density
     SwaDen,
@@ -23,11 +25,6 @@ pub enum KScrnAveragingScheme {
     SwaEsx,
 }
 
-impl Default for KScrnAveragingScheme {
-    fn default() -> Self {
-        Self::AveDen
-    }
-}
 
 impl FromCellValue for KScrnAveragingScheme {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

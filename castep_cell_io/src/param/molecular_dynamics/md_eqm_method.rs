@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MD_EQM_METHOD : BERENDSEN
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MdEqmMethod {
     /// No enhanced equilibration
+    #[default]
     None,
     /// Berendsen weak coupling scheme
     Berendsen,
 }
 
-impl Default for MdEqmMethod {
-    fn default() -> Self {
-        Self::None // Default is NONE
-    }
-}
 
 impl FromCellValue for MdEqmMethod {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

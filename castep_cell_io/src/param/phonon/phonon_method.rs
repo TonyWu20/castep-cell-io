@@ -27,10 +27,12 @@ pub type PhononMethod = SeconddMethod;
 // (not enum variants) usually requires custom deserializer logic or multiple struct fields.
 // For simplicity here, we define it for SECONDD_METHOD. A wrapper struct or custom logic
 // in the parent deserializer might be needed to fully support PHONON_METHOD alias.
+#[derive(Default)]
 pub enum SeconddMethod {
     /// Linear response method (or density functional perturbation theory)
     #[serde(alias = "linearresponse", alias = "LINEARRESPONSE")]
     #[serde(alias = "DFPT", alias = "dfpt")] // Alternative name
+    #[default]
     LinearResponse,
     /// Finite displacement method
     #[serde(alias = "finitedisplacement", alias = "FINITEDISPLACEMENT")]
@@ -55,11 +57,6 @@ impl FromKeyValue for SeconddMethod {
     }
 }
 
-impl Default for SeconddMethod {
-    fn default() -> Self {
-        Self::LinearResponse // Default is LINEARRESPONSE
-    }
-}
 
 impl ToCell for SeconddMethod {
     fn to_cell(&self) -> Cell<'_> {

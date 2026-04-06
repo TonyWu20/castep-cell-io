@@ -12,8 +12,10 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// OPTICS_XC_FUNCTIONAL : PW91
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum OpticXcFunctional {
     /// Local Density Approximation
+    #[default]
     Lda,
     /// Perdew Wang '91 GGA
     Pw91,
@@ -47,11 +49,6 @@ pub enum OpticXcFunctional {
     Rscan,
 }
 
-impl Default for OpticXcFunctional {
-    fn default() -> Self {
-        Self::Lda
-    }
-}
 
 impl FromCellValue for OpticXcFunctional {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

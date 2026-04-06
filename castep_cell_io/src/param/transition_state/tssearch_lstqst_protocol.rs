@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// TSSEARCH_LSTQST_PROTOCOL : CompleteLSTQST
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "TSSEARCH_LSTQST_PROTOCOL")]
+#[derive(Default)]
 pub enum TssearchLstqstProtocol {
     /// Uses the LST maximum method.
     #[serde(alias = "LSTMAXIMUM", alias = "lstmaximum")]
@@ -26,17 +27,13 @@ pub enum TssearchLstqstProtocol {
     LstOptimization,
     /// Uses the complete LSTQST method.
     #[serde(alias = "COMPLETELSTQST", alias = "completelstqst")]
+    #[default]
     CompleteLstqst,
     /// Uses the QST/Optimization method.
     #[serde(alias = "QST/OPTIMIZATION", alias = "qst/optimization")]
     QstOptimization,
 }
 
-impl Default for TssearchLstqstProtocol {
-    fn default() -> Self {
-        Self::CompleteLstqst
-    }
-}
 
 impl FromCellValue for TssearchLstqstProtocol {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

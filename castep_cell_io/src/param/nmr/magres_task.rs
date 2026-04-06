@@ -13,9 +13,11 @@ use serde::{Deserialize, Serialize};
 /// MAGRES_TASK : NMR
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "MAGRES_TASK")]
+#[derive(Default)]
 pub enum MagresTask {
     /// Performs a calculation of the NMR shielding tensor for all atoms
     #[serde(alias = "shielding", alias = "SHIELDING")]
+    #[default]
     Shielding,
     /// Performs a calculation of the electric field gradient tensor for all atoms
     #[serde(alias = "efg", alias = "EFG")]
@@ -25,11 +27,6 @@ pub enum MagresTask {
     Nmr,
 }
 
-impl Default for MagresTask {
-    fn default() -> Self {
-        Self::Shielding // Default is Shielding
-    }
-}
 
 impl FromCellValue for MagresTask {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

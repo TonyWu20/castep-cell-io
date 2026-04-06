@@ -10,20 +10,17 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// METALS_METHOD : dm
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MetalsMethod {
     /// System treated by density mixing
     Dm,
     /// System treated by ensemble density functional method
+    #[default]
     Edft,
     /// Currently not used
     None,
 }
 
-impl Default for MetalsMethod {
-    fn default() -> Self {
-        Self::Edft
-    }
-}
 
 impl FromKeyValue for MetalsMethod {
     const KEY_NAME: &'static str = "METALS_METHOD";

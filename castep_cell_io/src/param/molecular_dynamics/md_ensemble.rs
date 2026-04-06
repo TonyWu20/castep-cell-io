@@ -12,10 +12,12 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MD_ENSEMBLE : NVT
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MdEnsemble {
     /// Canonical ensemble (constant number of particles, volume, temperature)
     Nvt,
     /// Microcanonical ensemble (constant number of particles, volume, energy)
+    #[default]
     Nve,
     /// Isothermal-isobaric ensemble (constant number of particles, pressure, temperature)
     Npt,
@@ -23,11 +25,6 @@ pub enum MdEnsemble {
     Nph,
 }
 
-impl Default for MdEnsemble {
-    fn default() -> Self {
-        Self::Nve // Default is NVE
-    }
-}
 
 impl FromCellValue for MdEnsemble {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {

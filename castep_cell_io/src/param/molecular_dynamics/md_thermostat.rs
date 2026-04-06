@@ -12,18 +12,15 @@ use castep_cell_fmt::query::value_as_str;
 /// Example:
 /// MD_THERMOSTAT : Langevin
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default)]
 pub enum MdThermostat {
     /// Nosé-Hoover thermostat
+    #[default]
     NoseHoover,
     /// Langevin thermostat
     Langevin,
 }
 
-impl Default for MdThermostat {
-    fn default() -> Self {
-        Self::NoseHoover // Default is Nosé-Hoover
-    }
-}
 
 impl FromCellValue for MdThermostat {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
