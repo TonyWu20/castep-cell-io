@@ -31,13 +31,13 @@ impl FromKeyValue for NlxcPageExPot {
 }
 
 impl ToCell for NlxcPageExPot {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NLXC_PAGE_EX_POT", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for NlxcPageExPot {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

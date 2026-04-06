@@ -51,13 +51,13 @@ impl FromKeyValue for PhononForceConstantCutoff {
 }
 
 impl ToCell for PhononForceConstantCutoff {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_FORCE_CONSTANT_CUTOFF", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PhononForceConstantCutoff {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

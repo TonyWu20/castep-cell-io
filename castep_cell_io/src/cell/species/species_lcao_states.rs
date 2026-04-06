@@ -4,7 +4,7 @@ use super::Species;
 
 /// Represents a single entry within the SPECIES_LCAO_STATES block,
 /// linking a species to the number of LCAO states for it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, bon::Builder)]
 pub struct SpeciesLcaoState {
     /// The species (symbol or atomic number).
     pub species: Species,
@@ -29,7 +29,7 @@ impl FromCellValue for SpeciesLcaoState {
 }
 
 impl ToCellValue for SpeciesLcaoState {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             self.species.to_cell_value(),
             CellValue::UInt(self.num_states),
@@ -46,9 +46,10 @@ impl ToCellValue for SpeciesLcaoState {
 /// CCC2/I2 IB2
 /// ...
 /// %ENDBLOCK SPECIES_LCAO_STATES
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, bon::Builder)]
 pub struct SpeciesLcaoStates {
     /// The list of species and their corresponding LCAO state counts.
+    #[builder(default)]
     pub states: Vec<SpeciesLcaoState>,
 }
 
@@ -65,7 +66,7 @@ impl FromBlock for SpeciesLcaoStates {
 }
 
 impl ToCell for SpeciesLcaoStates {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "SPECIES_LCAO_STATES",
             self.states
@@ -136,6 +137,88 @@ mod tests {
     #[test]
     fn test_block_name() {
         assert_eq!(SpeciesLcaoStates::BLOCK_NAME, "SPECIES_LCAO_STATES");
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_species_lcao_state_builder_basic() {
+        let state = SpeciesLcaoState::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .num_states(9)
+            .build();
+
+        assert_eq!(state.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(state.num_states, 9);
+    }
+
+    #[test]
+    fn test_species_lcao_states_builder_empty() {
+        let states = SpeciesLcaoStates::builder().build();
+        assert_eq!(states.states.len(), 0);
+    }
+
+    #[test]
+    fn test_species_lcao_states_builder_single_state() {
+        let state = SpeciesLcaoState::builder()
+            .species(Species::Symbol("O".to_string()))
+            .num_states(5)
+            .build();
+
+        let states = SpeciesLcaoStates::builder()
+            .states(vec![state])
+            .build();
+
+        assert_eq!(states.states.len(), 1);
+        assert_eq!(states.states[0].num_states, 5);
+    }
+
+    #[test]
+    fn test_species_lcao_states_builder_multiple_with_vec() {
+        let state1 = SpeciesLcaoState::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .num_states(9)
+            .build();
+
+        let state2 = SpeciesLcaoState::builder()
+            .species(Species::Symbol("O".to_string()))
+            .num_states(5)
+            .build();
+
+        let states = SpeciesLcaoStates::builder()
+            .states(vec![state1, state2])
+            .build();
+
+        assert_eq!(states.states.len(), 2);
+        assert_eq!(states.states[0].num_states, 9);
+        assert_eq!(states.states[1].num_states, 5);
+    }
+
+    #[test]
+    fn test_species_lcao_states_builder_method_chaining() {
+        let state1 = SpeciesLcaoState::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .num_states(9)
+            .build();
+
+        let state2 = SpeciesLcaoState::builder()
+            .species(Species::Symbol("O".to_string()))
+            .num_states(5)
+            .build();
+
+        let state3 = SpeciesLcaoState::builder()
+            .species(Species::Symbol("C".to_string()))
+            .num_states(4)
+            .build();
+
+        // bon builder accepts Vec for collection fields
+        let states = SpeciesLcaoStates::builder()
+            .states(vec![state1, state2, state3])
+            .build();
+
+        assert_eq!(states.states.len(), 3);
+        assert_eq!(states.states[0].species, Species::Symbol("Fe".to_string()));
+        assert_eq!(states.states[1].species, Species::Symbol("O".to_string()));
+        assert_eq!(states.states[2].species, Species::Symbol("C".to_string()));
     }
 }
 

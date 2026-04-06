@@ -23,13 +23,13 @@ impl FromKeyValue for CalculateHirshfeld {
 }
 
 impl ToCell for CalculateHirshfeld {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CALCULATE_HIRSHFELD", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for CalculateHirshfeld {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

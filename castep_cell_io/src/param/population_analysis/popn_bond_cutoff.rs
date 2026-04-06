@@ -53,13 +53,13 @@ impl FromKeyValue for PopnBondCutoff {
 }
 
 impl ToCell for PopnBondCutoff {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("POPN_BOND_CUTOFF", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PopnBondCutoff {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

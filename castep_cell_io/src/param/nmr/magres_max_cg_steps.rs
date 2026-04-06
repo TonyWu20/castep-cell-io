@@ -35,13 +35,13 @@ impl FromKeyValue for MagresMaxCgSteps {
 }
 
 impl ToCell for MagresMaxCgSteps {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MAGRES_MAX_CG_STEPS", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for MagresMaxCgSteps {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

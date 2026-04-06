@@ -21,13 +21,13 @@ impl FromKeyValue for ImplicitSolventApolarTerm {
 }
 
 impl ToCell for ImplicitSolventApolarTerm {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("IMPLICIT_SOLVENT_APOLAR_TERM", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for ImplicitSolventApolarTerm {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

@@ -28,13 +28,13 @@ impl FromKeyValue for PrintClock {
 }
 
 impl ToCell for PrintClock {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PRINT_CLOCK", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for PrintClock {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

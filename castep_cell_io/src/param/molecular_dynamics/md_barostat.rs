@@ -44,13 +44,13 @@ impl FromKeyValue for MdBarostat {
 }
 
 impl ToCell for MdBarostat {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_BAROSTAT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdBarostat {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MdBarostat::AndersenHoover => "Andersen-Hoover",

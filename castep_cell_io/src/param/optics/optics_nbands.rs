@@ -31,13 +31,13 @@ impl FromKeyValue for OpticsNbands {
 }
 
 impl ToCell for OpticsNbands {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("OPTICS_NBANDS", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for OpticsNbands {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

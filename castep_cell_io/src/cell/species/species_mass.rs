@@ -4,7 +4,7 @@ use crate::units::MassUnit;
 
 /// Represents a single entry within the SPECIES_MASS block,
 /// linking a species to its mass.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SpeciesMassEntry {
     /// The species (symbol or atomic number).
     pub species: Species,
@@ -29,7 +29,7 @@ impl FromCellValue for SpeciesMassEntry {
 }
 
 impl ToCellValue for SpeciesMassEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             self.species.to_cell_value(),
             CellValue::Float(self.mass),
@@ -47,11 +47,12 @@ impl ToCellValue for SpeciesMassEntry {
 /// CCC2/I2 R2
 /// ...
 /// %ENDBLOCK SPECIES_MASS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SpeciesMass {
     /// The unit of mass. If None, the default (amu) is used.
     pub unit: Option<MassUnit>,
     /// The list of species and their corresponding masses.
+    #[builder(default)]
     pub masses: Vec<SpeciesMassEntry>,
 }
 
@@ -90,7 +91,7 @@ impl FromBlock for SpeciesMass {
 }
 
 impl ToCell for SpeciesMass {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
 
         if let Some(ref u) = self.unit {
@@ -181,5 +182,121 @@ mod tests {
     #[test]
     fn test_block_name() {
         assert_eq!(SpeciesMass::BLOCK_NAME, "SPECIES_MASS");
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_species_mass_entry_builder_basic() {
+        let entry = SpeciesMassEntry::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .mass(55.845)
+            .build();
+
+        assert_eq!(entry.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(entry.mass, 55.845);
+    }
+
+    #[test]
+    fn test_species_mass_builder_empty() {
+        let species_mass = SpeciesMass::builder().build();
+
+        assert!(species_mass.unit.is_none());
+        assert_eq!(species_mass.masses.len(), 0);
+    }
+
+    #[test]
+    fn test_species_mass_builder_single_entry_without_unit() {
+        let entry = SpeciesMassEntry::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .mass(55.845)
+            .build();
+
+        let species_mass = SpeciesMass::builder()
+            .masses(vec![entry])
+            .build();
+
+        assert!(species_mass.unit.is_none());
+        assert_eq!(species_mass.masses.len(), 1);
+        assert_eq!(species_mass.masses[0].mass, 55.845);
+    }
+
+    #[test]
+    fn test_species_mass_builder_single_entry_with_unit() {
+        let entry = SpeciesMassEntry::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .mass(55.845)
+            .build();
+
+        let species_mass = SpeciesMass::builder()
+            .unit(MassUnit::AtomicMassUnit)
+            .masses(vec![entry])
+            .build();
+
+        assert_eq!(species_mass.unit, Some(MassUnit::AtomicMassUnit));
+        assert_eq!(species_mass.masses.len(), 1);
+    }
+
+    #[test]
+    fn test_species_mass_builder_multiple_entries_with_vec() {
+        let entry1 = SpeciesMassEntry::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .mass(55.845)
+            .build();
+
+        let entry2 = SpeciesMassEntry::builder()
+            .species(Species::Symbol("O".to_string()))
+            .mass(15.999)
+            .build();
+
+        let species_mass = SpeciesMass::builder()
+            .unit(MassUnit::AtomicMassUnit)
+            .masses(vec![entry1, entry2])
+            .build();
+
+        assert_eq!(species_mass.masses.len(), 2);
+        assert_eq!(species_mass.masses[0].mass, 55.845);
+        assert_eq!(species_mass.masses[1].mass, 15.999);
+    }
+
+    #[test]
+    fn test_species_mass_builder_setting_entire_vec() {
+        let entries = vec![
+            SpeciesMassEntry::builder()
+                .species(Species::Symbol("Fe".to_string()))
+                .mass(55.845)
+                .build(),
+            SpeciesMassEntry::builder()
+                .species(Species::Symbol("O".to_string()))
+                .mass(15.999)
+                .build(),
+        ];
+
+        let species_mass = SpeciesMass::builder()
+            .masses(entries)
+            .build();
+
+        assert_eq!(species_mass.masses.len(), 2);
+    }
+
+    #[test]
+    fn test_species_mass_builder_method_chaining() {
+        let species_mass = SpeciesMass::builder()
+            .unit(MassUnit::AtomicMassUnit)
+            .masses(vec![
+                SpeciesMassEntry::builder()
+                    .species(Species::Symbol("Fe".to_string()))
+                    .mass(55.845)
+                    .build(),
+                SpeciesMassEntry::builder()
+                    .species(Species::Symbol("O".to_string()))
+                    .mass(15.999)
+                    .build(),
+            ])
+            .build();
+
+        assert_eq!(species_mass.unit, Some(MassUnit::AtomicMassUnit));
+        assert_eq!(species_mass.masses.len(), 2);
+        assert_eq!(species_mass.masses[0].species, Species::Symbol("Fe".to_string()));
+        assert_eq!(species_mass.masses[1].species, Species::Symbol("O".to_string()));
     }
 }

@@ -54,7 +54,7 @@ impl FromKeyValue for BsKpointPathSpacing {
 }
 
 impl ToCell for BsKpointPathSpacing {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "BS_KPOINT_PATH_SPACING",
             CellValue::Array(vec![
@@ -69,7 +69,7 @@ impl ToCell for BsKpointPathSpacing {
 }
 
 impl ToCellValue for BsKpointPathSpacing {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit

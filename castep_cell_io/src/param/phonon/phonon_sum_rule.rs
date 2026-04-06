@@ -31,13 +31,13 @@ impl FromKeyValue for PhononSumRule {
 }
 
 impl ToCell for PhononSumRule {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_SUM_RULE", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for PhononSumRule {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

@@ -12,7 +12,18 @@ use crate::units::EFieldUnit;
 /// HARTREE/BOHR/E
 /// 0.0 0.0 0.1
 /// %ENDBLOCK EXTERNAL_EFIELD
-#[derive(Debug, Clone, PartialEq)]
+///
+/// # Builder Example
+/// ```
+/// use castep_cell_io::cell::external_fields::ExternalEfield;
+/// use castep_cell_io::units::EFieldUnit;
+///
+/// let efield = ExternalEfield::builder()
+///     .field_vector([0.0, 0.0, 0.1])
+///     .unit(EFieldUnit::HartreePerBohrPerE)
+///     .build();
+/// ```
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct ExternalEfield {
     /// Optional unit specification for the electric field.
     /// If None, the default unit (eV/Ang/e) is implied.
@@ -56,7 +67,7 @@ impl FromBlock for ExternalEfield {
 }
 
 impl ToCell for ExternalEfield {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));
@@ -124,5 +135,66 @@ mod tests {
     #[test]
     fn test_block_name() {
         assert_eq!(ExternalEfield::BLOCK_NAME, "EXTERNAL_EFIELD");
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_builder_basic_without_unit() {
+        let efield = ExternalEfield::builder()
+            .field_vector([0.0, 0.0, 0.1])
+            .build();
+
+        assert_eq!(efield.unit, None);
+        assert_eq!(efield.field_vector, [0.0, 0.0, 0.1]);
+    }
+
+    #[test]
+    fn test_builder_with_unit() {
+        let efield = ExternalEfield::builder()
+            .unit(EFieldUnit::EvPerAngPerE)
+            .field_vector([0.1, 0.2, 0.3])
+            .build();
+
+        assert_eq!(efield.unit, Some(EFieldUnit::EvPerAngPerE));
+        assert_eq!(efield.field_vector, [0.1, 0.2, 0.3]);
+    }
+
+    #[test]
+    fn test_builder_different_field_vectors() {
+        let efield1 = ExternalEfield::builder()
+            .field_vector([1.0, 0.0, 0.0])
+            .build();
+
+        let efield2 = ExternalEfield::builder()
+            .field_vector([0.0, 1.0, 0.0])
+            .build();
+
+        let efield3 = ExternalEfield::builder()
+            .field_vector([0.0, 0.0, 1.0])
+            .build();
+
+        assert_eq!(efield1.field_vector, [1.0, 0.0, 0.0]);
+        assert_eq!(efield2.field_vector, [0.0, 1.0, 0.0]);
+        assert_eq!(efield3.field_vector, [0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn test_builder_method_chaining() {
+        let efield = ExternalEfield::builder()
+            .field_vector([0.5, 0.5, 0.5])
+            .unit(EFieldUnit::HartreePerBohrPerE)
+            .build();
+
+        assert_eq!(efield.unit, Some(EFieldUnit::HartreePerBohrPerE));
+        assert_eq!(efield.field_vector, [0.5, 0.5, 0.5]);
+
+        // Verify it can be converted to Cell
+        let cell = efield.to_cell();
+        if let Cell::Block(name, rows) = cell {
+            assert_eq!(name, "EXTERNAL_EFIELD");
+            assert_eq!(rows.len(), 2); // unit + field_vector
+        } else {
+            panic!("Expected Cell::Block");
+        }
     }
 }

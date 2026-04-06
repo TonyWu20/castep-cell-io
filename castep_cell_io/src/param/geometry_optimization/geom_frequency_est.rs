@@ -51,13 +51,13 @@ impl FromKeyValue for GeomFrequencyEst {
 }
 
 impl ToCell for GeomFrequencyEst {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_FREQUENCY_EST", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomFrequencyEst {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

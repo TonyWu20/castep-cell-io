@@ -29,13 +29,13 @@ impl FromKeyValue for MdElecConvergenceWin {
 }
 
 impl ToCell for MdElecConvergenceWin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_ELEC_CONVERGENCE_WIN", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for MdElecConvergenceWin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

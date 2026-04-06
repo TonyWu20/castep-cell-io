@@ -31,13 +31,13 @@ impl FromKeyValue for MaxCgSteps {
 }
 
 impl ToCell for MaxCgSteps {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MAX_CG_STEPS", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for MaxCgSteps {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

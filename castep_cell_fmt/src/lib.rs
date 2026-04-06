@@ -80,15 +80,15 @@ impl<'a> Cell<'a> {
 }
 
 pub trait ToCellValue {
-    fn to_cell_value(&self) -> CellValue;
+    fn to_cell_value(&self) -> CellValue<'_>;
 }
 
 pub trait ToCell {
-    fn to_cell(&self) -> Cell;
+    fn to_cell(&self) -> Cell<'_>;
 }
 
 pub trait ToCellFile {
-    fn to_cell_file(&self) -> Vec<Cell>;
+    fn to_cell_file(&self) -> Vec<Cell<'_>>;
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]

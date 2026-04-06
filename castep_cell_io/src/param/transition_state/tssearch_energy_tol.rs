@@ -37,13 +37,13 @@ impl FromKeyValue for TssearchEnergyTol {
 }
 
 impl ToCell for TssearchEnergyTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TSSEARCH_ENERGY_TOL", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for TssearchEnergyTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

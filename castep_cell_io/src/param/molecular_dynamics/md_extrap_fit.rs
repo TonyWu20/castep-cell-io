@@ -35,13 +35,13 @@ impl FromKeyValue for MdExtrapFit {
 }
 
 impl ToCell for MdExtrapFit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_EXTRAP_FIT", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for MdExtrapFit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

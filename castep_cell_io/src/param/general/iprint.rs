@@ -47,7 +47,7 @@ impl FromKeyValue for Iprint {
 }
 
 impl ToCell for Iprint {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let value = match self {
             Iprint::Level0 => 0,
             Iprint::Level1 => 1,
@@ -59,7 +59,7 @@ impl ToCell for Iprint {
 }
 
 impl ToCellValue for Iprint {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let value = match self {
             Iprint::Level0 => 0,
             Iprint::Level1 => 1,

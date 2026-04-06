@@ -52,13 +52,13 @@ impl FromKeyValue for BsEigenvalueTol {
 }
 
 impl ToCell for BsEigenvalueTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BS_EIGENVALUE_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for BsEigenvalueTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

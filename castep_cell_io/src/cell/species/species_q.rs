@@ -4,7 +4,7 @@ use crate::units::QuadrupoleMomentUnit;
 
 /// Represents a single entry within the SPECIES_Q block,
 /// linking a species to its quadrupole moment.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SpeciesQEntry {
     /// The species (symbol or atomic number).
     pub species: Species,
@@ -29,7 +29,7 @@ impl FromCellValue for SpeciesQEntry {
 }
 
 impl ToCellValue for SpeciesQEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             self.species.to_cell_value(),
             CellValue::Float(self.quadrupole_moment),
@@ -47,11 +47,12 @@ impl ToCellValue for SpeciesQEntry {
 /// CCC2/I2 R2
 /// ...
 /// %ENDBLOCK SPECIES_Q
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SpeciesQ {
     /// The unit of quadrupole moment. If None, the default (Barn) is used.
     pub unit: Option<QuadrupoleMomentUnit>,
     /// The list of species and their corresponding quadrupole moments.
+    #[builder(default)]
     pub moments: Vec<SpeciesQEntry>,
 }
 
@@ -90,7 +91,7 @@ impl FromBlock for SpeciesQ {
 }
 
 impl ToCell for SpeciesQ {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
 
         if let Some(ref u) = self.unit {
@@ -332,5 +333,108 @@ mod tests {
         } else {
             panic!("Expected Cell::Block");
         }
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_species_q_entry_builder() {
+        let entry = SpeciesQEntry::builder()
+            .species(Species::Symbol("B".to_string()))
+            .quadrupole_moment(0.04059)
+            .build();
+
+        assert_eq!(entry.species, Species::Symbol("B".to_string()));
+        assert_eq!(entry.quadrupole_moment, 0.04059);
+    }
+
+    #[test]
+    fn test_species_q_builder_empty() {
+        let species_q = SpeciesQ::builder().build();
+
+        assert!(species_q.unit.is_none());
+        assert_eq!(species_q.moments.len(), 0);
+    }
+
+    #[test]
+    fn test_species_q_builder_single_entry_without_unit() {
+        let entry = SpeciesQEntry::builder()
+            .species(Species::Symbol("B".to_string()))
+            .quadrupole_moment(0.04059)
+            .build();
+
+        let species_q = SpeciesQ::builder()
+            .moments(vec![entry])
+            .build();
+
+        assert!(species_q.unit.is_none());
+        assert_eq!(species_q.moments.len(), 1);
+        assert_eq!(species_q.moments[0].species, Species::Symbol("B".to_string()));
+        assert_eq!(species_q.moments[0].quadrupole_moment, 0.04059);
+    }
+
+    #[test]
+    fn test_species_q_builder_single_entry_with_unit() {
+        let entry = SpeciesQEntry::builder()
+            .species(Species::Symbol("N".to_string()))
+            .quadrupole_moment(0.0201)
+            .build();
+
+        let species_q = SpeciesQ::builder()
+            .unit(QuadrupoleMomentUnit::Fm2)
+            .moments(vec![entry])
+            .build();
+
+        assert_eq!(species_q.unit, Some(QuadrupoleMomentUnit::Fm2));
+        assert_eq!(species_q.moments.len(), 1);
+        assert_eq!(species_q.moments[0].species, Species::Symbol("N".to_string()));
+        assert_eq!(species_q.moments[0].quadrupole_moment, 0.0201);
+    }
+
+    #[test]
+    fn test_species_q_builder_multiple_entries_with_vec() {
+        let entry1 = SpeciesQEntry::builder()
+            .species(Species::Symbol("B".to_string()))
+            .quadrupole_moment(0.04059)
+            .build();
+
+        let entry2 = SpeciesQEntry::builder()
+            .species(Species::Symbol("N".to_string()))
+            .quadrupole_moment(0.0201)
+            .build();
+
+        let species_q = SpeciesQ::builder()
+            .unit(QuadrupoleMomentUnit::Barn)
+            .moments(vec![entry1, entry2])
+            .build();
+
+        assert_eq!(species_q.unit, Some(QuadrupoleMomentUnit::Barn));
+        assert_eq!(species_q.moments.len(), 2);
+        assert_eq!(species_q.moments[0].species, Species::Symbol("B".to_string()));
+        assert_eq!(species_q.moments[1].species, Species::Symbol("N".to_string()));
+    }
+
+    #[test]
+    fn test_species_q_builder_method_chaining() {
+        let entry1 = SpeciesQEntry::builder()
+            .species(Species::Symbol("B".to_string()))
+            .quadrupole_moment(0.04059)
+            .build();
+
+        let entry2 = SpeciesQEntry::builder()
+            .species(Species::AtomicNumber(7))
+            .quadrupole_moment(0.0201)
+            .build();
+
+        let species_q = SpeciesQ::builder()
+            .unit(QuadrupoleMomentUnit::Barn)
+            .moments(vec![entry1, entry2])
+            .build();
+
+        assert_eq!(species_q.unit, Some(QuadrupoleMomentUnit::Barn));
+        assert_eq!(species_q.moments.len(), 2);
+        assert_eq!(species_q.moments[0].species, Species::Symbol("B".to_string()));
+        assert_eq!(species_q.moments[0].quadrupole_moment, 0.04059);
+        assert_eq!(species_q.moments[1].species, Species::AtomicNumber(7));
+        assert_eq!(species_q.moments[1].quadrupole_moment, 0.0201);
     }
 }

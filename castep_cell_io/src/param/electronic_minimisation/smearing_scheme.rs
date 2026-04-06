@@ -40,13 +40,13 @@ impl FromKeyValue for SmearingScheme {
 }
 
 impl ToCell for SmearingScheme {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SMEARING_SCHEME", self.to_cell_value())
     }
 }
 
 impl ToCellValue for SmearingScheme {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 SmearingScheme::Gaussian => "Gaussian",

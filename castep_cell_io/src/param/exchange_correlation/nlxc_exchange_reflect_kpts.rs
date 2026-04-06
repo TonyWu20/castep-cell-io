@@ -37,13 +37,13 @@ impl FromKeyValue for NlxcExchangeReflectKpts {
 }
 
 impl ToCell for NlxcExchangeReflectKpts {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NLXC_EXCHANGE_REFLECT_KPTS", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for NlxcExchangeReflectKpts {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

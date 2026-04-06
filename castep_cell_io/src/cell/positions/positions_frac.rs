@@ -7,7 +7,7 @@ use crate::cell::species::Species;
 ///
 /// Consists of the element symbol/number, fractional coordinates, and optional spin/mixture qualifiers.
 /// Format: <element> <x> <y> <z> [SPIN <value>] [MIXTURE <index> <weight>]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionFracEntry {
     /// The chemical element symbol (e.g., "Fe") or atomic number as a string (e.g., "26").
     pub species: Species,
@@ -89,7 +89,7 @@ impl FromCellValue for PositionFracEntry {
 
 impl ToCellValue for PositionFracEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let mut arr = vec![self.species.to_cell_value()];
         arr.extend(self.coord.into_iter().map(CellValue::Float));
 
@@ -119,7 +119,7 @@ impl ToCellValue for PositionFracEntry {
 /// Species2/I2 R2i R2j R2k [SPIN S2]
 /// ...
 /// %ENDBLOCK POSITIONS_FRAC
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionsFrac {
     /// The list of atom entries.
     pub positions: Vec<PositionFracEntry>,
@@ -139,7 +139,7 @@ impl FromBlock for PositionsFrac {
 
 impl ToCell for PositionsFrac {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "POSITIONS_FRAC", // Block name
             self.positions
@@ -442,5 +442,113 @@ mod tests {
         assert_eq!(parsed.coord, original.coord);
         assert_eq!(parsed.spin, original.spin);
         assert_eq!(parsed.mixture, original.mixture);
+    }
+
+    #[test]
+    fn test_position_frac_entry_builder_basic() {
+        let entry = PositionFracEntry::builder()
+            .species(Species::from_cell_value(&CellValue::Str("Fe")).unwrap())
+            .coord([0.1, 0.2, 0.3])
+            .build();
+        assert_eq!(entry.coord, [0.1, 0.2, 0.3]);
+        assert!(entry.spin.is_none());
+        assert!(entry.mixture.is_none());
+    }
+
+    #[test]
+    fn test_position_frac_entry_builder_with_spin() {
+        let entry = PositionFracEntry::builder()
+            .species(Species::from_cell_value(&CellValue::Str("Fe")).unwrap())
+            .coord([0.5, 0.5, 0.5])
+            .spin(2.0)
+            .build();
+        assert_eq!(entry.spin, Some(2.0));
+    }
+
+    #[test]
+    fn test_position_frac_entry_builder_with_mixture() {
+        let entry = PositionFracEntry::builder()
+            .species(Species::from_cell_value(&CellValue::Str("Al")).unwrap())
+            .coord([0.25, 0.5, 0.0])
+            .mixture((1, 0.666667))
+            .build();
+        assert_eq!(entry.mixture, Some((1, 0.666667)));
+    }
+
+    #[test]
+    fn test_position_frac_entry_builder_full() {
+        let entry = PositionFracEntry::builder()
+            .species(Species::from_cell_value(&CellValue::Str("Fe")).unwrap())
+            .coord([0.5, 0.5, 0.5])
+            .spin(2.0)
+            .mixture((1, 0.5))
+            .build();
+        assert_eq!(entry.coord, [0.5, 0.5, 0.5]);
+        assert_eq!(entry.spin, Some(2.0));
+        assert_eq!(entry.mixture, Some((1, 0.5)));
+    }
+
+    #[test]
+    fn test_positions_frac_builder_basic() {
+        let positions = PositionsFrac::builder()
+            .positions(vec![])
+            .build();
+        assert_eq!(positions.positions.len(), 0);
+    }
+
+    #[test]
+    fn test_positions_frac_builder_with_entries() {
+        let entry1 = PositionFracEntry {
+            species: Species::from_cell_value(&CellValue::Str("Fe")).unwrap(),
+            coord: [0.0, 0.0, 0.0],
+            spin: None,
+            mixture: None,
+        };
+        let entry2 = PositionFracEntry {
+            species: Species::from_cell_value(&CellValue::Str("O")).unwrap(),
+            coord: [0.5, 0.5, 0.5],
+            spin: None,
+            mixture: None,
+        };
+        let positions = PositionsFrac::builder()
+            .positions(vec![entry1, entry2])
+            .build();
+        assert_eq!(positions.positions.len(), 2);
+    }
+
+    #[test]
+    fn test_positions_frac_builder_with_single_entry() {
+        let entry = PositionFracEntry {
+            species: Species::from_cell_value(&CellValue::Str("Fe")).unwrap(),
+            coord: [0.0, 0.0, 0.0],
+            spin: None,
+            mixture: None,
+        };
+        let positions = PositionsFrac::builder()
+            .positions(vec![entry])
+            .build();
+        assert_eq!(positions.positions.len(), 1);
+    }
+
+    #[test]
+    fn test_positions_frac_builder_chaining() {
+        let entry1 = PositionFracEntry {
+            species: Species::from_cell_value(&CellValue::Str("Fe")).unwrap(),
+            coord: [0.0, 0.0, 0.0],
+            spin: None,
+            mixture: None,
+        };
+        let entry2 = PositionFracEntry {
+            species: Species::from_cell_value(&CellValue::Str("O")).unwrap(),
+            coord: [0.5, 0.5, 0.5],
+            spin: None,
+            mixture: None,
+        };
+        let mut entries = vec![entry1];
+        entries.push(entry2);
+        let positions = PositionsFrac::builder()
+            .positions(entries)
+            .build();
+        assert_eq!(positions.positions.len(), 2);
     }
 }

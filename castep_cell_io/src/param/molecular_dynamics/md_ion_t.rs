@@ -54,13 +54,13 @@ impl FromKeyValue for MdIonT {
 }
 
 impl ToCell for MdIonT {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_ION_T", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdIonT {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

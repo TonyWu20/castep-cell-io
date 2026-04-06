@@ -37,13 +37,13 @@ impl FromKeyValue for BsMaxIter {
 }
 
 impl ToCell for BsMaxIter {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BS_MAX_ITER", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for BsMaxIter {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

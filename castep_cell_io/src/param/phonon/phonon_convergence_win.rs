@@ -37,13 +37,13 @@ impl Default for PhononConvergenceWin {
 }
 
 impl ToCell for PhononConvergenceWin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_CONVERGENCE_WIN", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for PhononConvergenceWin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

@@ -52,7 +52,7 @@ impl FromKeyValue for FiniteBasisSpacing {
 }
 
 impl ToCell for FiniteBasisSpacing {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "FINITE_BASIS_SPACING",
             CellValue::Array(vec![
@@ -64,7 +64,7 @@ impl ToCell for FiniteBasisSpacing {
 }
 
 impl ToCellValue for FiniteBasisSpacing {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit.to_cell_value(),

@@ -11,7 +11,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromK
 ///
 /// Example:
 /// SYMMETRY_TOL : 0.25 ang
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, bon::Builder)]
 pub struct SymmetryTol {
     /// The tolerance value.
     pub value: f64,
@@ -43,7 +43,7 @@ impl FromKeyValue for SymmetryTol {
 }
 
 impl ToCell for SymmetryTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "SYMMETRY_TOL",
             CellValue::Array(vec![
@@ -55,7 +55,7 @@ impl ToCell for SymmetryTol {
 }
 
 impl ToCellValue for SymmetryTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit.to_cell_value(),

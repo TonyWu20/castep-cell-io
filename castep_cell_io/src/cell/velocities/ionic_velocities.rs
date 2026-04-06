@@ -8,7 +8,7 @@ use crate::units::VelocityUnit;
 ///
 /// Consists of the element symbol/number and velocity components in Cartesian coordinates.
 /// Format: <element> <vx> <vy> <vz>
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct IonicVelocityEntry {
     /// The chemical element symbol (e.g., "Fe") or atomic number as a string (e.g., "26").
     pub species: Species,
@@ -38,7 +38,7 @@ impl FromCellValue for IonicVelocityEntry {
 
 impl ToCellValue for IonicVelocityEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let mut arr = vec![self.species.to_cell_value()];
         arr.extend(self.velocity.into_iter().map(CellValue::Float));
         CellValue::Array(arr)
@@ -55,11 +55,12 @@ impl ToCellValue for IonicVelocityEntry {
 /// Species2/I2 V2x V2y V2z
 /// ...
 /// %ENDBLOCK IONIC_VELOCITIES
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct IonicVelocities {
     /// Optional unit specifier (default: Å/ps).
     pub unit: Option<VelocityUnit>,
     /// The list of velocity entries.
+    #[builder(default)]
     pub velocities: Vec<IonicVelocityEntry>,
 }
 
@@ -99,7 +100,7 @@ impl FromBlock for IonicVelocities {
 
 impl ToCell for IonicVelocities {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));

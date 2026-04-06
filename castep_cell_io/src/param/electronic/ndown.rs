@@ -32,13 +32,13 @@ impl FromKeyValue for Ndown {
 }
 
 impl ToCell for Ndown {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NDOWN", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for Ndown {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

@@ -52,13 +52,13 @@ impl FromKeyValue for MdDeltaT {
 }
 
 impl ToCell for MdDeltaT {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_DELTA_T", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdDeltaT {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

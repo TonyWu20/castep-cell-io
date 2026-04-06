@@ -3,7 +3,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromB
 
 /// Represents a specific atom site, including its species, index within that species,
 /// and the periodic image (Miller indices) it occupies.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct AtomSite {
     /// The species of the atom (e.g., "H", "O", "C").
     pub species: Species,
@@ -24,7 +24,7 @@ impl AtomSite {
 }
 
 impl ToCellValue for AtomSite {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             vec![
                 self.species.to_cell_value(),
@@ -60,7 +60,7 @@ impl FromCellValue for ConstraintType {
 }
 
 impl ToCellValue for ConstraintType {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 ConstraintType::Distance => "distance",
@@ -73,7 +73,7 @@ impl ToCellValue for ConstraintType {
 }
 
 /// Represents a single nonlinear constraint entry within the NONLINEAR_CONSTRAINTS block.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct NonlinearConstraint {
     /// The type of the constraint (distance, bend, torsion).
     pub constraint_type: ConstraintType,
@@ -81,6 +81,7 @@ pub struct NonlinearConstraint {
     /// - 2 atoms for Distance
     /// - 3 atoms for Bend
     /// - 4 atoms for Torsion
+    #[builder(default)]
     pub atom_sites: Vec<AtomSite>,
 }
 
@@ -128,7 +129,7 @@ impl FromCellValue for NonlinearConstraint {
 }
 
 impl ToCellValue for NonlinearConstraint {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [self.constraint_type.to_cell_value()]
                 .to_vec()
@@ -153,9 +154,10 @@ impl ToCellValue for NonlinearConstraint {
 /// CONSTRAIN_TYPE atom1 atom2 (atom3 atom4)
 /// ...
 /// %ENDBLOCK NONLINEAR_CONSTRAINTS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct NonlinearConstraints {
     /// The list of nonlinear constraint entries.
+    #[builder(default)]
     pub constraints: Vec<NonlinearConstraint>,
 }
 
@@ -172,7 +174,7 @@ impl FromBlock for NonlinearConstraints {
 }
 
 impl ToCell for NonlinearConstraints {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "NONLINEAR_CONSTRAINTS",
             self.constraints
@@ -382,6 +384,182 @@ mod tests {
     #[test]
     fn test_nonlinear_constraints_block_name() {
         assert_eq!(NonlinearConstraints::BLOCK_NAME, "NONLINEAR_CONSTRAINTS");
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_builder_empty_nonlinear_constraints() {
+        let constraints = NonlinearConstraints::builder().build();
+        assert_eq!(constraints.constraints.len(), 0);
+    }
+
+    #[test]
+    fn test_builder_atom_site() {
+        let atom_site = AtomSite::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .image_indices([0, 0, 0])
+            .build();
+
+        assert_eq!(atom_site.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(atom_site.ion_number, 1);
+        assert_eq!(atom_site.image_indices, [0, 0, 0]);
+    }
+
+    #[test]
+    fn test_builder_nonlinear_constraint_distance() {
+        let atom1 = AtomSite::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .image_indices([0, 0, 0])
+            .build();
+
+        let atom2 = AtomSite::builder()
+            .species(Species::Symbol("O".to_string()))
+            .ion_number(2)
+            .image_indices([0, 0, 0])
+            .build();
+
+        let constraint = NonlinearConstraint::builder()
+            .constraint_type(ConstraintType::Distance)
+            .atom_sites(vec![atom1, atom2])
+            .build();
+
+        assert_eq!(constraint.constraint_type, ConstraintType::Distance);
+        assert_eq!(constraint.atom_sites.len(), 2);
+        assert_eq!(constraint.atom_sites[0].species, Species::Symbol("Fe".to_string()));
+        assert_eq!(constraint.atom_sites[1].species, Species::Symbol("O".to_string()));
+    }
+
+    #[test]
+    fn test_builder_nonlinear_constraints_single_constraint() {
+        let atom1 = AtomSite::builder()
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .image_indices([0, 0, 0])
+            .build();
+
+        let atom2 = AtomSite::builder()
+            .species(Species::Symbol("O".to_string()))
+            .ion_number(2)
+            .image_indices([0, 0, 0])
+            .build();
+
+        let constraint = NonlinearConstraint::builder()
+            .constraint_type(ConstraintType::Distance)
+            .atom_sites(vec![atom1, atom2])
+            .build();
+
+        let constraints = NonlinearConstraints::builder()
+            .constraints(vec![constraint])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 1);
+        assert_eq!(constraints.constraints[0].constraint_type, ConstraintType::Distance);
+    }
+
+    #[test]
+    fn test_builder_nonlinear_constraints_multiple_with_vec() {
+        let constraint1 = NonlinearConstraint::builder()
+            .constraint_type(ConstraintType::Distance)
+            .atom_sites(vec![
+                AtomSite::builder()
+                    .species(Species::Symbol("Fe".to_string()))
+                    .ion_number(1)
+                    .image_indices([0, 0, 0])
+                    .build(),
+                AtomSite::builder()
+                    .species(Species::Symbol("O".to_string()))
+                    .ion_number(2)
+                    .image_indices([0, 0, 0])
+                    .build(),
+            ])
+            .build();
+
+        let constraint2 = NonlinearConstraint::builder()
+            .constraint_type(ConstraintType::Bend)
+            .atom_sites(vec![
+                AtomSite::builder()
+                    .species(Species::Symbol("Fe".to_string()))
+                    .ion_number(1)
+                    .image_indices([0, 0, 0])
+                    .build(),
+                AtomSite::builder()
+                    .species(Species::Symbol("O".to_string()))
+                    .ion_number(2)
+                    .image_indices([0, 0, 0])
+                    .build(),
+                AtomSite::builder()
+                    .species(Species::Symbol("O".to_string()))
+                    .ion_number(3)
+                    .image_indices([0, 0, 0])
+                    .build(),
+            ])
+            .build();
+
+        let constraints = NonlinearConstraints::builder()
+            .constraints(vec![constraint1, constraint2])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 2);
+        assert_eq!(constraints.constraints[0].constraint_type, ConstraintType::Distance);
+        assert_eq!(constraints.constraints[1].constraint_type, ConstraintType::Bend);
+        assert_eq!(constraints.constraints[1].atom_sites.len(), 3);
+    }
+
+    #[test]
+    fn test_builder_method_chaining_with_collection_helpers() {
+        // Build constraints using vec! for collection fields
+        let constraints = NonlinearConstraints::builder()
+            .constraints(vec![
+                NonlinearConstraint::builder()
+                    .constraint_type(ConstraintType::Distance)
+                    .atom_sites(vec![
+                        AtomSite::builder()
+                            .species(Species::Symbol("Fe".to_string()))
+                            .ion_number(1)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                        AtomSite::builder()
+                            .species(Species::Symbol("O".to_string()))
+                            .ion_number(2)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                    ])
+                    .build(),
+                NonlinearConstraint::builder()
+                    .constraint_type(ConstraintType::Torsion)
+                    .atom_sites(vec![
+                        AtomSite::builder()
+                            .species(Species::Symbol("Fe".to_string()))
+                            .ion_number(1)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                        AtomSite::builder()
+                            .species(Species::Symbol("O".to_string()))
+                            .ion_number(2)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                        AtomSite::builder()
+                            .species(Species::Symbol("O".to_string()))
+                            .ion_number(3)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                        AtomSite::builder()
+                            .species(Species::Symbol("N".to_string()))
+                            .ion_number(4)
+                            .image_indices([0, 0, 0])
+                            .build(),
+                    ])
+                    .build(),
+            ])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 2);
+        assert_eq!(constraints.constraints[0].constraint_type, ConstraintType::Distance);
+        assert_eq!(constraints.constraints[0].atom_sites.len(), 2);
+        assert_eq!(constraints.constraints[1].constraint_type, ConstraintType::Torsion);
+        assert_eq!(constraints.constraints[1].atom_sites.len(), 4);
     }
 }
 

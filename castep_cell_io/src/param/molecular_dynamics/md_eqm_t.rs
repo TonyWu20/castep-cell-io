@@ -52,13 +52,13 @@ impl FromKeyValue for MdEqmT {
 }
 
 impl ToCell for MdEqmT {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_EQM_T", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdEqmT {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

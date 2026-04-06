@@ -31,13 +31,13 @@ impl FromKeyValue for BsReEstKScrn {
 }
 
 impl ToCell for BsReEstKScrn {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BS_RE_EST_K_SCRN", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for BsReEstKScrn {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

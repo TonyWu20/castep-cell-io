@@ -22,13 +22,13 @@ impl FromKeyValue for CalculateStress {
 }
 
 impl ToCell for CalculateStress {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CALCULATE_STRESS", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for CalculateStress {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

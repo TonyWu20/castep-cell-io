@@ -35,13 +35,13 @@ impl FromKeyValue for EfieldConvergenceWin {
 }
 
 impl ToCell for EfieldConvergenceWin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("EFIELD_CONVERGENCE_WIN", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for EfieldConvergenceWin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

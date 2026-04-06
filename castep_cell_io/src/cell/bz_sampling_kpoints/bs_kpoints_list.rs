@@ -2,7 +2,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromBlock, FromCellV
 
 use super::Kpoint;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, bon::Builder)]
 /// Represents the KPOINTS_LIST block.
 /// This data block contains a list of k-points at which the Brillouin zone
 /// will be sampled during non-self consistent band structure calculations,
@@ -14,6 +14,7 @@ use super::Kpoint;
 /// ...
 /// %ENDBLOCK BS_KPOINTS_LIST
 pub struct BSKpointList {
+    #[builder(default)]
     pub kpts: Vec<Kpoint>,
 }
 
@@ -30,7 +31,7 @@ impl FromBlock for BSKpointList {
 }
 
 impl ToCell for BSKpointList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "BS_KPOINT_LIST",
             self.kpts

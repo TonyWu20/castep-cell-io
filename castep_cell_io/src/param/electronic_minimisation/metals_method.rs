@@ -39,13 +39,13 @@ impl FromKeyValue for MetalsMethod {
 }
 
 impl ToCell for MetalsMethod {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("METALS_METHOD", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MetalsMethod {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MetalsMethod::Dm => "DM",

@@ -32,13 +32,13 @@ impl FromKeyValue for Spin {
 }
 
 impl ToCell for Spin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SPIN", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for Spin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

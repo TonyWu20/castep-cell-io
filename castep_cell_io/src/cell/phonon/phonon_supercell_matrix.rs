@@ -1,6 +1,6 @@
 use castep_cell_fmt::{Cell, CellValue, ToCell, parse::FromBlock, CResult, Error, query::row_as_i32_n};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, bon::Builder)]
 /// 3×3 integer matrix for phonon supercell
 /// %BLOCK PHONON_SUPERCELL_MATRIX
 ///     m11 m12 m13
@@ -32,7 +32,7 @@ impl FromBlock for PhononSupercellMatrix {
 }
 
 impl ToCell for PhononSupercellMatrix {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "PHONON_SUPERCELL_MATRIX",
             vec![

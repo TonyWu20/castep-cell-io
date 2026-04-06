@@ -41,7 +41,7 @@ impl FromKeyValue for KpointsMpGrid {
 }
 
 impl ToCell for KpointsMpGrid {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "KPOINTS_MP_GRID",
             CellValue::Array(
@@ -55,7 +55,7 @@ impl ToCell for KpointsMpGrid {
 }
 
 impl ToCellValue for KpointsMpGrid {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.0
                 .iter()

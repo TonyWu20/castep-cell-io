@@ -3,7 +3,7 @@ use super::Species;
 
 /// Represents a single entry within the SPECIES_POT block,
 /// linking a species to its pseudopotential filename.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, bon::Builder)]
 pub struct SpeciesPotEntry {
     /// The species (symbol or atomic number).
     pub species: Species,
@@ -28,7 +28,7 @@ impl FromCellValue for SpeciesPotEntry {
 }
 
 impl ToCellValue for SpeciesPotEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             self.species.to_cell_value(),
             CellValue::String(self.filename.clone()),
@@ -45,7 +45,7 @@ impl ToCellValue for SpeciesPotEntry {
 /// CCC2/I2 [filename]
 /// ...
 /// %ENDBLOCK SPECIES_POT
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, bon::Builder)]
 pub struct SpeciesPot {
     /// The list of species and their corresponding pseudopotential filenames.
     pub potentials: Vec<SpeciesPotEntry>,
@@ -64,7 +64,7 @@ impl FromBlock for SpeciesPot {
 }
 
 impl ToCell for SpeciesPot {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "SPECIES_POT",
             self.potentials
@@ -135,6 +135,127 @@ mod tests {
     #[test]
     fn test_block_name() {
         assert_eq!(SpeciesPot::BLOCK_NAME, "SPECIES_POT");
+    }
+
+    #[test]
+    fn test_species_pot_builder_basic() {
+        let pot = SpeciesPot::builder()
+            .potentials(vec![])
+            .build();
+        assert_eq!(pot.potentials.len(), 0);
+    }
+
+    #[test]
+    fn test_species_pot_builder_with_single_entry() {
+        let entry = SpeciesPotEntry {
+            species: Species::Symbol("Fe".to_string()),
+            filename: "Fe.usp".to_string(),
+        };
+        let pot = SpeciesPot::builder()
+            .potentials(vec![entry.clone()])
+            .build();
+        assert_eq!(pot.potentials.len(), 1);
+        assert_eq!(pot.potentials[0], entry);
+    }
+
+    #[test]
+    fn test_species_pot_builder_with_multiple_entries() {
+        let entries = vec![
+            SpeciesPotEntry {
+                species: Species::Symbol("Fe".to_string()),
+                filename: "Fe.usp".to_string(),
+            },
+            SpeciesPotEntry {
+                species: Species::Symbol("O".to_string()),
+                filename: "O.usp".to_string(),
+            },
+        ];
+        let pot = SpeciesPot::builder()
+            .potentials(entries.clone())
+            .build();
+        assert_eq!(pot.potentials.len(), 2);
+        assert_eq!(pot.potentials, entries);
+    }
+
+    #[test]
+    fn test_species_pot_builder_push_single_entry() {
+        let entry = SpeciesPotEntry {
+            species: Species::Symbol("Fe".to_string()),
+            filename: "Fe.usp".to_string(),
+        };
+        let mut pot = SpeciesPot::builder()
+            .potentials(vec![])
+            .build();
+        pot.potentials.push(entry.clone());
+        assert_eq!(pot.potentials.len(), 1);
+        assert_eq!(pot.potentials[0], entry);
+    }
+
+    #[test]
+    fn test_species_pot_builder_push_multiple_entries() {
+        let entry1 = SpeciesPotEntry {
+            species: Species::Symbol("Fe".to_string()),
+            filename: "Fe.usp".to_string(),
+        };
+        let entry2 = SpeciesPotEntry {
+            species: Species::Symbol("O".to_string()),
+            filename: "O.usp".to_string(),
+        };
+        let entry3 = SpeciesPotEntry {
+            species: Species::Symbol("Ni".to_string()),
+            filename: "Ni.usp".to_string(),
+        };
+        let mut pot = SpeciesPot::builder()
+            .potentials(vec![])
+            .build();
+        pot.potentials.push(entry1.clone());
+        pot.potentials.push(entry2.clone());
+        pot.potentials.push(entry3.clone());
+        assert_eq!(pot.potentials.len(), 3);
+        assert_eq!(pot.potentials[0], entry1);
+        assert_eq!(pot.potentials[1], entry2);
+        assert_eq!(pot.potentials[2], entry3);
+    }
+
+    #[test]
+    fn test_species_pot_builder_mixed_initialization() {
+        let entry1 = SpeciesPotEntry {
+            species: Species::Symbol("Fe".to_string()),
+            filename: "Fe.usp".to_string(),
+        };
+        let entry2 = SpeciesPotEntry {
+            species: Species::Symbol("O".to_string()),
+            filename: "O.usp".to_string(),
+        };
+        let entry3 = SpeciesPotEntry {
+            species: Species::Symbol("Ni".to_string()),
+            filename: "Ni.usp".to_string(),
+        };
+        let mut pot = SpeciesPot::builder()
+            .potentials(vec![entry1.clone()])
+            .build();
+        pot.potentials.push(entry2.clone());
+        pot.potentials.push(entry3.clone());
+        assert_eq!(pot.potentials.len(), 3);
+        assert_eq!(pot.potentials[0], entry1);
+        assert_eq!(pot.potentials[1], entry2);
+        assert_eq!(pot.potentials[2], entry3);
+    }
+
+    #[test]
+    fn test_species_pot_builder_method_chaining() {
+        let entry1 = SpeciesPotEntry {
+            species: Species::Symbol("Fe".to_string()),
+            filename: "Fe.usp".to_string(),
+        };
+        let entry2 = SpeciesPotEntry {
+            species: Species::Symbol("O".to_string()),
+            filename: "O.usp".to_string(),
+        };
+        let pot = SpeciesPot::builder()
+            .potentials(vec![entry1, entry2])
+            .build();
+        assert_eq!(pot.potentials.len(), 2);
     }
 }
 

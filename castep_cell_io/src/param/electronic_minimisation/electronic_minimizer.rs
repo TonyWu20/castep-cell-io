@@ -42,13 +42,13 @@ impl FromKeyValue for ElectronicMinimizer {
 }
 
 impl ToCell for ElectronicMinimizer {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("ELECTRONIC_MINIMIZER", self.to_cell_value())
     }
 }
 
 impl ToCellValue for ElectronicMinimizer {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 ElectronicMinimizer::Sd => "SD",

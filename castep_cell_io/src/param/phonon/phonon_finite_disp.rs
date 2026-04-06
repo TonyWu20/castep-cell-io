@@ -51,13 +51,13 @@ impl FromKeyValue for PhononFiniteDisp {
 }
 
 impl ToCell for PhononFiniteDisp {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_FINITE_DISP", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PhononFiniteDisp {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

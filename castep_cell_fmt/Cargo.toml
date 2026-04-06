@@ -15,7 +15,6 @@ keywords = ["chemistry", "castep"]
 [dependencies]
 chumsky = "0.10.1"
 thiserror = "2.0.8"
-derive_builder = "0.20.2"
 anyhow = "1.0.98"
 ariadne = { version = "0.6.0", features = ["auto-color"] }
 

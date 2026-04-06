@@ -35,13 +35,13 @@ impl FromKeyValue for PopnCalculate {
 }
 
 impl ToCell for PopnCalculate {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("POPN_CALCULATE", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for PopnCalculate {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

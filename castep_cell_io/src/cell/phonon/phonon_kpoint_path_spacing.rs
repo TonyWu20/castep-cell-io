@@ -54,7 +54,7 @@ impl FromKeyValue for PhononKpointPathSpacing {
 }
 
 impl ToCell for PhononKpointPathSpacing {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "PHONON_KPOINT_PATH_SPACING",
             CellValue::Array(vec![
@@ -69,7 +69,7 @@ impl ToCell for PhononKpointPathSpacing {
 }
 
 impl ToCellValue for PhononKpointPathSpacing {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit

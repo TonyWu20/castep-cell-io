@@ -47,13 +47,13 @@ impl FromKeyValue for MdDampingScheme {
 }
 
 impl ToCell for MdDampingScheme {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_DAMPING_SCHEME", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdDampingScheme {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MdDampingScheme::Independent => "Independent",

@@ -31,13 +31,13 @@ impl FromKeyValue for NlxcReEstKScrn {
 }
 
 impl ToCell for NlxcReEstKScrn {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NLXC_RE_EST_K_SCRN", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for NlxcReEstKScrn {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

@@ -48,13 +48,13 @@ impl FromKeyValue for PopnWrite {
 }
 
 impl ToCell for PopnWrite {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("POPN_WRITE", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PopnWrite {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 PopnWrite::None => "NONE",

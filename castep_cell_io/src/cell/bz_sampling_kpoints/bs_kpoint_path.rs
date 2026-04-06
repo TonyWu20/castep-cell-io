@@ -4,7 +4,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromB
 ///
 /// Each entry contains three fractional k-point coordinates relative to the reciprocal space lattice vectors.
 /// Format: <x> <y> <z>
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, bon::Builder)]
 pub struct BsKpointPathEntry {
     /// Fractional k-point coordinates [x, y, z].
     pub coord: [f64; 3],
@@ -30,7 +30,7 @@ impl FromCellValue for BsKpointPathEntry {
 
 impl ToCellValue for BsKpointPathEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -49,9 +49,10 @@ impl ToCellValue for BsKpointPathEntry {
 /// R2i R2j R2k
 /// ...
 /// %ENDBLOCK BS_KPOINT_PATH
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct BsKpointPath {
     /// The list of k-point entries.
+    #[builder(default)]
     pub points: Vec<BsKpointPathEntry>,
 }
 
@@ -69,7 +70,7 @@ impl FromBlock for BsKpointPath {
 
 impl ToCell for BsKpointPath {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "BS_KPOINT_PATH",
             self.points
@@ -176,5 +177,70 @@ mod tests {
             }
             _ => panic!("Expected Block"),
         }
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_bs_kpoint_path_entry_builder() {
+        let entry = BsKpointPathEntry::builder()
+            .coord([0.5, 0.5, 0.5])
+            .build();
+        assert_eq!(entry.coord, [0.5, 0.5, 0.5]);
+    }
+
+    #[test]
+    fn test_bs_kpoint_path_builder_empty() {
+        let path = BsKpointPath::builder().build();
+        assert_eq!(path.points.len(), 0);
+    }
+
+    #[test]
+    fn test_bs_kpoint_path_builder_single_point() {
+        let entry = BsKpointPathEntry::builder()
+            .coord([0.0, 0.0, 0.0])
+            .build();
+        let path = BsKpointPath::builder()
+            .points(vec![entry])
+            .build();
+        assert_eq!(path.points.len(), 1);
+        assert_eq!(path.points[0].coord, [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_bs_kpoint_path_builder_multiple_points_with_vec() {
+        let entry1 = BsKpointPathEntry::builder()
+            .coord([0.0, 0.0, 0.0])
+            .build();
+        let entry2 = BsKpointPathEntry::builder()
+            .coord([0.5, 0.5, 0.0])
+            .build();
+        let entry3 = BsKpointPathEntry::builder()
+            .coord([0.5, 0.5, 0.5])
+            .build();
+
+        let path = BsKpointPath::builder()
+            .points(vec![entry1, entry2, entry3])
+            .build();
+
+        assert_eq!(path.points.len(), 3);
+        assert_eq!(path.points[0].coord, [0.0, 0.0, 0.0]);
+        assert_eq!(path.points[1].coord, [0.5, 0.5, 0.0]);
+        assert_eq!(path.points[2].coord, [0.5, 0.5, 0.5]);
+    }
+
+    #[test]
+    fn test_bs_kpoint_path_builder_method_chaining() {
+        let entry1 = BsKpointPathEntry::builder().coord([0.0, 0.0, 0.0]).build();
+        let entry2 = BsKpointPathEntry::builder().coord([0.3333, 0.3750, 0.3333]).build();
+        let entry3 = BsKpointPathEntry::builder().coord([0.5, 0.5, 0.5]).build();
+
+        let path = BsKpointPath::builder()
+            .points(vec![entry1, entry2, entry3])
+            .build();
+
+        assert_eq!(path.points.len(), 3);
+        assert_eq!(path.points[0].coord, [0.0, 0.0, 0.0]);
+        assert_eq!(path.points[1].coord, [0.3333, 0.3750, 0.3333]);
+        assert_eq!(path.points[2].coord, [0.5, 0.5, 0.5]);
     }
 }

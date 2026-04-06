@@ -34,13 +34,13 @@ impl FromKeyValue for FixCOM {
 }
 
 impl ToCell for FixCOM {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("FIX_COM", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for FixCOM {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

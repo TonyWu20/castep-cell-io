@@ -22,13 +22,13 @@ impl FromKeyValue for Comment {
 }
 
 impl ToCell for Comment {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("COMMENT", CellValue::String(self.0.clone()))
     }
 }
 
 impl ToCellValue for Comment {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(self.0.clone())
     }
 }

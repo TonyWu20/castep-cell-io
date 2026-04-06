@@ -38,13 +38,13 @@ impl FromKeyValue for GridScale {
 }
 
 impl ToCell for GridScale {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GRID_SCALE", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for GridScale {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

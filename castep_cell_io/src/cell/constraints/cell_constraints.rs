@@ -5,7 +5,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromB
 /// Consists of two sets of indices:
 /// - One for the lattice vector magnitudes (a, b, c)
 /// - One for the lattice angles (alpha, beta, gamma)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, bon::Builder)]
 pub struct CellConstraints {
     /// Constraints for lattice vector magnitudes [a, b, c].
     /// 0 = fixed, positive integer = free to vary, shared integers = linked values.
@@ -52,7 +52,7 @@ impl FromBlock for CellConstraints {
 }
 
 impl ToCell for CellConstraints {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let block_content = [
             CellValue::Array(self.lengths.iter().map(|&v| CellValue::UInt(v)).collect()),
             CellValue::Array(self.angles.iter().map(|&v| CellValue::UInt(v)).collect()),

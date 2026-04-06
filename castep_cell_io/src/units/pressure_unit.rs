@@ -71,7 +71,7 @@ impl FromCellValue for PressureUnit {
 
 // Implement ToCell for PressureUnit to enable serialization via your custom backend
 impl ToCell for PressureUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         // Create a KeyValue Cell with the name "PRESSURE_UNIT" and the unit string as the value.
         Cell::KeyValue("PRESSURE_UNIT", self.to_cell_value())
     }
@@ -79,7 +79,7 @@ impl ToCell for PressureUnit {
 
 // Implement ToCellValue for PressureUnit.
 impl ToCellValue for PressureUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 PressureUnit::HartreePerBohr3 => "hartree/bohr**3",

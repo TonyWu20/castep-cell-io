@@ -29,13 +29,13 @@ impl FromKeyValue for SpinPolarized {
 }
 
 impl ToCell for SpinPolarized {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SPIN_POLARIZED", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for SpinPolarized {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

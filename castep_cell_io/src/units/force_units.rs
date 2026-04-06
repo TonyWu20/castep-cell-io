@@ -50,7 +50,7 @@ impl FromCellValue for ForceUnit {
 }
 
 impl ToCell for ForceUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         // Create a KeyValue Cell with the name "FORCE_UNIT" and the unit string as the value.
         Cell::KeyValue("FORCE_UNIT", self.to_cell_value())
     }
@@ -59,7 +59,7 @@ impl ToCell for ForceUnit {
 // Implement ToCellValue for ForceUnit.
 // This is the primary way it will be serialized when used as a value (e.g., in SymmetryTol).
 impl ToCellValue for ForceUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 ForceUnit::HartreePerBohr => "hartree/bohr",

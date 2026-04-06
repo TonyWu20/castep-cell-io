@@ -55,13 +55,13 @@ impl FromKeyValue for SpectralTask {
 }
 
 impl ToCell for SpectralTask {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SPECTRAL_TASK", self.to_cell_value())
     }
 }
 
 impl ToCellValue for SpectralTask {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 SpectralTask::BandStructure => "BandStructure",

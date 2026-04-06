@@ -22,13 +22,13 @@ impl FromKeyValue for WriteFormattedElf {
 }
 
 impl ToCell for WriteFormattedElf {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("WRITE_FORMATTED_ELF", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for WriteFormattedElf {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

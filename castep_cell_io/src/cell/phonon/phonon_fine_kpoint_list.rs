@@ -32,7 +32,7 @@ impl FromCellValue for PhononFineKpointListEntry {
 }
 
 impl ToCellValue for PhononFineKpointListEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -52,8 +52,9 @@ impl ToCellValue for PhononFineKpointListEntry {
 ///    R2i R2j R2k R2w
 /// ...
 /// %ENDBLOCK PHONON_FINE_KPOINT_LIST
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PhononFineKpointList {
+    #[builder(default)]
     pub kpoints: Vec<PhononFineKpointListEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for PhononFineKpointList {
 }
 
 impl ToCell for PhononFineKpointList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "PHONON_FINE_KPOINT_LIST",
             self.kpoints

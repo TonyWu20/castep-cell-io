@@ -21,13 +21,13 @@ impl FromKeyValue for FixOccupancy {
 }
 
 impl ToCell for FixOccupancy {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("FIX_OCCUPANCY", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for FixOccupancy {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

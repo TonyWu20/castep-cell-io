@@ -3,7 +3,7 @@ use super::Species;
 
 /// Represents a single parameter entry in SEDC_CUSTOM_PARAMS format.
 /// Parameters are specified as `key:value` pairs (e.g., `C6:0.0`, `R0:1.6404`).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SedcParameter {
     /// Parameter name (e.g., "C6", "R0", "alpha", "I", "Neff").
     pub key: String,
@@ -42,11 +42,12 @@ impl std::fmt::Display for SedcParameter {
 
 /// Represents a single entry within the SEDC_CUSTOM_PARAMS block.
 /// Each entry specifies custom dispersion parameters for a species.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SedcCustomParamsEntry {
     /// The species (symbol or atomic number).
     pub species: Species,
     /// The custom parameters for this species.
+    #[builder(default)]
     pub params: Vec<SedcParameter>,
 }
 
@@ -74,7 +75,7 @@ impl SedcCustomParamsEntry {
     }
 
     /// Convert to CellValue array.
-    fn to_array(&self) -> CellValue {
+    fn to_array(&self) -> CellValue<'_> {
         let mut arr = vec![self.species.to_cell_value()];
         arr.extend(
             self.params
@@ -95,12 +96,13 @@ impl SedcCustomParamsEntry {
 /// species2 param1:value1 param2:value2 ...
 /// ...
 /// %ENDBLOCK SEDC_CUSTOM_PARAMS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SedcCustomParams {
     /// Optional units specification (e.g., "eV Angstrom").
     /// If None, defaults are used (eV and Å).
     pub units: Option<String>,
     /// The list of species and their custom parameters.
+    #[builder(default)]
     pub entries: Vec<SedcCustomParamsEntry>,
 }
 
@@ -158,7 +160,7 @@ fn is_likely_units_row(arr: &[CellValue<'_>]) -> bool {
 }
 
 impl ToCell for SedcCustomParams {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
 
         if let Some(ref u) = self.units {

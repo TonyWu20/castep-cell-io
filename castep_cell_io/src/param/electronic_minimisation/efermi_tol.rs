@@ -44,13 +44,13 @@ impl FromKeyValue for EFermiTol {
 }
 
 impl ToCell for EFermiTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("EFERMI_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for EFermiTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

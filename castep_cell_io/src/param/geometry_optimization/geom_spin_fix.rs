@@ -31,13 +31,13 @@ impl FromKeyValue for GeomSpinFix {
 }
 
 impl ToCell for GeomSpinFix {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_SPIN_FIX", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for GeomSpinFix {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

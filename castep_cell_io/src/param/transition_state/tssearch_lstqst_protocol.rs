@@ -60,13 +60,13 @@ impl FromKeyValue for TssearchLstqstProtocol {
 }
 
 impl ToCell for TssearchLstqstProtocol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TSSEARCH_LSTQST_PROTOCOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for TssearchLstqstProtocol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 TssearchLstqstProtocol::LstMaximum => "LSTMaximum",

@@ -27,13 +27,13 @@ impl FromKeyValue for ElecConvergenceWin {
 }
 
 impl ToCell for ElecConvergenceWin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("ELEC_CONVERGENCE_WIN", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for ElecConvergenceWin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

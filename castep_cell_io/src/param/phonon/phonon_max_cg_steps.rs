@@ -37,13 +37,13 @@ impl Default for PhononMaxCgSteps {
 }
 
 impl ToCell for PhononMaxCgSteps {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_MAX_CG_STEPS", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for PhononMaxCgSteps {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

@@ -29,13 +29,13 @@ impl FromKeyValue for NumBackupIter {
 }
 
 impl ToCell for NumBackupIter {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NUM_BACKUP_ITER", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for NumBackupIter {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

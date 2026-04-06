@@ -22,13 +22,13 @@ impl FromKeyValue for RandSeed {
 }
 
 impl ToCell for RandSeed {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("RAND_SEED", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for RandSeed {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

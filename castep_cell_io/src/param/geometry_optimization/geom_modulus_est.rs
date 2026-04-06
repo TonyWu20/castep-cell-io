@@ -51,13 +51,13 @@ impl FromKeyValue for GeomModulusEst {
 }
 
 impl ToCell for GeomModulusEst {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_MODULUS_EST", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomModulusEst {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

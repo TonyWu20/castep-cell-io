@@ -50,13 +50,13 @@ impl FromKeyValue for MdExtrap {
 }
 
 impl ToCell for MdExtrap {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_EXTRAP", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdExtrap {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MdExtrap::None => "None",

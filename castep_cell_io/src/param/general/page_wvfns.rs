@@ -22,13 +22,13 @@ impl FromKeyValue for PageWvfns {
 }
 
 impl ToCell for PageWvfns {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PAGE_WVFNS", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for PageWvfns {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

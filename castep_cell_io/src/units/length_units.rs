@@ -53,7 +53,7 @@ impl FromKeyValue for LengthUnit {
 }
 
 impl ToCellValue for LengthUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 LengthUnit::Bohr => "bohr",
@@ -69,7 +69,7 @@ impl ToCellValue for LengthUnit {
 }
 
 impl ToCell for LengthUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("LENGTH_UNIT", self.to_cell_value())
     }
 }

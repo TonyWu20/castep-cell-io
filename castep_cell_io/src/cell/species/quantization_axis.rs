@@ -10,7 +10,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromK
 /// QUANTIZATION_AXIS : 1 1 -1
 /// This input defines the quantization axis (1 1 -1) which is most appropriate
 /// for a fcc structure (along one of the fourth order axes).
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, bon::Builder)]
 pub struct QuantizationAxis {
     /// The fractional coordinates [fa, fb, fc] defining the quantization axis.
     pub direction: [f64; 3],
@@ -43,7 +43,7 @@ impl FromKeyValue for QuantizationAxis {
 }
 
 impl ToCell for QuantizationAxis {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "QUANTIZATION_AXIS",
             CellValue::Array(
@@ -57,7 +57,7 @@ impl ToCell for QuantizationAxis {
 }
 
 impl ToCellValue for QuantizationAxis {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.direction
                 .iter()

@@ -35,13 +35,13 @@ impl FromKeyValue for MdNumIter {
 }
 
 impl ToCell for MdNumIter {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_NUM_ITER", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for MdNumIter {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

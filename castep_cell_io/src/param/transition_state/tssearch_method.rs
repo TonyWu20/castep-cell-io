@@ -48,13 +48,13 @@ impl FromKeyValue for TssearchMethod {
 }
 
 impl ToCell for TssearchMethod {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TSSEARCH_METHOD", self.to_cell_value())
     }
 }
 
 impl ToCellValue for TssearchMethod {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 TssearchMethod::Lstqst => "LSTQST",

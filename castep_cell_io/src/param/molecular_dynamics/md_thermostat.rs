@@ -44,13 +44,13 @@ impl FromKeyValue for MdThermostat {
 }
 
 impl ToCell for MdThermostat {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_THERMOSTAT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdThermostat {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MdThermostat::NoseHoover => "Nosé-Hoover",

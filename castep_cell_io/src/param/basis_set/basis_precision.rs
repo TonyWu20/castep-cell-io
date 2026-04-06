@@ -61,13 +61,13 @@ impl FromKeyValue for BasisPrecision {
 }
 
 impl ToCell for BasisPrecision {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BASIS_PRECISION", self.to_cell_value())
     }
 }
 
 impl ToCellValue for BasisPrecision {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 BasisPrecision::Coarse => "COARSE",

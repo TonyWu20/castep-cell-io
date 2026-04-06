@@ -32,7 +32,7 @@ impl FromCellValue for OpticsKpointsListEntry {
 }
 
 impl ToCellValue for OpticsKpointsListEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -52,8 +52,9 @@ impl ToCellValue for OpticsKpointsListEntry {
 ///    R2i R2j R2k R2w
 /// ...
 /// %ENDBLOCK OPTICS_KPOINTS_LIST
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct OpticsKpointsList {
+    #[builder(default)]
     pub kpoints: Vec<OpticsKpointsListEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for OpticsKpointsList {
 }
 
 impl ToCell for OpticsKpointsList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "OPTICS_KPOINTS_LIST",
             self.kpoints

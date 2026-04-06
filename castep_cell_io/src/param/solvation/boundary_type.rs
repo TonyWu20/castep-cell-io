@@ -42,13 +42,13 @@ impl FromKeyValue for BoundaryType {
 }
 
 impl ToCell for BoundaryType {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BOUNDARY_TYPE", self.to_cell_value())
     }
 }
 
 impl ToCellValue for BoundaryType {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 BoundaryType::Periodic => "Periodic",

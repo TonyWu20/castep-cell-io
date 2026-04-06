@@ -105,13 +105,13 @@ impl FromKeyValue for XcFunctional {
 }
 
 impl ToCell for XcFunctional {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("XC_FUNCTIONAL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for XcFunctional {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 XcFunctional::Lda => "LDA",

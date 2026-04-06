@@ -57,7 +57,7 @@ impl FromCellValue for MassUnit {
 
 impl ToCellValue for MassUnit {
     /// Converts the enum variant into the corresponding `CellValue::String`.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MassUnit::ElectronMass => "me",
@@ -71,7 +71,7 @@ impl ToCellValue for MassUnit {
 }
 
 impl ToCell for MassUnit {
-    fn to_cell(&self) -> castep_cell_fmt::Cell {
+    fn to_cell(&self) -> castep_cell_fmt::Cell<'_> {
         Cell::KeyValue("MASS_UNIT", self.to_cell_value())
     }
 }

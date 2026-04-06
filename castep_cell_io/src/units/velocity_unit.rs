@@ -55,13 +55,13 @@ impl FromCellValue for VelocityUnit {
 }
 
 impl ToCell for VelocityUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("VELOCITY_UNIT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for VelocityUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 VelocityUnit::AtomicUnitOfVelocity => "auv",

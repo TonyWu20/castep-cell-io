@@ -22,13 +22,13 @@ impl FromKeyValue for Checkpoint {
 }
 
 impl ToCell for Checkpoint {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CHECKPOINT", CellValue::String(self.0.clone()))
     }
 }
 
 impl ToCellValue for Checkpoint {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(self.0.clone())
     }
 }

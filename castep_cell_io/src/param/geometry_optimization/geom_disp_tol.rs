@@ -51,13 +51,13 @@ impl FromKeyValue for GeomDispTol {
 }
 
 impl ToCell for GeomDispTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_DISP_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomDispTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

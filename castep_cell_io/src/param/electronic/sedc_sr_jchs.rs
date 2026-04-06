@@ -29,13 +29,13 @@ impl FromKeyValue for SedcSrJchs {
 }
 
 impl ToCell for SedcSrJchs {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SEDC_SR_JCHS", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for SedcSrJchs {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

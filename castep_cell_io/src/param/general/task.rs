@@ -92,13 +92,13 @@ impl FromKeyValue for Task {
 }
 
 impl ToCell for Task {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TASK", self.to_cell_value())
     }
 }
 
 impl ToCellValue for Task {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 Task::SinglePoint => "SinglePoint",

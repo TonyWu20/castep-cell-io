@@ -1,6 +1,6 @@
 use castep_cell_fmt::{CellValue, ToCellValue, FromCellValue, CResult, query::value_as_f64};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, bon::Builder)]
 /// A line of block `KpointsList`
 /// The first three entries on a line are the fractional positions of the
 /// k-point relative to the reciprocal space lattice vectors.
@@ -49,7 +49,7 @@ impl FromCellValue for Kpoint {
 }
 
 impl ToCellValue for Kpoint {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()

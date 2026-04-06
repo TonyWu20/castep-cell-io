@@ -22,13 +22,13 @@ impl FromKeyValue for RunTime {
 }
 
 impl ToCell for RunTime {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("RUN_TIME", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for RunTime {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

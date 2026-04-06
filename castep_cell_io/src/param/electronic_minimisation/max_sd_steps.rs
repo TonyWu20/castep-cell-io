@@ -31,13 +31,13 @@ impl FromKeyValue for MaxSdSteps {
 }
 
 impl ToCell for MaxSdSteps {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MAX_SD_STEPS", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for MaxSdSteps {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

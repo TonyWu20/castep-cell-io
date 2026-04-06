@@ -48,7 +48,7 @@ impl FromCellValue for InvLengthUnit {
 }
 
 impl ToCell for InvLengthUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         // Create a KeyValue Cell with the name "INV_LENGTH_UNIT" and the unit string as the value.
         Cell::KeyValue("INV_LENGTH_UNIT", self.to_cell_value())
     }
@@ -56,7 +56,7 @@ impl ToCell for InvLengthUnit {
 
 // Implement ToCellValue for InvLengthUnit.
 impl ToCellValue for InvLengthUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 InvLengthUnit::Bohr => "1/bohr",

@@ -28,7 +28,7 @@ impl FromCellValue for TemperatureUnit {
 }
 
 impl ToCellValue for TemperatureUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String("K".to_string())
     }
 }

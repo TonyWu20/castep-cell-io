@@ -30,7 +30,7 @@ impl FromCellValue for PhononKpointPathEntry {
 
 impl ToCellValue for PhononKpointPathEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -69,7 +69,7 @@ impl FromBlock for PhononKpointPath {
 
 impl ToCell for PhononKpointPath {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "PHONON_KPOINT_PATH",
             self.points

@@ -52,13 +52,13 @@ impl FromKeyValue for MixMetricQ {
 }
 
 impl ToCell for MixMetricQ {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MIX_METRIC_Q", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MixMetricQ {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

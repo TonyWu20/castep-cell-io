@@ -51,13 +51,13 @@ impl FromKeyValue for GeomForceTol {
 }
 
 impl ToCell for GeomForceTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_FORCE_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomForceTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

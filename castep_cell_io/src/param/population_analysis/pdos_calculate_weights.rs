@@ -30,13 +30,13 @@ impl FromKeyValue for PdosCalculateWeights {
 }
 
 impl ToCell for PdosCalculateWeights {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PDOS_CALCULATE_WEIGHTS", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for PdosCalculateWeights {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

@@ -32,7 +32,7 @@ impl FromCellValue for MagresKpointsListEntry {
 }
 
 impl ToCellValue for MagresKpointsListEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -52,8 +52,9 @@ impl ToCellValue for MagresKpointsListEntry {
 ///    R2i R2j R2k R2w
 /// ...
 /// %ENDBLOCK MAGRES_KPOINTS_LIST
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct MagresKpointsList {
+    #[builder(default)]
     pub kpoints: Vec<MagresKpointsListEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for MagresKpointsList {
 }
 
 impl ToCell for MagresKpointsList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "MAGRES_KPOINTS_LIST",
             self.kpoints

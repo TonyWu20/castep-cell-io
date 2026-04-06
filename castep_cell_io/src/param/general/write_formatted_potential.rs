@@ -22,13 +22,13 @@ impl FromKeyValue for WriteFormattedPotential {
 }
 
 impl ToCell for WriteFormattedPotential {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("WRITE_FORMATTED_POTENTIAL", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for WriteFormattedPotential {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

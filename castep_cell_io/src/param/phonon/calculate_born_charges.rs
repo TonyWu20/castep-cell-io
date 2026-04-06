@@ -37,13 +37,13 @@ impl Default for CalculateBornCharges {
 }
 
 impl ToCell for CalculateBornCharges {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CALCULATE_BORN_CHARGES", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for CalculateBornCharges {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

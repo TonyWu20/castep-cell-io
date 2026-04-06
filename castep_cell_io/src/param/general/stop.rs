@@ -40,7 +40,7 @@ impl FromKeyValue for Stop {
 }
 
 impl ToCell for Stop {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         if self.0 {
             Cell::Flag("STOP")
         } else {
@@ -51,7 +51,7 @@ impl ToCell for Stop {
 
 // Note: ToCellValue is less applicable for flags, but we can provide a placeholder.
 impl ToCellValue for Stop {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         // Flags don't have a value in the traditional sense.
         // Returning Null or Bool(self.0) could be options.
         // Since it's a flag presence, Bool might be more informative if used in a context expecting a value.

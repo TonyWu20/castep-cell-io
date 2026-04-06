@@ -37,13 +37,13 @@ impl FromKeyValue for TssearchQstMaxIter {
 }
 
 impl ToCell for TssearchQstMaxIter {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TSSEARCH_QST_MAX_ITER", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for TssearchQstMaxIter {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

@@ -27,13 +27,13 @@ impl FromKeyValue for SpinFix {
 }
 
 impl ToCell for SpinFix {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SPIN_FIX", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for SpinFix {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

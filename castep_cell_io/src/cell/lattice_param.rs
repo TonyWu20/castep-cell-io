@@ -2,7 +2,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, parse::{FromBlock, F
 
 use crate::units::LengthUnit;
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, bon::Builder)]
 /// Lattice vectors
 /// This data block contains the cell lattice vectors in Cartesian coordinates. It has the following format:
 /// %BLOCK LATTICE_CART
@@ -57,7 +57,7 @@ impl FromBlock for LatticeCart {
 }
 
 impl ToCell for LatticeCart {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));
@@ -69,7 +69,7 @@ impl ToCell for LatticeCart {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, bon::Builder)]
 pub struct LatticeABC {
     pub unit: Option<LengthUnit>,
     pub abc: [f64; 3],
@@ -112,7 +112,7 @@ impl FromBlock for LatticeABC {
 }
 
 impl ToCell for LatticeABC {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));
@@ -256,6 +256,86 @@ mod tests {
             }
             _ => panic!("Expected Cell::Block"),
         }
+    }
+
+    // Builder pattern tests for LatticeCart
+    #[test]
+    fn test_lattice_cart_builder_basic() {
+        let lattice = LatticeCart::builder()
+            .a([5.0, 0.0, 0.0])
+            .b([0.0, 5.0, 0.0])
+            .c([0.0, 0.0, 5.0])
+            .build();
+
+        assert_eq!(lattice.unit, None);
+        assert_eq!(lattice.a, [5.0, 0.0, 0.0]);
+        assert_eq!(lattice.b, [0.0, 5.0, 0.0]);
+        assert_eq!(lattice.c, [0.0, 0.0, 5.0]);
+    }
+
+    #[test]
+    fn test_lattice_cart_builder_with_unit() {
+        let lattice = LatticeCart::builder()
+            .a([5.0, 0.0, 0.0])
+            .b([0.0, 5.0, 0.0])
+            .c([0.0, 0.0, 5.0])
+            .unit(LengthUnit::Ang)
+            .build();
+
+        assert_eq!(lattice.unit, Some(LengthUnit::Ang));
+        assert_eq!(lattice.a, [5.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_lattice_cart_builder_without_unit() {
+        let lattice = LatticeCart::builder()
+            .a([9.45, 0.0, 0.0])
+            .b([0.0, 9.45, 0.0])
+            .c([0.0, 0.0, 9.45])
+            .build();
+
+        assert_eq!(lattice.unit, None);
+        assert_eq!(lattice.a, [9.45, 0.0, 0.0]);
+        assert_eq!(lattice.b, [0.0, 9.45, 0.0]);
+        assert_eq!(lattice.c, [0.0, 0.0, 9.45]);
+    }
+
+    // Builder pattern tests for LatticeABC
+    #[test]
+    fn test_lattice_abc_builder_basic() {
+        let lattice = LatticeABC::builder()
+            .abc([5.0, 5.0, 5.0])
+            .angles([90.0, 90.0, 90.0])
+            .build();
+
+        assert_eq!(lattice.unit, None);
+        assert_eq!(lattice.abc, [5.0, 5.0, 5.0]);
+        assert_eq!(lattice.angles, [90.0, 90.0, 90.0]);
+    }
+
+    #[test]
+    fn test_lattice_abc_builder_with_unit() {
+        let lattice = LatticeABC::builder()
+            .abc([5.0, 5.0, 5.0])
+            .angles([90.0, 90.0, 90.0])
+            .unit(LengthUnit::Bohr)
+            .build();
+
+        assert_eq!(lattice.unit, Some(LengthUnit::Bohr));
+        assert_eq!(lattice.abc, [5.0, 5.0, 5.0]);
+        assert_eq!(lattice.angles, [90.0, 90.0, 90.0]);
+    }
+
+    #[test]
+    fn test_lattice_abc_builder_without_unit() {
+        let lattice = LatticeABC::builder()
+            .abc([10.0, 10.0, 10.0])
+            .angles([120.0, 90.0, 90.0])
+            .build();
+
+        assert_eq!(lattice.unit, None);
+        assert_eq!(lattice.abc, [10.0, 10.0, 10.0]);
+        assert_eq!(lattice.angles, [120.0, 90.0, 90.0]);
     }
 }
 

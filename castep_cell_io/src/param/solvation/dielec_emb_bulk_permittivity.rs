@@ -31,13 +31,13 @@ impl FromKeyValue for DielecEmbBulkPermittivity {
 }
 
 impl ToCell for DielecEmbBulkPermittivity {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("DIELEC_EMB_BULK_PERMITTIVITY", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for DielecEmbBulkPermittivity {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

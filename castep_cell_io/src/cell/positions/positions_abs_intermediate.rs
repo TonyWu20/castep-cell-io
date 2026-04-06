@@ -8,7 +8,7 @@ use crate::units::LengthUnit;
 ///
 /// Consists of the element symbol/number, absolute coordinates, and optional spin/mixture qualifiers.
 /// Format: <element> <x> <y> <z> [SPIN <value>] [MIXTURE <index> <weight>]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionAbsIntermediateEntry {
     /// The chemical element symbol (e.g., "Fe") or atomic number as a string (e.g., "26").
     pub species: Species,
@@ -90,7 +90,7 @@ impl FromCellValue for PositionAbsIntermediateEntry {
 
 impl ToCellValue for PositionAbsIntermediateEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let mut arr = vec![self.species.to_cell_value()];
         arr.extend(self.coord.into_iter().map(CellValue::Float));
 
@@ -121,11 +121,12 @@ impl ToCellValue for PositionAbsIntermediateEntry {
 /// Species2/I2 R2x R2y R2z [SPIN S2] [MIXTURE M2 W2]
 /// ...
 /// %ENDBLOCK POSITIONS_ABS_INTERMEDIATE
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionsAbsIntermediate {
     /// Optional unit specifier (default: Angstrom).
     pub unit: Option<LengthUnit>,
     /// The list of atom entries.
+    #[builder(default)]
     pub positions: Vec<PositionAbsIntermediateEntry>,
 }
 
@@ -165,7 +166,7 @@ impl FromBlock for PositionsAbsIntermediate {
 
 impl ToCell for PositionsAbsIntermediate {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));

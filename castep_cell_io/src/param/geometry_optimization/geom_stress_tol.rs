@@ -51,13 +51,13 @@ impl FromKeyValue for GeomStressTol {
 }
 
 impl ToCell for GeomStressTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_STRESS_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomStressTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

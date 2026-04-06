@@ -29,13 +29,13 @@ impl FromKeyValue for PercExtraBands {
 }
 
 impl ToCell for PercExtraBands {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PERC_EXTRA_BANDS", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for PercExtraBands {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

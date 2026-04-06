@@ -1,6 +1,6 @@
 use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromBlock, FromCellValue, CResult, query::value_as_f64};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, bon::Builder)]
 /// A line of block `PhononKpointList`
 /// The first three entries on a line are the fractional positions of the
 /// k-point relative to the reciprocal space lattice vectors.
@@ -32,7 +32,7 @@ impl FromCellValue for PhononKpointListEntry {
 }
 
 impl ToCellValue for PhononKpointListEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -52,8 +52,9 @@ impl ToCellValue for PhononKpointListEntry {
 ///    R2i R2j R2k R2w
 /// ...
 /// %ENDBLOCK PHONON_KPOINT_LIST
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PhononKpointList {
+    #[builder(default)]
     pub kpoints: Vec<PhononKpointListEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for PhononKpointList {
 }
 
 impl ToCell for PhononKpointList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "PHONON_KPOINT_LIST",
             self.kpoints
@@ -173,5 +174,105 @@ mod tests {
             }
             _ => panic!("Expected Block"),
         }
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_phonon_kpoint_list_entry_builder() {
+        let entry = PhononKpointListEntry::builder()
+            .coord([0.5, 0.25, 0.0])
+            .weight(1.0)
+            .build();
+        assert_eq!(entry.coord, [0.5, 0.25, 0.0]);
+        assert_eq!(entry.weight, 1.0);
+    }
+
+    #[test]
+    fn test_phonon_kpoint_list_builder_empty() {
+        let list = PhononKpointList::builder().build();
+        assert_eq!(list.kpoints.len(), 0);
+    }
+
+    #[test]
+    fn test_phonon_kpoint_list_builder_single_kpoint() {
+        let entry = PhononKpointListEntry::builder()
+            .coord([0.0, 0.0, 0.0])
+            .weight(1.0)
+            .build();
+        let list = PhononKpointList::builder().kpoints(vec![entry]).build();
+        assert_eq!(list.kpoints.len(), 1);
+        assert_eq!(list.kpoints[0].coord, [0.0, 0.0, 0.0]);
+        assert_eq!(list.kpoints[0].weight, 1.0);
+    }
+
+    #[test]
+    fn test_phonon_kpoint_list_builder_multiple_kpoints_vec() {
+        let entries = vec![
+            PhononKpointListEntry::builder()
+                .coord([0.0, 0.0, 0.0])
+                .weight(0.5)
+                .build(),
+            PhononKpointListEntry::builder()
+                .coord([0.5, 0.5, 0.5])
+                .weight(0.5)
+                .build(),
+        ];
+        let list = PhononKpointList::builder().kpoints(entries).build();
+        assert_eq!(list.kpoints.len(), 2);
+        assert_eq!(list.kpoints[0].weight, 0.5);
+        assert_eq!(list.kpoints[1].weight, 0.5);
+    }
+
+    #[test]
+    fn test_phonon_kpoint_list_builder_method_chaining() {
+        let kpoints = vec![
+            PhononKpointListEntry::builder()
+                .coord([0.0, 0.0, 0.0])
+                .weight(0.25)
+                .build(),
+            PhononKpointListEntry::builder()
+                .coord([0.5, 0.0, 0.0])
+                .weight(0.25)
+                .build(),
+            PhononKpointListEntry::builder()
+                .coord([0.0, 0.5, 0.0])
+                .weight(0.25)
+                .build(),
+            PhononKpointListEntry::builder()
+                .coord([0.0, 0.0, 0.5])
+                .weight(0.25)
+                .build(),
+        ];
+
+        let list = PhononKpointList::builder()
+            .kpoints(kpoints)
+            .build();
+
+        assert_eq!(list.kpoints.len(), 4);
+        assert_eq!(list.kpoints[0].coord, [0.0, 0.0, 0.0]);
+        assert_eq!(list.kpoints[1].coord, [0.5, 0.0, 0.0]);
+        assert_eq!(list.kpoints[2].coord, [0.0, 0.5, 0.0]);
+        assert_eq!(list.kpoints[3].coord, [0.0, 0.0, 0.5]);
+        assert!(list.kpoints.iter().all(|k| k.weight == 0.25));
+    }
+
+    #[test]
+    fn test_phonon_kpoint_list_builder_push_after_build() {
+        let mut list = PhononKpointList::builder().build();
+        list.kpoints.push(
+            PhononKpointListEntry::builder()
+                .coord([0.0, 0.0, 0.0])
+                .weight(0.5)
+                .build(),
+        );
+        list.kpoints.push(
+            PhononKpointListEntry::builder()
+                .coord([0.5, 0.5, 0.5])
+                .weight(0.5)
+                .build(),
+        );
+        assert_eq!(list.kpoints.len(), 2);
+        assert_eq!(list.kpoints[0].weight, 0.5);
+        assert_eq!(list.kpoints[1].weight, 0.5);
     }
 }

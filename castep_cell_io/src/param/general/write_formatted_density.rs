@@ -22,13 +22,13 @@ impl FromKeyValue for WriteFormattedDensity {
 }
 
 impl ToCell for WriteFormattedDensity {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("WRITE_FORMATTED_DENSITY", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for WriteFormattedDensity {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

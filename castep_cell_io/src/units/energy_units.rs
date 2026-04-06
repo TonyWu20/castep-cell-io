@@ -95,13 +95,13 @@ impl FromCellValue for EnergyUnit {
 }
 
 impl ToCell for EnergyUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("ENERGY_UNIT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for EnergyUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 EnergyUnit::Hartree => "ha",

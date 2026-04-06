@@ -54,7 +54,7 @@ impl FromKeyValue for KpointsMpSpacing {
 }
 
 impl ToCell for KpointsMpSpacing {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "KPOINTS_MP_SPACING",
             CellValue::Array(vec![
@@ -69,7 +69,7 @@ impl ToCell for KpointsMpSpacing {
 }
 
 impl ToCellValue for KpointsMpSpacing {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit

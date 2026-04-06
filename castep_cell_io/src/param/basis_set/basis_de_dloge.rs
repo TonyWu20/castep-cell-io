@@ -52,7 +52,7 @@ impl FromKeyValue for BasisDeDloge {
 }
 
 impl ToCell for BasisDeDloge {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "BASIS_DE_DLOGE",
             CellValue::Array(vec![
@@ -64,7 +64,7 @@ impl ToCell for BasisDeDloge {
 }
 
 impl ToCellValue for BasisDeDloge {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit.to_cell_value(),

@@ -29,13 +29,13 @@ impl FromKeyValue for SedcLambdaObs {
 }
 
 impl ToCell for SedcLambdaObs {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SEDC_LAMBDA_OBS", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for SedcLambdaObs {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

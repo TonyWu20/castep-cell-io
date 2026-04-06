@@ -38,13 +38,13 @@ impl Default for GeomConvergenceWin {
 }
 
 impl ToCell for GeomConvergenceWin {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_CONVERGENCE_WIN", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for GeomConvergenceWin {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

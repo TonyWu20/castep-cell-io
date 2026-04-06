@@ -37,13 +37,13 @@ impl Default for PhononMaxCycles {
 }
 
 impl ToCell for PhononMaxCycles {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_MAX_CYCLES", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for PhononMaxCycles {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

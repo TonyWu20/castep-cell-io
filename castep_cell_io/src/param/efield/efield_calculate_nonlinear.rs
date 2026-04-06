@@ -44,13 +44,13 @@ impl FromKeyValue for EfieldCalculateNonlinear {
 }
 
 impl ToCell for EfieldCalculateNonlinear {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("EFIELD_CALCULATE_NONLINEAR", self.to_cell_value())
     }
 }
 
 impl ToCellValue for EfieldCalculateNonlinear {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 EfieldCalculateNonlinear::Chi2 => "CHI2",

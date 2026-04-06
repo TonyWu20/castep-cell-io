@@ -8,7 +8,7 @@ use crate::units::LengthUnit;
 ///
 /// Consists of the element symbol/number, absolute coordinates, and optional spin/mixture qualifiers.
 /// Format: <element> <x> <y> <z> [SPIN <value>] [MIXTURE <index> <weight>]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionAbsEntry {
     /// The chemical element symbol (e.g., "Fe") or atomic number as a string (e.g., "26").
     pub species: Species,
@@ -90,7 +90,7 @@ impl FromCellValue for PositionAbsEntry {
 
 impl ToCellValue for PositionAbsEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let mut arr = vec![self.species.to_cell_value()];
         arr.extend(self.coord.into_iter().map(CellValue::Float));
 
@@ -121,11 +121,12 @@ impl ToCellValue for PositionAbsEntry {
 /// Species2/I2 R2x R2y R2z [SPIN S2] [MIXTURE M2 W2]
 /// ...
 /// %ENDBLOCK POSITIONS_ABS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionsAbs {
     /// Optional unit specifier (default: Angstrom).
     pub unit: Option<LengthUnit>,
     /// The list of atom entries.
+    #[builder(default)]
     pub positions: Vec<PositionAbsEntry>,
 }
 
@@ -165,7 +166,7 @@ impl FromBlock for PositionsAbs {
 
 impl ToCell for PositionsAbs {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
         if let Some(u) = &self.unit {
             block_content.push(CellValue::Array(vec![u.to_cell_value()]));
@@ -377,5 +378,155 @@ mod tests {
             }
             _ => panic!("Expected Array"),
         }
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_position_abs_entry_builder_minimal() {
+        let species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let entry = PositionAbsEntry::builder()
+            .species(species.clone())
+            .coord([0.0, 0.0, 0.0])
+            .build();
+
+        assert_eq!(entry.species, species);
+        assert_eq!(entry.coord, [0.0, 0.0, 0.0]);
+        assert_eq!(entry.spin, None);
+        assert_eq!(entry.mixture, None);
+    }
+
+    #[test]
+    fn test_position_abs_entry_builder_with_spin() {
+        let species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let entry = PositionAbsEntry::builder()
+            .species(species.clone())
+            .coord([1.5, 2.5, 3.5])
+            .spin(2.0)
+            .build();
+
+        assert_eq!(entry.species, species);
+        assert_eq!(entry.coord, [1.5, 2.5, 3.5]);
+        assert_eq!(entry.spin, Some(2.0));
+        assert_eq!(entry.mixture, None);
+    }
+
+    #[test]
+    fn test_position_abs_entry_builder_with_mixture() {
+        let species = Species::from_cell_value(&CellValue::Str("O")).unwrap();
+        let entry = PositionAbsEntry::builder()
+            .species(species.clone())
+            .coord([0.5, 0.5, 0.5])
+            .mixture((1, 0.8))
+            .build();
+
+        assert_eq!(entry.species, species);
+        assert_eq!(entry.coord, [0.5, 0.5, 0.5]);
+        assert_eq!(entry.spin, None);
+        assert_eq!(entry.mixture, Some((1, 0.8)));
+    }
+
+    #[test]
+    fn test_position_abs_entry_builder_with_all_fields() {
+        let species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let entry = PositionAbsEntry::builder()
+            .species(species.clone())
+            .coord([1.0, 2.0, 3.0])
+            .spin(1.5)
+            .mixture((2, 0.6))
+            .build();
+
+        assert_eq!(entry.species, species);
+        assert_eq!(entry.coord, [1.0, 2.0, 3.0]);
+        assert_eq!(entry.spin, Some(1.5));
+        assert_eq!(entry.mixture, Some((2, 0.6)));
+    }
+
+    #[test]
+    fn test_positions_abs_builder_empty() {
+        let positions = PositionsAbs::builder().build();
+
+        assert_eq!(positions.unit, None);
+        assert_eq!(positions.positions.len(), 0);
+    }
+
+    #[test]
+    fn test_positions_abs_builder_with_unit() {
+        let positions = PositionsAbs::builder()
+            .unit(LengthUnit::Ang)
+            .build();
+
+        assert_eq!(positions.unit, Some(LengthUnit::Ang));
+        assert_eq!(positions.positions.len(), 0);
+    }
+
+    #[test]
+    fn test_positions_abs_builder_single_position() {
+        let species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let entry = PositionAbsEntry::builder()
+            .species(species.clone())
+            .coord([0.0, 0.0, 0.0])
+            .build();
+
+        let positions = PositionsAbs::builder()
+            .positions(vec![entry.clone()])
+            .build();
+
+        assert_eq!(positions.unit, None);
+        assert_eq!(positions.positions.len(), 1);
+        assert_eq!(positions.positions[0], entry);
+    }
+
+    #[test]
+    fn test_positions_abs_builder_multiple_positions_with_push() {
+        let fe_species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let o_species = Species::from_cell_value(&CellValue::Str("O")).unwrap();
+
+        let fe_entry = PositionAbsEntry::builder()
+            .species(fe_species)
+            .coord([0.0, 0.0, 0.0])
+            .build();
+
+        let o_entry = PositionAbsEntry::builder()
+            .species(o_species)
+            .coord([1.5, 1.5, 1.5])
+            .spin(0.5)
+            .build();
+
+        let positions = PositionsAbs::builder()
+            .unit(LengthUnit::Bohr)
+            .positions(vec![fe_entry.clone(), o_entry.clone()])
+            .build();
+
+        assert_eq!(positions.unit, Some(LengthUnit::Bohr));
+        assert_eq!(positions.positions.len(), 2);
+        assert_eq!(positions.positions[0], fe_entry);
+        assert_eq!(positions.positions[1], o_entry);
+    }
+
+    #[test]
+    fn test_positions_abs_builder_method_chaining() {
+        let fe_species = Species::from_cell_value(&CellValue::Str("Fe")).unwrap();
+        let o_species = Species::from_cell_value(&CellValue::Str("O")).unwrap();
+
+        let positions = PositionsAbs::builder()
+            .unit(LengthUnit::Ang)
+            .positions(vec![
+                PositionAbsEntry::builder()
+                    .species(fe_species)
+                    .coord([0.0, 0.0, 0.0])
+                    .spin(2.0)
+                    .build(),
+                PositionAbsEntry::builder()
+                    .species(o_species)
+                    .coord([1.5, 1.5, 1.5])
+                    .mixture((1, 0.8))
+                    .build(),
+            ])
+            .build();
+
+        assert_eq!(positions.unit, Some(LengthUnit::Ang));
+        assert_eq!(positions.positions.len(), 2);
+        assert_eq!(positions.positions[0].spin, Some(2.0));
+        assert_eq!(positions.positions[1].mixture, Some((1, 0.8)));
     }
 }

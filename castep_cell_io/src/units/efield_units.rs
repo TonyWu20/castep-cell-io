@@ -37,7 +37,7 @@ impl FromCellValue for EFieldUnit {
 }
 
 impl ToCellValue for EFieldUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 EFieldUnit::EvPerAngPerE => "ev/ang/e",

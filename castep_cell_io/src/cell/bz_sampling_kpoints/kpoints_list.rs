@@ -2,7 +2,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromBlock, FromCellV
 
 use super::Kpoint;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, bon::Builder)]
 /// Represents the KPOINTS_LIST block.
 ///
 /// Contains a list of k-points and their weights for Brillouin zone sampling.
@@ -13,6 +13,7 @@ use super::Kpoint;
 /// ...
 /// %ENDBLOCK KPOINTS_LIST
 pub struct KpointsList {
+    #[builder(default)]
     pub kpts: Vec<Kpoint>,
 }
 
@@ -29,7 +30,7 @@ impl FromBlock for KpointsList {
 }
 
 impl ToCell for KpointsList {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "KPOINTS_LIST",
             self.kpts
@@ -93,6 +94,71 @@ mod tests {
             }
             _ => panic!("Expected Block"),
         }
+    }
+
+    #[test]
+    fn test_kpoints_list_builder_basic() {
+        let kpts_list = KpointsList::builder()
+            .kpts(vec![Kpoint {
+                coord: [0.5, 0.5, 0.5],
+                weight: 1.0,
+            }])
+            .build();
+        assert_eq!(kpts_list.kpts.len(), 1);
+        assert_eq!(kpts_list.kpts[0].weight, 1.0);
+    }
+
+    #[test]
+    fn test_kpoints_list_builder_empty() {
+        let kpts_list = KpointsList::builder().build();
+        assert_eq!(kpts_list.kpts.len(), 0);
+    }
+
+    #[test]
+    fn test_kpoints_list_builder_with_multiple_kpoints() {
+        let kpts = vec![
+            Kpoint {
+                coord: [0.0, 0.0, 0.0],
+                weight: 0.5,
+            },
+            Kpoint {
+                coord: [0.5, 0.5, 0.5],
+                weight: 0.5,
+            },
+        ];
+        let kpts_list = KpointsList::builder()
+            .kpts(kpts)
+            .build();
+        assert_eq!(kpts_list.kpts.len(), 2);
+        assert_eq!(kpts_list.kpts[0].weight, 0.5);
+        assert_eq!(kpts_list.kpts[1].weight, 0.5);
+    }
+
+    #[test]
+    fn test_kpoints_list_builder_chaining() {
+        let kpt1 = Kpoint {
+            coord: [0.0, 0.0, 0.0],
+            weight: 0.25,
+        };
+        let kpt2 = Kpoint {
+            coord: [0.5, 0.0, 0.0],
+            weight: 0.25,
+        };
+        let kpt3 = Kpoint {
+            coord: [0.5, 0.5, 0.0],
+            weight: 0.25,
+        };
+        let kpt4 = Kpoint {
+            coord: [0.5, 0.5, 0.5],
+            weight: 0.25,
+        };
+
+        let kpts_list = KpointsList::builder()
+            .kpts(vec![kpt1, kpt2, kpt3, kpt4])
+            .build();
+
+        assert_eq!(kpts_list.kpts.len(), 4);
+        assert!(kpts_list.kpts.iter().all(|k| k.weight == 0.25));
     }
 }
 

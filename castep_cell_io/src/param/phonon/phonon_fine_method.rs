@@ -52,13 +52,13 @@ impl Default for PhononFineMethod {
 }
 
 impl ToCell for PhononFineMethod {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PHONON_FINE_METHOD", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PhononFineMethod {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 PhononFineMethod::None => "NONE",

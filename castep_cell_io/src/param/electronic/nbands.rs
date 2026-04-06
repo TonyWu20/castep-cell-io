@@ -29,13 +29,13 @@ impl FromKeyValue for Nbands {
 }
 
 impl ToCell for Nbands {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NBANDS", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for Nbands {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

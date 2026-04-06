@@ -29,13 +29,13 @@ impl FromKeyValue for NextraBands {
 }
 
 impl ToCell for NextraBands {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NEXTRA_BANDS", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for NextraBands {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

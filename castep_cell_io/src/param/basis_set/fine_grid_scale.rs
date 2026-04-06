@@ -38,13 +38,13 @@ impl FromKeyValue for FineGridScale {
 }
 
 impl ToCell for FineGridScale {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("FINE_GRID_SCALE", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for FineGridScale {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

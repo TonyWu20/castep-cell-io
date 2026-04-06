@@ -28,13 +28,13 @@ impl FromKeyValue for PrintMemoryUsage {
 }
 
 impl ToCell for PrintMemoryUsage {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PRINT_MEMORY_USAGE", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for PrintMemoryUsage {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

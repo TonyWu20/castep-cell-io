@@ -15,7 +15,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, parse::{FromBlock, F
 ///                     5.0000000000    0.0000000000
 ///                                     5.0000000000
 /// %ENDBLOCK EXTERNAL_PRESSURE
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct ExternalPressure {
     /// Optional unit specification for the pressure tensor.
     /// If None, the default unit (GPa) is implied.
@@ -64,7 +64,7 @@ impl FromBlock for ExternalPressure {
 }
 
 impl ToCell for ExternalPressure {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::with_capacity(4);
 
         if let Some(unit) = &self.unit {
@@ -86,6 +86,58 @@ impl ToCell for ExternalPressure {
         block_content.push(CellValue::Array(vec![CellValue::Float(self.tensor[5])]));
 
         Cell::Block("EXTERNAL_PRESSURE", block_content)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_builder_basic_without_unit() {
+        let pressure = ExternalPressure::builder()
+            .tensor([5.0, 0.0, 0.0, 5.0, 0.0, 5.0])
+            .build();
+
+        assert_eq!(pressure.unit, None);
+        assert_eq!(pressure.tensor, [5.0, 0.0, 0.0, 5.0, 0.0, 5.0]);
+    }
+
+    #[test]
+    fn test_builder_with_unit() {
+        let pressure = ExternalPressure::builder()
+            .tensor([10.0, 0.0, 0.0, 10.0, 0.0, 10.0])
+            .unit(PressureUnit::GigaPascal)
+            .build();
+
+        assert_eq!(pressure.unit, Some(PressureUnit::GigaPascal));
+        assert_eq!(pressure.tensor, [10.0, 0.0, 0.0, 10.0, 0.0, 10.0]);
+    }
+
+    #[test]
+    fn test_builder_different_tensor_values() {
+        let pressure = ExternalPressure::builder()
+            .tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+            .unit(PressureUnit::MegaBar)
+            .build();
+
+        assert_eq!(pressure.unit, Some(PressureUnit::MegaBar));
+        assert_eq!(pressure.tensor, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+    }
+
+    #[test]
+    fn test_builder_method_chaining() {
+        let pressure = ExternalPressure::builder()
+            .unit(PressureUnit::GigaPascal)
+            .tensor([2.5, 0.5, 0.3, 2.5, 0.4, 2.5])
+            .build();
+
+        assert_eq!(pressure.unit, Some(PressureUnit::GigaPascal));
+        assert_eq!(pressure.tensor, [2.5, 0.5, 0.3, 2.5, 0.4, 2.5]);
+
+        // Verify it can be converted to Cell and back
+        let cell = pressure.to_cell();
+        assert!(matches!(cell, Cell::Block("EXTERNAL_PRESSURE", _)));
     }
 }
 

@@ -37,13 +37,13 @@ impl FromKeyValue for MixHistoryLength {
 }
 
 impl ToCell for MixHistoryLength {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MIX_HISTORY_LENGTH", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for MixHistoryLength {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

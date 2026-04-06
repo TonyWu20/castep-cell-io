@@ -37,13 +37,13 @@ impl Default for GeomMaxIter {
 }
 
 impl ToCell for GeomMaxIter {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_MAX_ITER", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for GeomMaxIter {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

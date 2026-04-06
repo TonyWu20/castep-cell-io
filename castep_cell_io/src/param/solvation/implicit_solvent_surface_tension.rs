@@ -59,7 +59,7 @@ impl FromKeyValue for ImplicitSolventSurfaceTension {
 }
 
 impl ToCell for ImplicitSolventSurfaceTension {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
             "IMPLICIT_SOLVENT_SURFACE_TENSION",
             CellValue::Array(vec![
@@ -74,7 +74,7 @@ impl ToCell for ImplicitSolventSurfaceTension {
 }
 
 impl ToCellValue for ImplicitSolventSurfaceTension {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             CellValue::Float(self.value),
             self.unit

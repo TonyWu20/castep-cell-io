@@ -52,13 +52,13 @@ impl FromKeyValue for MixChargeGmax {
 }
 
 impl ToCell for MixChargeGmax {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MIX_CHARGE_GMAX", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MixChargeGmax {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             [
                 CellValue::Float(self.value),

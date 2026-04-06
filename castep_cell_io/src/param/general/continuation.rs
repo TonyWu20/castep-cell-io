@@ -22,13 +22,13 @@ impl FromKeyValue for Continuation {
 }
 
 impl ToCell for Continuation {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CONTINUATION", CellValue::String(self.0.clone()))
     }
 }
 
 impl ToCellValue for Continuation {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(self.0.clone())
     }
 }

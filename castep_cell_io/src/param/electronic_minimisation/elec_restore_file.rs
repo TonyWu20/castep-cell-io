@@ -21,13 +21,13 @@ impl FromKeyValue for ElecRestoreFile {
 }
 
 impl ToCell for ElecRestoreFile {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("ELEC_RESTORE_FILE", CellValue::String(self.0.clone()))
     }
 }
 
 impl ToCellValue for ElecRestoreFile {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(self.0.clone())
     }
 }

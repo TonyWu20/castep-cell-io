@@ -49,13 +49,13 @@ impl FromKeyValue for KScrnAveragingScheme {
 }
 
 impl ToCell for KScrnAveragingScheme {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("K_SCRN_AVERAGING_SCHEME", self.to_cell_value())
     }
 }
 
 impl ToCellValue for KScrnAveragingScheme {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 KScrnAveragingScheme::AveDen => "AVE_DEN",

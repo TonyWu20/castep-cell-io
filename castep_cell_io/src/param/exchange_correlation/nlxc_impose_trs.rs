@@ -31,13 +31,13 @@ impl FromKeyValue for NlxcImposeTrs {
 }
 
 impl ToCell for NlxcImposeTrs {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NLXC_IMPOSE_TRS", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for NlxcImposeTrs {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

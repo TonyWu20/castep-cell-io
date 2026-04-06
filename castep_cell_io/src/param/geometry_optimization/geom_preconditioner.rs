@@ -52,13 +52,13 @@ impl Default for GeomPreconditioner {
 }
 
 impl ToCell for GeomPreconditioner {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("GEOM_PRECONDITIONER", self.to_cell_value())
     }
 }
 
 impl ToCellValue for GeomPreconditioner {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 GeomPreconditioner::Id => "ID",

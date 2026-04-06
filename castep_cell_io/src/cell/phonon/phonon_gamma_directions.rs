@@ -4,7 +4,7 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, FromCellValue, FromB
 ///
 /// Each entry contains three components of a direction vector for approaching the gamma point.
 /// Format: <x> <y> <z>
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, bon::Builder)]
 pub struct PhononGammaDirectionEntry {
     /// Direction vector components [x, y, z].
     pub direction: [f64; 3],
@@ -30,7 +30,7 @@ impl FromCellValue for PhononGammaDirectionEntry {
 
 impl ToCellValue for PhononGammaDirectionEntry {
     /// Converts the entry into a `CellValue::Array` representing one line of the block.
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.direction
                 .into_iter()
@@ -50,9 +50,10 @@ impl ToCellValue for PhononGammaDirectionEntry {
 /// R2i R2j R2k
 /// ...
 /// %ENDBLOCK PHONON_GAMMA_DIRECTIONS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PhononGammaDirections {
     /// The list of direction entries.
+    #[builder(default)]
     pub directions: Vec<PhononGammaDirectionEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for PhononGammaDirections {
 
 impl ToCell for PhononGammaDirections {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "PHONON_GAMMA_DIRECTIONS",
             self.directions

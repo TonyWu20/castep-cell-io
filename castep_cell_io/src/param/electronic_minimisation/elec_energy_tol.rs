@@ -44,13 +44,13 @@ impl FromKeyValue for ElecEnergyTol {
 }
 
 impl ToCell for ElecEnergyTol {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("ELEC_ENERGY_TOL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for ElecEnergyTol {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         // Create a CellValue::Array containing the value and optionally the unit
         CellValue::Array(
             [

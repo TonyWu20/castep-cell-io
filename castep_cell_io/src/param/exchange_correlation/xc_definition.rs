@@ -28,7 +28,7 @@ impl FromCellValue for XcFunctionalEntry {
 }
 
 impl ToCellValue for XcFunctionalEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(vec![
             self.functional.to_cell_value(),
             CellValue::Float(self.weight),
@@ -113,7 +113,7 @@ impl FromBlock for XcDefinition {
 }
 
 impl ToCell for XcDefinition {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let mut block_content = Vec::new();
 
         // Add functional entries

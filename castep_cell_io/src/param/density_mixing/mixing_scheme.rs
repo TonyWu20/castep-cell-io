@@ -56,13 +56,13 @@ impl FromKeyValue for MixingScheme {
 }
 
 impl ToCell for MixingScheme {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MIXING_SCHEME", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MixingScheme {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MixingScheme::Kerker => "Kerker",

@@ -48,13 +48,13 @@ impl FromKeyValue for SedcScheme {
 }
 
 impl ToCell for SedcScheme {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("SEDC_SCHEME", self.to_cell_value())
     }
 }
 
 impl ToCellValue for SedcScheme {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 SedcScheme::Ts => "TS",

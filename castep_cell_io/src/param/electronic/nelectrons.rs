@@ -32,13 +32,13 @@ impl FromKeyValue for Nelectrons {
 }
 
 impl ToCell for Nelectrons {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NELECTRONS", CellValue::Float(self.0))
     }
 }
 
 impl ToCellValue for Nelectrons {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Float(self.0)
     }
 }

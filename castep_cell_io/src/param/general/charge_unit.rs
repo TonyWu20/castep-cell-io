@@ -44,13 +44,13 @@ impl FromKeyValue for ChargeUnit {
 }
 
 impl ToCell for ChargeUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("CHARGE_UNIT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for ChargeUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 ChargeUnit::E => "e",

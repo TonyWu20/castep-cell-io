@@ -28,4 +28,16 @@ impl FromKeyValue for MdOptDampedDeltaT {
     }
 }
 
+impl ToCell for MdOptDampedDeltaT {
+    fn to_cell(&self) -> Cell<'_> {
+        Cell::KeyValue("MD_OPT_DAMPED_DELTA_T", self.to_cell_value())
+    }
+}
+
+impl ToCellValue for MdOptDampedDeltaT {
+    fn to_cell_value(&self) -> CellValue<'_> {
+        CellValue::Bool(self.0)
+    }
+}
+
 

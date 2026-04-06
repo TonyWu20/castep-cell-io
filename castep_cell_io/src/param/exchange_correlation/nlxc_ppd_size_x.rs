@@ -29,13 +29,13 @@ impl FromKeyValue for NlxcPpdSizeX {
 }
 
 impl ToCell for NlxcPpdSizeX {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NLXC_PPD_SIZE_X", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for NlxcPpdSizeX {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

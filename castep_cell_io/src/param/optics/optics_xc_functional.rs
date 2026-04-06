@@ -86,13 +86,13 @@ impl FromKeyValue for OpticXcFunctional {
 }
 
 impl ToCell for OpticXcFunctional {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("OPTICS_XC_FUNCTIONAL", self.to_cell_value())
     }
 }
 
 impl ToCellValue for OpticXcFunctional {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 OpticXcFunctional::Lda => "LDA",

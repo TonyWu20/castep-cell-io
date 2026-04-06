@@ -32,7 +32,7 @@ impl FromCellValue for SupercellKpointListCastepEntry {
 }
 
 impl ToCellValue for SupercellKpointListCastepEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             self.coord
                 .into_iter()
@@ -52,8 +52,9 @@ impl ToCellValue for SupercellKpointListCastepEntry {
 ///    R2i R2j R2k R2w
 /// ...
 /// %ENDBLOCK SUPERCELL_KPOINT_LIST_CASTEP
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct SupercellKpointListCastep {
+    #[builder(default)]
     pub kpoints: Vec<SupercellKpointListCastepEntry>,
 }
 
@@ -70,7 +71,7 @@ impl FromBlock for SupercellKpointListCastep {
 }
 
 impl ToCell for SupercellKpointListCastep {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "SUPERCELL_KPOINT_LIST_CASTEP",
             self.kpoints

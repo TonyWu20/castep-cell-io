@@ -39,13 +39,13 @@ impl FromKeyValue for PspotBetaPhiType {
 }
 
 impl ToCell for PspotBetaPhiType {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("PSPOT_BETA_PHI_TYPE", self.to_cell_value())
     }
 }
 
 impl ToCellValue for PspotBetaPhiType {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 PspotBetaPhiType::Reciprocal => "RECIPROCAL",

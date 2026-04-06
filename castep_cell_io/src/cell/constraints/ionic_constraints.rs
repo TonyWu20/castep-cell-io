@@ -11,7 +11,7 @@ use crate::cell::species::Species;
 /// - CCC/Ic: Species (symbol or atomic number)
 /// - In: Ion number within the species
 /// - Rix, Riy, Riz: Coefficients for x, y, z Cartesian coordinates
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct IonicConstraintEntry {
     /// The constraint number.
     pub constraint_number: u32,
@@ -50,7 +50,7 @@ impl FromCellValue for IonicConstraintEntry {
 }
 
 impl ToCellValue for IonicConstraintEntry {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Array(
             vec![
                 CellValue::UInt(self.constraint_number),
@@ -73,9 +73,10 @@ impl ToCellValue for IonicConstraintEntry {
 /// I2 CCC2/I2 In2 R2i R2j R2k
 /// ...
 /// %ENDBLOCK IONIC_CONSTRAINTS
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct IonicConstraints {
     /// The list of constraint entries.
+    #[builder(default)]
     pub constraints: Vec<IonicConstraintEntry>,
 }
 
@@ -92,7 +93,7 @@ impl FromBlock for IonicConstraints {
 }
 
 impl ToCell for IonicConstraints {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "IONIC_CONSTRAINTS",
             self.constraints
@@ -206,6 +207,130 @@ mod tests {
     #[test]
     fn test_ionic_constraints_block_name() {
         assert_eq!(IonicConstraints::BLOCK_NAME, "IONIC_CONSTRAINTS");
+    }
+
+    // Builder pattern tests
+    #[test]
+    fn test_ionic_constraint_entry_builder_basic() {
+        let entry = IonicConstraintEntry::builder()
+            .constraint_number(1)
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .coefficients([1.0, 0.0, 0.0])
+            .build();
+
+        assert_eq!(entry.constraint_number, 1);
+        assert_eq!(entry.species, Species::Symbol("Fe".to_string()));
+        assert_eq!(entry.ion_number, 1);
+        assert_eq!(entry.coefficients, [1.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_ionic_constraints_builder_empty() {
+        let constraints = IonicConstraints::builder().build();
+        assert_eq!(constraints.constraints.len(), 0);
+    }
+
+    #[test]
+    fn test_ionic_constraints_builder_single_entry() {
+        let entry = IonicConstraintEntry::builder()
+            .constraint_number(1)
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .coefficients([1.0, 0.0, 0.0])
+            .build();
+
+        let constraints = IonicConstraints::builder()
+            .constraints(vec![entry.clone()])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 1);
+        assert_eq!(constraints.constraints[0].constraint_number, 1);
+    }
+
+    #[test]
+    fn test_ionic_constraints_builder_multiple_entries() {
+        let entry1 = IonicConstraintEntry::builder()
+            .constraint_number(1)
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .coefficients([1.0, 0.0, 0.0])
+            .build();
+
+        let entry2 = IonicConstraintEntry::builder()
+            .constraint_number(2)
+            .species(Species::Symbol("O".to_string()))
+            .ion_number(2)
+            .coefficients([0.0, 1.0, 0.0])
+            .build();
+
+        let constraints = IonicConstraints::builder()
+            .constraints(vec![entry1.clone(), entry2.clone()])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 2);
+        assert_eq!(constraints.constraints[0].constraint_number, 1);
+        assert_eq!(constraints.constraints[1].constraint_number, 2);
+    }
+
+    #[test]
+    fn test_ionic_constraints_builder_set_entire_vec() {
+        let entries = vec![
+            IonicConstraintEntry::builder()
+                .constraint_number(1)
+                .species(Species::Symbol("Fe".to_string()))
+                .ion_number(1)
+                .coefficients([1.0, 0.0, 0.0])
+                .build(),
+            IonicConstraintEntry::builder()
+                .constraint_number(2)
+                .species(Species::Symbol("O".to_string()))
+                .ion_number(2)
+                .coefficients([0.0, 1.0, 0.0])
+                .build(),
+        ];
+
+        let constraints = IonicConstraints::builder()
+            .constraints(entries)
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 2);
+        assert_eq!(constraints.constraints[0].constraint_number, 1);
+        assert_eq!(constraints.constraints[1].constraint_number, 2);
+    }
+
+    #[test]
+    fn test_ionic_constraints_builder_method_chaining() {
+        let entry1 = IonicConstraintEntry::builder()
+            .constraint_number(1)
+            .species(Species::Symbol("Fe".to_string()))
+            .ion_number(1)
+            .coefficients([1.0, 0.0, 0.0])
+            .build();
+
+        let entry2 = IonicConstraintEntry::builder()
+            .constraint_number(2)
+            .species(Species::Symbol("O".to_string()))
+            .ion_number(2)
+            .coefficients([0.0, 1.0, 0.0])
+            .build();
+
+        let entry3 = IonicConstraintEntry::builder()
+            .constraint_number(3)
+            .species(Species::Symbol("C".to_string()))
+            .ion_number(3)
+            .coefficients([0.0, 0.0, 1.0])
+            .build();
+
+        let constraints = IonicConstraints::builder()
+            .constraints(vec![entry1, entry2, entry3])
+            .build();
+
+        assert_eq!(constraints.constraints.len(), 3);
+        assert_eq!(constraints.constraints[0].constraint_number, 1);
+        assert_eq!(constraints.constraints[1].constraint_number, 2);
+        assert_eq!(constraints.constraints[2].constraint_number, 3);
+        assert_eq!(constraints.constraints[2].species, Species::Symbol("C".to_string()));
     }
 }
 

@@ -43,13 +43,13 @@ impl FromKeyValue for OptStrategy {
 }
 
 impl ToCell for OptStrategy {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("OPT_STRATEGY", self.to_cell_value())
     }
 }
 
 impl ToCellValue for OptStrategy {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 OptStrategy::Speed => "Speed",

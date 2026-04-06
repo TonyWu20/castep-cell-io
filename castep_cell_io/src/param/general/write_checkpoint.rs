@@ -97,7 +97,7 @@ fn parse_action(s: &str) -> CResult<WriteCheckpointAction> {
 }
 
 impl ToCell for WriteCheckpoint {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         // Construct the string value based on the struct fields.
         let action_str = match self.action {
             WriteCheckpointAction::None => "NONE",
@@ -133,7 +133,7 @@ impl ToCell for WriteCheckpoint {
 }
 
 impl ToCellValue for WriteCheckpoint {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let action_str = match self.action {
             WriteCheckpointAction::None => "NONE",
             WriteCheckpointAction::Minimal => "MINIMAL",

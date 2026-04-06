@@ -22,13 +22,13 @@ impl FromKeyValue for BackupInterval {
 }
 
 impl ToCell for BackupInterval {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("BACKUP_INTERVAL", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for BackupInterval {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

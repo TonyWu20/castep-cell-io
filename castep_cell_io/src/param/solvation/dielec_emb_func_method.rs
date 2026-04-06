@@ -38,13 +38,13 @@ impl FromKeyValue for DielecEmbFuncMethod {
 }
 
 impl ToCell for DielecEmbFuncMethod {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("DIELEC_EMB_FUNC_METHOD", self.to_cell_value())
     }
 }
 
 impl ToCellValue for DielecEmbFuncMethod {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 DielecEmbFuncMethod::Fg => "FG",

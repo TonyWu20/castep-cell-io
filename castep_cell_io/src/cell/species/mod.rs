@@ -69,7 +69,7 @@ impl FromCellValue for Species {
 }
 
 impl ToCellValue for Species {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         match self {
             Species::Symbol(s) => CellValue::String(s.clone()),
             Species::AtomicNumber(u) => CellValue::UInt(*u),

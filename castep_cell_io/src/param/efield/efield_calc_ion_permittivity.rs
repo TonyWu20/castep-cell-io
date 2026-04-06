@@ -35,13 +35,13 @@ impl FromKeyValue for EfieldCalcIonPermittivity {
 }
 
 impl ToCell for EfieldCalcIonPermittivity {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("EFIELD_CALC_ION_PERMITTIVITY", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for EfieldCalcIonPermittivity {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

@@ -51,13 +51,13 @@ impl FromCellValue for VolumeUnit {
 }
 
 impl ToCell for VolumeUnit {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("VOLUME_UNIT", self.to_cell_value())
     }
 }
 
 impl ToCellValue for VolumeUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 VolumeUnit::Bohr3 => "bohr**3",

@@ -38,13 +38,13 @@ impl FromKeyValue for FiniteBasisNpoints {
 }
 
 impl ToCell for FiniteBasisNpoints {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("FINITE_BASIS_NPOINTS", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for FiniteBasisNpoints {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

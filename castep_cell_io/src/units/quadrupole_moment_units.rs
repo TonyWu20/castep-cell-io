@@ -36,7 +36,7 @@ impl FromCellValue for QuadrupoleMomentUnit {
 }
 
 impl ToCellValue for QuadrupoleMomentUnit {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         match self {
             QuadrupoleMomentUnit::Barn => CellValue::String("barn".into()),
             QuadrupoleMomentUnit::Fm2 => CellValue::String("fm2".into()),

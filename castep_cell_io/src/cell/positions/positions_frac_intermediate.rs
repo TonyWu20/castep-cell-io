@@ -13,9 +13,10 @@ use super::positions_frac::PositionFracEntry;
 /// Species2/I2 R2i R2j R2k [SPIN S2]
 /// ...
 /// %ENDBLOCK POSITIONS_FRAC_INTERMEDIATE
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, bon::Builder)]
 pub struct PositionsFracIntermediate {
     /// The list of atom entries.
+    #[builder(default)]
     pub positions: Vec<PositionFracEntry>,
 }
 
@@ -33,7 +34,7 @@ impl FromBlock for PositionsFracIntermediate {
 
 impl ToCell for PositionsFracIntermediate {
     /// Converts the block into the intermediate `Cell` representation for serialization.
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
             "POSITIONS_FRAC_INTERMEDIATE",
             self.positions

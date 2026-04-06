@@ -34,13 +34,13 @@ impl FromKeyValue for FixAllCell {
 }
 
 impl ToCell for FixAllCell {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("FIX_ALL_CELL", CellValue::Bool(self.0))
     }
 }
 
 impl ToCellValue for FixAllCell {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Bool(self.0)
     }
 }

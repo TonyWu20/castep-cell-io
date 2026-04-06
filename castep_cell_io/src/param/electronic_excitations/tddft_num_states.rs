@@ -29,13 +29,13 @@ impl FromKeyValue for TddftNumStates {
 }
 
 impl ToCell for TddftNumStates {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("TDDFT_NUM_STATES", CellValue::UInt(self.0))
     }
 }
 
 impl ToCellValue for TddftNumStates {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::UInt(self.0)
     }
 }

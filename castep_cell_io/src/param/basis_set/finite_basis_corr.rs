@@ -53,7 +53,7 @@ impl FromKeyValue for FiniteBasisCorr {
 }
 
 impl ToCell for FiniteBasisCorr {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         let value = match self {
             FiniteBasisCorr::None => 0,
             FiniteBasisCorr::Manual => 1,
@@ -64,7 +64,7 @@ impl ToCell for FiniteBasisCorr {
 }
 
 impl ToCellValue for FiniteBasisCorr {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         let value = match self {
             FiniteBasisCorr::None => 0,
             FiniteBasisCorr::Manual => 1,

@@ -27,13 +27,13 @@ impl FromKeyValue for NumDumpCycles {
 }
 
 impl ToCell for NumDumpCycles {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("NUM_DUMP_CYCLES", CellValue::Int(self.0))
     }
 }
 
 impl ToCellValue for NumDumpCycles {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::Int(self.0)
     }
 }

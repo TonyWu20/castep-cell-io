@@ -50,13 +50,13 @@ impl FromKeyValue for MdEnsemble {
 }
 
 impl ToCell for MdEnsemble {
-    fn to_cell(&self) -> Cell {
+    fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue("MD_ENSEMBLE", self.to_cell_value())
     }
 }
 
 impl ToCellValue for MdEnsemble {
-    fn to_cell_value(&self) -> CellValue {
+    fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
                 MdEnsemble::Nvt => "NVT",
