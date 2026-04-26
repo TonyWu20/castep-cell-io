@@ -59,7 +59,8 @@ pub struct MagresKpointsList {
 }
 
 impl FromBlock for MagresKpointsList {
-    const BLOCK_NAME: &'static str = "MAGRES_KPOINTS_LIST";
+    const BLOCK_NAME: &'static str = "MAGRES_KPOINT_LIST";
+    const BLOCK_ALIASES: &'static [&'static str] = &["MAGRES_KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpoints = rows
@@ -73,7 +74,7 @@ impl FromBlock for MagresKpointsList {
 impl ToCell for MagresKpointsList {
     fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
-            "MAGRES_KPOINTS_LIST",
+            "MAGRES_KPOINT_LIST",
             self.kpoints
                 .iter()
                 .map(|entry| entry.to_cell_value())
@@ -155,7 +156,7 @@ mod tests {
 
     #[test]
     fn test_magres_kpoints_list_block_name() {
-        assert_eq!(MagresKpointsList::BLOCK_NAME, "MAGRES_KPOINTS_LIST");
+        assert_eq!(MagresKpointsList::BLOCK_NAME, "MAGRES_KPOINT_LIST");
     }
 
     #[test]
@@ -169,7 +170,7 @@ mod tests {
         let cell = kpts.to_cell();
         match cell {
             Cell::Block(name, values) => {
-                assert_eq!(name, "MAGRES_KPOINTS_LIST");
+                assert_eq!(name, "MAGRES_KPOINT_LIST");
                 assert_eq!(values.len(), 1);
             }
             _ => panic!("Expected Block"),

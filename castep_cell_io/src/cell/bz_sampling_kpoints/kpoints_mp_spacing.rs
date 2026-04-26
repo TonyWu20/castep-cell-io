@@ -46,7 +46,8 @@ impl FromCellValue for KpointsMpSpacing {
 }
 
 impl FromKeyValue for KpointsMpSpacing {
-    const KEY_NAME: &'static str = "KPOINTS_MP_SPACING";
+    const KEY_NAME: &'static str = "KPOINT_MP_SPACING";
+    const KEY_ALIASES: &'static [&'static str] = &["KPOINTS_MP_SPACING"];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)
@@ -56,7 +57,7 @@ impl FromKeyValue for KpointsMpSpacing {
 impl ToCell for KpointsMpSpacing {
     fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
-            "KPOINTS_MP_SPACING",
+            "KPOINT_MP_SPACING",
             CellValue::Array(vec![
                 CellValue::Float(self.value),
                 self.unit
@@ -130,7 +131,7 @@ mod tests {
         let cell = spacing.to_cell();
         match cell {
             Cell::KeyValue(name, CellValue::Array(arr)) => {
-                assert_eq!(name, "KPOINTS_MP_SPACING");
+                assert_eq!(name, "KPOINT_MP_SPACING");
                 assert_eq!(arr.len(), 2);
             }
             _ => panic!("Expected Cell::KeyValue with Array"),
@@ -146,7 +147,7 @@ mod tests {
         let cell = spacing.to_cell();
         match cell {
             Cell::KeyValue(name, CellValue::Array(arr)) => {
-                assert_eq!(name, "KPOINTS_MP_SPACING");
+                assert_eq!(name, "KPOINT_MP_SPACING");
                 assert_eq!(arr.len(), 2);
             }
             _ => panic!("Expected Cell::KeyValue with Array"),

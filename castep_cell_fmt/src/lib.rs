@@ -57,8 +57,8 @@ pub use parse::{FromBlock, FromCellFile, FromCellValue, FromKeyValue, parse};
 pub use parser::parse_cell_file;
 pub use parser::rich_error;
 pub use query::{
-    find_block, find_keyvalue, has_flag, row_as_f64_n, value_as_bool, value_as_f64, value_as_i32,
-    value_as_str, value_as_string, value_as_u32,
+    find_block, find_block_any, find_keyvalue, has_flag, row_as_f64_n, value_as_bool, value_as_f64,
+    value_as_i32, value_as_str, value_as_string, value_as_u32,
 };
 
 // Intermediate representation for parsed data

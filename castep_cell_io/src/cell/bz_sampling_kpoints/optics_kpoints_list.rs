@@ -59,7 +59,8 @@ pub struct OpticsKpointsList {
 }
 
 impl FromBlock for OpticsKpointsList {
-    const BLOCK_NAME: &'static str = "OPTICS_KPOINTS_LIST";
+    const BLOCK_NAME: &'static str = "OPTICS_KPOINT_LIST";
+    const BLOCK_ALIASES: &'static [&'static str] = &["OPTICS_KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpoints = rows
@@ -73,7 +74,7 @@ impl FromBlock for OpticsKpointsList {
 impl ToCell for OpticsKpointsList {
     fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
-            "OPTICS_KPOINTS_LIST",
+            "OPTICS_KPOINT_LIST",
             self.kpoints
                 .iter()
                 .map(|entry| entry.to_cell_value())
@@ -155,7 +156,7 @@ mod tests {
 
     #[test]
     fn test_optics_kpoints_list_block_name() {
-        assert_eq!(OpticsKpointsList::BLOCK_NAME, "OPTICS_KPOINTS_LIST");
+        assert_eq!(OpticsKpointsList::BLOCK_NAME, "OPTICS_KPOINT_LIST");
     }
 
     #[test]
@@ -169,7 +170,7 @@ mod tests {
         let cell = kpts.to_cell();
         match cell {
             Cell::Block(name, values) => {
-                assert_eq!(name, "OPTICS_KPOINTS_LIST");
+                assert_eq!(name, "OPTICS_KPOINT_LIST");
                 assert_eq!(values.len(), 1);
             }
             _ => panic!("Expected Block"),

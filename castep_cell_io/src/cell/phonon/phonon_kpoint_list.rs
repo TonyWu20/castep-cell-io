@@ -60,6 +60,7 @@ pub struct PhononKpointList {
 
 impl FromBlock for PhononKpointList {
     const BLOCK_NAME: &'static str = "PHONON_KPOINT_LIST";
+    const BLOCK_ALIASES: &'static [&'static str] = &["PHONON_KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpoints = rows

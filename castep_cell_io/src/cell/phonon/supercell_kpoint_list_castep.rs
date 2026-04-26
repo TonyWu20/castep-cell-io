@@ -60,6 +60,7 @@ pub struct SupercellKpointListCastep {
 
 impl FromBlock for SupercellKpointListCastep {
     const BLOCK_NAME: &'static str = "SUPERCELL_KPOINT_LIST_CASTEP";
+    const BLOCK_ALIASES: &'static [&'static str] = &["SUPERCELL_KPOINTS_LIST_CASTEP"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpoints = rows

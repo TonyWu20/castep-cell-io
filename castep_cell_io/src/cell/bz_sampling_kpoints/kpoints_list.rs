@@ -18,7 +18,8 @@ pub struct KpointsList {
 }
 
 impl FromBlock for KpointsList {
-    const BLOCK_NAME: &'static str = "KPOINTS_LIST";
+    const BLOCK_NAME: &'static str = "KPOINT_LIST";
+    const BLOCK_ALIASES: &'static [&'static str] = &["KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpts = rows
@@ -32,7 +33,7 @@ impl FromBlock for KpointsList {
 impl ToCell for KpointsList {
     fn to_cell(&self) -> Cell<'_> {
         Cell::Block(
-            "KPOINTS_LIST",
+            "KPOINT_LIST",
             self.kpts
                 .iter()
                 .map(|kpt| kpt.to_cell_value())
@@ -75,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_kpoints_list_block_name() {
-        assert_eq!(KpointsList::BLOCK_NAME, "KPOINTS_LIST");
+        assert_eq!(KpointsList::BLOCK_NAME, "KPOINT_LIST");
     }
 
     #[test]
@@ -89,7 +90,7 @@ mod tests {
         let cell = kpts.to_cell();
         match cell {
             Cell::Block(name, values) => {
-                assert_eq!(name, "KPOINTS_LIST");
+                assert_eq!(name, "KPOINT_LIST");
                 assert_eq!(values.len(), 1);
             }
             _ => panic!("Expected Block"),

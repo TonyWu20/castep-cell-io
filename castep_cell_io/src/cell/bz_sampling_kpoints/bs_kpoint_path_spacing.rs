@@ -47,6 +47,7 @@ impl FromCellValue for BsKpointPathSpacing {
 
 impl FromKeyValue for BsKpointPathSpacing {
     const KEY_NAME: &'static str = "BS_KPOINT_PATH_SPACING";
+    const KEY_ALIASES: &'static [&'static str] = &["BS_KPOINTS_PATH_SPACING"];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)

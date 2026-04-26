@@ -19,7 +19,8 @@ pub struct BSKpointList {
 }
 
 impl FromBlock for BSKpointList {
-    const BLOCK_NAME: &'static str = "BS_KPOINTS_LIST";
+    const BLOCK_NAME: &'static str = "BS_KPOINT_LIST";
+    const BLOCK_ALIASES: &'static [&'static str] = &["BS_KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpts = rows
@@ -76,7 +77,7 @@ mod tests {
 
     #[test]
     fn test_bs_kpoints_list_block_name() {
-        assert_eq!(BSKpointList::BLOCK_NAME, "BS_KPOINTS_LIST");
+        assert_eq!(BSKpointList::BLOCK_NAME, "BS_KPOINT_LIST");
     }
 
     #[test]

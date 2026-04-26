@@ -33,7 +33,8 @@ impl FromCellValue for KpointsMpGrid {
 }
 
 impl FromKeyValue for KpointsMpGrid {
-    const KEY_NAME: &'static str = "KPOINTS_MP_GRID";
+    const KEY_NAME: &'static str = "KPOINT_MP_GRID";
+    const KEY_ALIASES: &'static [&'static str] = &["KPOINTS_MP_GRID"];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)
@@ -43,7 +44,7 @@ impl FromKeyValue for KpointsMpGrid {
 impl ToCell for KpointsMpGrid {
     fn to_cell(&self) -> Cell<'_> {
         Cell::KeyValue(
-            "KPOINTS_MP_GRID",
+            "KPOINT_MP_GRID",
             CellValue::Array(
                 self.0
                     .iter()
@@ -127,7 +128,7 @@ mod tests {
         let cell = grid.to_cell();
         match cell {
             Cell::KeyValue(name, CellValue::Array(arr)) => {
-                assert_eq!(name, "KPOINTS_MP_GRID");
+                assert_eq!(name, "KPOINT_MP_GRID");
                 assert_eq!(arr.len(), 3);
                 assert_eq!(arr[0], CellValue::UInt(3));
                 assert_eq!(arr[1], CellValue::UInt(4));

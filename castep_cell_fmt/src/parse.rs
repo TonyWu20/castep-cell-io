@@ -18,30 +18,60 @@ pub trait FromCellValue: Sized {
 /// Block-level: parse a block's rows into a struct.
 ///
 /// `BLOCK_NAME` is the case-insensitive block name used for lookup.
+/// `BLOCK_ALIASES` provides alternative block names also accepted during deserialization.
+/// The primary `BLOCK_NAME` is tried first; aliases are checked only if it is not found.
 pub trait FromBlock: Sized {
     const BLOCK_NAME: &'static str;
+
+    /// Alternative block names accepted during deserialization.
+    /// Checked in order after `BLOCK_NAME` is not found.
+    /// Defaults to `&[]` (no aliases) for backward compatibility.
+    const BLOCK_ALIASES: &'static [&'static str] = &[];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self>;
 
     /// Provided: find the block in the token slice and parse it.
     fn from_cells(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::from_block_rows(find_block(tokens, Self::BLOCK_NAME)?)
+        match find_block(tokens, Self::BLOCK_NAME) {
+            Ok(rows) => Self::from_block_rows(rows),
+            Err(Error::KeyNotFound(_)) => {
+                for alias in Self::BLOCK_ALIASES {
+                    if let Ok(rows) = find_block(tokens, alias) {
+                        return Self::from_block_rows(rows);
+                    }
+                }
+                Err(Error::KeyNotFound(Self::BLOCK_NAME.to_string()))
+            }
+            Err(e) => Err(e),
+        }
     }
 }
 
 /// KeyValue-level: parse the value at a known key into a type.
 ///
 /// `KEY_NAME` is the case-insensitive key used for lookup.
+/// `KEY_ALIASES` provides alternative key names also accepted during deserialization.
 pub trait FromKeyValue: Sized {
     const KEY_NAME: &'static str;
 
+    /// Alternative key names accepted during deserialization.
+    /// Defaults to `&[]` (no aliases) for backward compatibility.
+    const KEY_ALIASES: &'static [&'static str] = &[];
+
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self>;
 
-    /// Provided: returns `None` if the key is absent (optional fields).
+    /// Provided: returns `None` if the key and all aliases are absent (optional fields).
     fn from_cells(tokens: &[Cell<'_>]) -> CResult<Option<Self>> {
         match find_keyvalue(tokens, Self::KEY_NAME) {
             Ok(v) => Self::from_cell_value_kv(v).map(Some),
-            Err(Error::KeyNotFound(_)) => Ok(None),
+            Err(Error::KeyNotFound(_)) => {
+                for alias in Self::KEY_ALIASES {
+                    if let Ok(v) = find_keyvalue(tokens, alias) {
+                        return Self::from_cell_value_kv(v).map(Some);
+                    }
+                }
+                Ok(None)
+            }
             Err(e) => Err(e),
         }
     }

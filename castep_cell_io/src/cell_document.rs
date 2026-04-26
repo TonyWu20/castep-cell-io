@@ -59,7 +59,7 @@ use bon::Builder;
 use castep_cell_fmt::{
     CResult, Cell, CellValue, Error, ToCell, ToCellFile,
     parse::{FromBlock, FromCellFile},
-    query::find_block,
+    query::{find_block, find_block_any},
 };
 
 use crate::cell::{
@@ -383,27 +383,27 @@ impl FromCellFile for CellDocument {
             )?)?)
         };
 
-        let kpoints_list = find_block(cells, "KPOINTS_LIST")
+        let kpoints_list = find_block_any(cells, &["KPOINT_LIST", "KPOINTS_LIST"])
             .ok()
             .map(|rows| KpointsList::from_block_rows(rows))
             .transpose()?;
 
-        let bs_kpoint_path = find_block(cells, "BS_KPOINT_PATH")
+        let bs_kpoint_path = find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
             .ok()
             .map(|rows| BsKpointPath::from_block_rows(rows))
             .transpose()?;
 
-        let bs_kpoints_list = find_block(cells, "BS_KPOINTS_LIST")
+        let bs_kpoints_list = find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
             .ok()
             .map(|rows| BSKpointList::from_block_rows(rows))
             .transpose()?;
 
-        let optics_kpoints_list = find_block(cells, "OPTICS_KPOINTS_LIST")
+        let optics_kpoints_list = find_block_any(cells, &["OPTICS_KPOINT_LIST", "OPTICS_KPOINTS_LIST"])
             .ok()
             .map(|rows| OpticsKpointsList::from_block_rows(rows))
             .transpose()?;
 
-        let magres_kpoints_list = find_block(cells, "MAGRES_KPOINTS_LIST")
+        let magres_kpoints_list = find_block_any(cells, &["MAGRES_KPOINT_LIST", "MAGRES_KPOINTS_LIST"])
             .ok()
             .map(|rows| MagresKpointsList::from_block_rows(rows))
             .transpose()?;
@@ -490,12 +490,12 @@ impl FromCellFile for CellDocument {
             .map(|rows| SedcCustomParams::from_block_rows(rows))
             .transpose()?;
 
-        let phonon_kpoint_list = find_block(cells, "PHONON_KPOINT_LIST")
+        let phonon_kpoint_list = find_block_any(cells, &["PHONON_KPOINT_LIST", "PHONON_KPOINTS_LIST"])
             .ok()
             .map(|rows| PhononKpointList::from_block_rows(rows))
             .transpose()?;
 
-        let phonon_kpoint_path = find_block(cells, "PHONON_KPOINT_PATH")
+        let phonon_kpoint_path = find_block_any(cells, &["PHONON_KPOINT_PATH", "PHONON_KPOINTS_PATH"])
             .ok()
             .map(|rows| PhononKpointPath::from_block_rows(rows))
             .transpose()?;
@@ -505,7 +505,7 @@ impl FromCellFile for CellDocument {
             .map(|rows| PhononGammaDirections::from_block_rows(rows))
             .transpose()?;
 
-        let phonon_fine_kpoint_list = find_block(cells, "PHONON_FINE_KPOINT_LIST")
+        let phonon_fine_kpoint_list = find_block_any(cells, &["PHONON_FINE_KPOINT_LIST", "PHONON_FINE_KPOINTS_LIST"])
             .ok()
             .map(|rows| PhononFineKpointList::from_block_rows(rows))
             .transpose()?;
@@ -515,7 +515,7 @@ impl FromCellFile for CellDocument {
             .map(|rows| PhononSupercellMatrix::from_block_rows(rows))
             .transpose()?;
 
-        let supercell_kpoint_list = find_block(cells, "SUPERCELL_KPOINT_LIST")
+        let supercell_kpoint_list = find_block_any(cells, &["SUPERCELL_KPOINT_LIST", "SUPERCELL_KPOINTS_LIST"])
             .ok()
             .map(|rows| SupercellKpointListCastep::from_block_rows(rows))
             .transpose()?;

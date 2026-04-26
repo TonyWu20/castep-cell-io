@@ -58,6 +58,7 @@ pub struct BsKpointPath {
 
 impl FromBlock for BsKpointPath {
     const BLOCK_NAME: &'static str = "BS_KPOINT_PATH";
+    const BLOCK_ALIASES: &'static [&'static str] = &["BS_KPOINTS_PATH"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let points = rows

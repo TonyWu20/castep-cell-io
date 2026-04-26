@@ -57,6 +57,7 @@ pub struct PhononKpointPath {
 
 impl FromBlock for PhononKpointPath {
     const BLOCK_NAME: &'static str = "PHONON_KPOINT_PATH";
+    const BLOCK_ALIASES: &'static [&'static str] = &["PHONON_KPOINTS_PATH"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let points = rows

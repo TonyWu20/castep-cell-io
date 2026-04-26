@@ -14,6 +14,17 @@ pub fn find_block<'a>(tokens: &'a [Cell<'a>], name: &str) -> CResult<&'a [CellVa
     Err(Error::KeyNotFound(name.to_string()))
 }
 
+/// Find a block by trying multiple names in order (case-insensitive).
+/// Returns the rows of the first matching block.
+/// If no block matches any name, returns `Error::KeyNotFound` with the first name.
+pub fn find_block_any<'a>(tokens: &'a [Cell<'a>], names: &[&str]) -> CResult<&'a [CellValue<'a>]> {
+    let first_name = names.first().copied().unwrap_or("");
+    names
+        .iter()
+        .find_map(|name| find_block(tokens, name).ok())
+        .ok_or_else(|| Error::KeyNotFound(first_name.to_string()))
+}
+
 /// Find a key-value entry by key (case-insensitive). Returns reference to its CellValue.
 pub fn find_keyvalue<'a>(tokens: &'a [Cell<'a>], key: &str) -> CResult<&'a CellValue<'a>> {
     for token in tokens {
@@ -137,7 +148,7 @@ pub fn row_as_i32_n<const N: usize>(v: &CellValue<'_>) -> CResult<[i32; N]> {
 #[cfg(test)]
 mod query_test {
     use crate::{CellValue, parse_cell_file};
-    use super::{find_block, find_keyvalue, has_flag, row_as_f64_n, row_as_i32_n, value_as_bool, value_as_f64};
+    use super::{find_block, find_block_any, find_keyvalue, has_flag, row_as_f64_n, row_as_i32_n, value_as_bool, value_as_f64};
 
     const MIXED_CASE: &str = r#"
 LATTICE_CART : dummy
@@ -170,6 +181,19 @@ SYMMETRY_GENERATE
         assert!(find_block(&tokens, "Positions_Frac").is_ok());
         // Non-existent block returns Err
         assert!(find_block(&tokens, "no_such_block").is_err());
+    }
+
+    #[test]
+    fn find_block_any_returns_first_match() {
+        let tokens = parse_cell_file(MIXED_CASE).unwrap();
+        let rows = find_block_any(&tokens, &["no_such", "POSITIONS_FRAC", "positions_frac"]).unwrap();
+        assert_eq!(rows.len(), 1);
+    }
+
+    #[test]
+    fn find_block_any_returns_err_for_no_match() {
+        let tokens = parse_cell_file(MIXED_CASE).unwrap();
+        assert!(find_block_any(&tokens, &["no_such", "nope"]).is_err());
     }
 
     #[test]
