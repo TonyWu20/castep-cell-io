@@ -23,10 +23,18 @@ All in `castep_cell_io/src/cell/`.
 - Update `bz_sampling_kpoints/mod.rs` to register + re-export
 
 ### 1b. Spectral k-point types (in `bz_sampling_kpoints/`)
+
+**Counterparts to existing BS_ types (first-class types, not parsing aliases):**
+- **`spectral_kpoint_path.rs`** — `SpectralKpointPath { points: Vec<SpectralKpointPathEntry> }`, `BLOCK_NAME = "SPECTRAL_KPOINT_PATH"`
+- **`spectral_kpoints_list.rs`** — `SpectralKpointsList { ... }`, `BLOCK_NAME = "SPECTRAL_KPOINTS_LIST"`
+- **`spectral_kpoint_path_spacing.rs`** — `SpectralKpointPathSpacing { value: f64, unit: Option<InvLengthUnit> }`, `KEY_NAME = "SPECTRAL_KPOINT_PATH_SPACING"`
+
+**Net-new types (no BS_ equivalent):**
 - **`spectral_kpoints_mp_grid.rs`** — `SpectralKpointsMpGrid(pub [u32; 3])`, `KEY_NAME = "SPECTRAL_KPOINTS_MP_GRID"`
 - **`spectral_kpoints_mp_spacing.rs`** — `SpectralKpointsMpSpacing { value: f64, unit: Option<InvLengthUnit> }`, `KEY_NAME = "SPECTRAL_KPOINTS_MP_SPACING"`
 - **`spectral_kpoints_mp_offset.rs`** — `SpectralKpointsMpOffset(pub [f64; 3])`, `KEY_NAME = "SPECTRAL_KPOINTS_MP_OFFSET"`
-- Update `bz_sampling_kpoints/mod.rs`
+
+Update `bz_sampling_kpoints/mod.rs`
 
 ### 1c. Symmetry types (in `symmetry/`)
 - **`symmetry_generate.rs`** — `SymmetryGenerate` (tag type, flag keyword — uses `has_flag`)
@@ -52,8 +60,8 @@ All in `castep_cell_io/src/cell/`.
 In `cell_document.rs`:
 - Add `Lattice::Abc(LatticeABC)` to the enum
 - Add `impl From<LatticeABC> for Lattice`
+- Add `impl From<LatticeCart> for Lattice` (missing — bon `#[builder(on(Lattice, into))]` requires it)
 - Update `ToCell for Lattice` to handle both variants
-- Add `ToCell for LatticeABC` alias or handle in parsing
 
 ---
 
@@ -63,15 +71,23 @@ New files in `castep_cell_io/src/cell/` (registered in `cell/mod.rs`):
 
 ### Group structs (each gets its own file):
 
+All group structs derive `Debug, Clone, Default, bon::Builder`. `Default` is required so `CellDocument` can use `#[builder(default)]` on each sub-group field.
+
 #### `kpoints_params.rs` — SCF k-point sampling
 - `KpointsParams` with fields: `kpoints_list`, `kpoints_mp_grid`, `kpoints_mp_spacing`, `kpoints_mp_offset`
 - `FromCellFile` / `ToCellFile` / `validate()` (mutex: list/grid/spacing)
 
 #### `spectral_params.rs` — Spectral/BS k-points
-- `SpectralParams` with fields: `bs_kpoint_path`, `bs_kpoints_list`, `bs_kpoint_path_spacing`, `spectral_kpoints_mp_grid`, `spectral_kpoints_mp_spacing`, `spectral_kpoints_mp_offset`
-- `FromCellFile`: check both BS_ and SPECTRAL_ block/key names
-- `ToCellFile`: serialize as BS_
-- `validate()` (mutex: path/list/mp_grid/mp_spacing)
+- `SpectralParams` with 9 fields:
+  - BS_ side: `bs_kpoint_path`, `bs_kpoints_list`, `bs_kpoint_path_spacing`
+  - SPECTRAL_ side: `spectral_kpoint_path`, `spectral_kpoints_list`, `spectral_kpoint_path_spacing`
+  - Net-new: `spectral_kpoints_mp_grid`, `spectral_kpoints_mp_spacing`, `spectral_kpoints_mp_offset`
+- `FromCellFile`: each field parses its own native BLOCK_NAME/KEY_NAME (no dual-name logic)
+- `ToCellFile`: each field serializes under its own native name (BS_ for BS_ types, SPECTRAL_ for SPECTRAL_ types)
+- `validate()`:
+  1. Mutual exclusion per keyword pair (e.g., `bs_kpoint_path` XOR `spectral_kpoint_path`)
+  2. Warning if any BS_ field is set alongside any SPECTRAL_ field (mixed prefix usage)
+  3. Standard mutex: path/list/mp_grid/mp_spacing across all nine fields
 
 #### `optics_magres_params.rs` — Optics + Magres k-points
 - `OpticsMagresParams` with fields: `optics_kpoints_list`, `magres_kpoints_list`
@@ -138,12 +154,20 @@ pub struct CellDocument {
 ## Part 5: Update imports/exports
 
 - `castep_cell_io/src/cell/mod.rs`: register new sub-group modules (as `pub mod`)
-- `castep_cell_io/src/cell_document.rs`: update all imports
-- `castep_cell_io/src/lib.rs`: export `Lattice`, `Positions`, `CellDocument`, `CellDocumentBuilder`
+- `castep_cell_io/src/cell/constraints/mod.rs`: add `pub use cell_constraints::CellConstraints;`
+- `castep_cell_io/src/cell_document.rs`: update all imports, add `impl From<LatticeCart> for Lattice`
+- `castep_cell_io/src/lib.rs`: export `Lattice`, `LatticeABC`, `Positions`, `CellDocument`, `CellDocumentBuilder`, and all sub-group types (`KpointsParams`, `SpectralParams`, etc.)
 
 ---
 
 ## Verification
+
+- For each new keyword type: round-trip tests (`from_cell_value` → `to_cell_value`)
+- For each sub-group: `validate()` unit tests covering each mutual-exclusion case
+- For `CellDocument`: integration tests for full parse-validate-serialize cycle, including:
+  - `cell_constraints` superseding `fix_all_cell`
+  - BS_/SPECTRAL_ mutual-exclusion rejection
+  - Mixed-prefix warning detection
 
 ```bash
 cargo build
