@@ -51,4 +51,4 @@ BS_NBANDS : 64
 
 BIOVIA Materials Studio 2023 Help: Monday, April 24, 2023
 
-[Legal Notices](../../../guide/copyright_page.htm)
+[Legal Notices](../../../guide/copyright_page.htm)\n
