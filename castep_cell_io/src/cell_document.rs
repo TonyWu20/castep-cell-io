@@ -57,16 +57,20 @@
 
 use bon::Builder;
 use castep_cell_fmt::{
-    CResult, Cell, CellValue, Error, ToCell, ToCellFile,
+    CResult, Cell, CellValue, Error, FromKeyValue, ToCell, ToCellFile,
     parse::{FromBlock, FromCellFile},
-    query::{find_block, find_block_any},
+    query::{find_block, find_block_any, has_flag},
 };
 
 use crate::cell::{
     bz_sampling_kpoints::{
-        BSKpointList, BsKpointPath, KpointsList, MagresKpointsList, OpticsKpointsList,
+        BSKpointList, BsKpointPath, BsKpointPathSpacing, KpointsList, KpointsMpGrid,
+        KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
     },
-    constraints::{FixAllCell, FixAllIons, FixCOM, IonicConstraints, NonlinearConstraints},
+    constraints::{
+        CellConstraints, FixAllCell, FixAllIons, FixCOM, FixVOL, IonicConstraints,
+        NonlinearConstraints,
+    },
     external_fields::{ExternalEfield, ExternalPressure},
     lattice_param::LatticeCart,
     phonon::{
@@ -75,7 +79,7 @@ use crate::cell::{
     },
     positions::{PositionsAbs, PositionsFrac},
     species::{HubbardU, SedcCustomParams, SpeciesLcaoStates, SpeciesMass, SpeciesPot, SpeciesQ},
-    symmetry::SymmetryOps,
+    symmetry::{SymmetryOps, SymmetryTol},
     velocities::IonicVelocities,
 };
 
@@ -241,10 +245,26 @@ pub struct CellDocument {
     ///
     /// Corresponds to `%BLOCK MAGRES_KPOINTS_LIST` in CASTEP.
     pub magres_kpoints_list: Option<MagresKpointsList>,
+    /// Monkhorst-Pack grid for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_GRID` in CASTEP.
+    pub kpoints_mp_grid: Option<KpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_SPACING` in CASTEP.
+    pub kpoints_mp_spacing: Option<KpointsMpSpacing>,
+    /// Spacing for band structure k-point path.
+    ///
+    /// Corresponds to `BS_KPOINT_PATH_SPACING` in CASTEP.
+    pub bs_kpoint_path_spacing: Option<BsKpointPathSpacing>,
     /// Explicit symmetry operations.
     ///
     /// Overrides automatic symmetry detection. Corresponds to `%BLOCK SYMMETRY_OPS`.
     pub symmetry_ops: Option<SymmetryOps>,
+    /// Symmetry detection tolerance.
+    ///
+    /// Corresponds to `SYMMETRY_TOL` in CASTEP.
+    pub symmetry_tol: Option<SymmetryTol>,
     /// Fix center of mass during geometry optimization.
     ///
     /// Corresponds to `FIX_COM : TRUE` in CASTEP.
@@ -265,6 +285,14 @@ pub struct CellDocument {
     ///
     /// Corresponds to `FIX_ALL_CELL : TRUE` in CASTEP.
     pub fix_all_cell: Option<FixAllCell>,
+    /// Fix the volume of the cell during optimization.
+    ///
+    /// Corresponds to `FIX_VOL : TRUE` in CASTEP.
+    pub fix_vol: Option<FixVOL>,
+    /// Cell constraints for geometry optimization.
+    ///
+    /// Corresponds to `%BLOCK CELL_CONSTRAINTS` in CASTEP.
+    pub cell_constraints: Option<CellConstraints>,
     /// External electric field applied to the system.
     ///
     /// Corresponds to `%BLOCK EXTERNAL_EFIELD` in CASTEP.
@@ -398,6 +426,8 @@ impl FromCellFile for CellDocument {
             .map(|rows| BSKpointList::from_block_rows(rows))
             .transpose()?;
 
+        let bs_kpoint_path_spacing = BsKpointPathSpacing::from_cells(cells)?;
+
         let optics_kpoints_list = find_block_any(cells, &["OPTICS_KPOINT_LIST", "OPTICS_KPOINTS_LIST"])
             .ok()
             .map(|rows| OpticsKpointsList::from_block_rows(rows))
@@ -408,10 +438,15 @@ impl FromCellFile for CellDocument {
             .map(|rows| MagresKpointsList::from_block_rows(rows))
             .transpose()?;
 
+        let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
+        let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
+
         let symmetry_ops = find_block(cells, "SYMMETRY_OPS")
             .ok()
             .map(|rows| SymmetryOps::from_block_rows(rows))
             .transpose()?;
+
+        let symmetry_tol = SymmetryTol::from_cells(cells)?;
 
         let fix_com = cells.iter().find_map(|c| {
             if let Cell::KeyValue(k, _v) = c
@@ -449,6 +484,12 @@ impl FromCellFile for CellDocument {
             }
             None
         });
+
+        let fix_vol = FixVOL::from_cells(cells)?;
+        let cell_constraints = find_block(cells, "CELL_CONSTRAINTS")
+            .ok()
+            .map(|rows| CellConstraints::from_block_rows(rows))
+            .transpose()?;
 
         let external_efield = find_block(cells, "EXTERNAL_EFIELD")
             .ok()
@@ -533,12 +574,18 @@ impl FromCellFile for CellDocument {
             bs_kpoints_list,
             optics_kpoints_list,
             magres_kpoints_list,
+            bs_kpoint_path_spacing,
+            kpoints_mp_grid,
+            kpoints_mp_spacing,
             symmetry_ops,
+            symmetry_tol,
             fix_com,
             ionic_constraints,
             nonlinear_constraints,
             fix_all_ions,
             fix_all_cell,
+            cell_constraints,
+            fix_vol,
             external_efield,
             external_pressure,
             species_mass,
@@ -607,8 +654,20 @@ impl ToCellFile for CellDocument {
         if let Some(mk) = &self.magres_kpoints_list {
             cells.push(mk.to_cell());
         }
+        if let Some(kmg) = &self.kpoints_mp_grid {
+            cells.push(kmg.to_cell());
+        }
+        if let Some(kms) = &self.kpoints_mp_spacing {
+            cells.push(kms.to_cell());
+        }
+        if let Some(bps) = &self.bs_kpoint_path_spacing {
+            cells.push(bps.to_cell());
+        }
         if let Some(sym) = &self.symmetry_ops {
             cells.push(sym.to_cell());
+        }
+        if let Some(st) = &self.symmetry_tol {
+            cells.push(st.to_cell());
         }
         if let Some(_fc) = &self.fix_com {
             cells.push(Cell::Flag("FIX_COM"));
@@ -624,6 +683,12 @@ impl ToCellFile for CellDocument {
         }
         if let Some(_fc) = &self.fix_all_cell {
             cells.push(Cell::Flag("FIX_ALL_CELL"));
+        }
+        if let Some(fv) = &self.fix_vol {
+            cells.push(fv.to_cell());
+        }
+        if let Some(cc) = &self.cell_constraints {
+            cells.push(cc.to_cell());
         }
         if let Some(ef) = &self.external_efield {
             cells.push(ef.to_cell());
