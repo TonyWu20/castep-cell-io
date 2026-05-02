@@ -3,7 +3,7 @@
   "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G1-fix-gaps",
   "groups": {
     "G1-fix-gaps": {
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         "TASK-G1-1",
         "TASK-G1-2",
