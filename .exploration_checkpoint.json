@@ -1,0 +1,15 @@
+{
+  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G1-fix-gaps.json",
+  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G1-fix-gaps",
+  "groups": {
+    "G1-fix-gaps": {
+      "status": "pending",
+      "tasks": [
+        "TASK-G1-1",
+        "TASK-G1-2",
+        "TASK-G1-3"
+      ],
+      "reason": "Goal 1: Fix gaps and wire orphan types. Establishes FromKeyValue::from_cells wiring pattern. Fixes CellConstraints export gap."
+    }
+  }
+}
