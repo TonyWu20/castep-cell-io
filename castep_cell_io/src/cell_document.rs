@@ -72,7 +72,7 @@ use crate::cell::{
         NonlinearConstraints,
     },
     external_fields::{ExternalEfield, ExternalPressure},
-    lattice_param::LatticeCart,
+    lattice_param::{LatticeABC, LatticeCart},
     phonon::{
         PhononFineKpointList, PhononGammaDirections, PhononKpointList, PhononKpointPath,
         PhononSupercellMatrix, SupercellKpointListCastep,
@@ -86,8 +86,7 @@ use crate::cell::{
 /// Lattice vector specification for the simulation cell.
 ///
 /// Defines the periodic boundary conditions of the crystal structure.
-/// Currently supports Cartesian coordinates; future versions may add
-/// fractional or ABC+angles representations.
+/// Supports both Cartesian and ABC+angles representations.
 ///
 /// # Example
 ///
@@ -103,13 +102,30 @@ pub enum Lattice {
     ///
     /// Corresponds to the `%BLOCK LATTICE_CART` section in CASTEP input files.
     Cart(LatticeCart),
+    /// Lattice vectors in ABC+angles format.
+    ///
+    /// Corresponds to the `%BLOCK LATTICE_ABC` section in CASTEP input files.
+    Abc(LatticeABC),
 }
 
 impl ToCell for Lattice {
     fn to_cell(&self) -> Cell<'_> {
         match self {
             Lattice::Cart(cart) => cart.to_cell(),
+            Lattice::Abc(abc) => abc.to_cell(),
         }
+    }
+}
+
+impl From<LatticeCart> for Lattice {
+    fn from(v: LatticeCart) -> Self {
+        Lattice::Cart(v)
+    }
+}
+
+impl From<LatticeABC> for Lattice {
+    fn from(v: LatticeABC) -> Self {
+        Lattice::Abc(v)
     }
 }
 
@@ -396,8 +412,23 @@ impl FromCellFile for CellDocument {
     /// # Ok::<(), castep_cell_fmt::Error>(())
     /// ```
     fn from_cell_file(cells: &[Cell<'_>]) -> CResult<Self> {
-        let lattice_rows = find_block(cells, "LATTICE_CART")?;
-        let lattice = Lattice::Cart(LatticeCart::from_block_rows(lattice_rows)?);
+        let has_lattice_cart = find_block(cells, "LATTICE_CART").is_ok();
+        let has_lattice_abc = find_block(cells, "LATTICE_ABC").is_ok();
+        if has_lattice_cart && has_lattice_abc {
+            return Err(Error::Message(
+                "Both LATTICE_CART and LATTICE_ABC are specified. Only one lattice specification is allowed."
+                    .into(),
+            ));
+        }
+        let lattice = if has_lattice_cart {
+            Lattice::Cart(LatticeCart::from_block_rows(find_block(
+                cells,
+                "LATTICE_CART",
+            )?)?)
+        } else {
+            let rows = find_block(cells, "LATTICE_ABC")?;
+            Lattice::Abc(LatticeABC::from_block_rows(rows)?)
+        };
 
         let positions = if find_block(cells, "POSITIONS_FRAC").is_ok() {
             Positions::Frac(PositionsFrac::from_block_rows(find_block(
