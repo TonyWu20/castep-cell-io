@@ -66,6 +66,8 @@ use crate::cell::{
     bz_sampling_kpoints::{
         BSKpointList, BsKpointPath, BsKpointPathSpacing, KpointsList, KpointsMpGrid,
         KpointsMpOffset, KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
+        SpectralKpointPath, SpectralKpointsList, SpectralKpointPathSpacing,
+        SpectralKpointsMpGrid, SpectralKpointsMpSpacing, SpectralKpointsMpOffset,
     },
     constraints::{
         CellConstraints, FixAllCell, FixAllIons, FixCOM, FixVOL, IonicConstraints,
@@ -277,6 +279,30 @@ pub struct CellDocument {
     ///
     /// Corresponds to `BS_KPOINT_PATH_SPACING` in CASTEP.
     pub bs_kpoint_path_spacing: Option<BsKpointPathSpacing>,
+    /// Spectral k-point path for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_PATH` in CASTEP.
+    pub spectral_kpoint_path: Option<SpectralKpointPath>,
+    /// Spectral k-points list for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_LIST` in CASTEP.
+    pub spectral_kpoints_list: Option<SpectralKpointsList>,
+    /// Spacing for spectral k-point path.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_PATH_SPACING` in CASTEP.
+    pub spectral_kpoint_path_spacing: Option<SpectralKpointPathSpacing>,
+    /// Monkhorst-Pack grid for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_GRID` in CASTEP.
+    pub spectral_kpoints_mp_grid: Option<SpectralKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_SPACING` in CASTEP.
+    pub spectral_kpoints_mp_spacing: Option<SpectralKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_OFFSET` in CASTEP.
+    pub spectral_kpoints_mp_offset: Option<SpectralKpointsMpOffset>,
     /// Explicit symmetry operations.
     ///
     /// Overrides automatic symmetry detection. Corresponds to `%BLOCK SYMMETRY_OPS`.
@@ -481,6 +507,27 @@ impl FromCellFile for CellDocument {
         let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
         let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
 
+        let spectral_kpoint_path = find_block_any(
+            cells,
+            &["SPECTRAL_KPOINT_PATH", "SPECTRAL_KPOINTS_PATH", "BS_KPOINT_PATH", "BS_KPOINTS_PATH"],
+        )
+        .ok()
+        .map(|rows| SpectralKpointPath::from_block_rows(rows))
+        .transpose()?;
+
+        let spectral_kpoints_list = find_block_any(
+            cells,
+            &["SPECTRAL_KPOINT_LIST", "SPECTRAL_KPOINTS_LIST", "BS_KPOINT_LIST", "BS_KPOINTS_LIST"],
+        )
+        .ok()
+        .map(|rows| SpectralKpointsList::from_block_rows(rows))
+        .transpose()?;
+
+        let spectral_kpoint_path_spacing = SpectralKpointPathSpacing::from_cells(cells)?;
+        let spectral_kpoints_mp_grid = SpectralKpointsMpGrid::from_cells(cells)?;
+        let spectral_kpoints_mp_spacing = SpectralKpointsMpSpacing::from_cells(cells)?;
+        let spectral_kpoints_mp_offset = SpectralKpointsMpOffset::from_cells(cells)?;
+
         let symmetry_ops = find_block(cells, "SYMMETRY_OPS")
             .ok()
             .map(|rows| SymmetryOps::from_block_rows(rows))
@@ -624,6 +671,12 @@ impl FromCellFile for CellDocument {
             kpoints_mp_grid,
             kpoints_mp_spacing,
             kpoints_mp_offset,
+            spectral_kpoint_path,
+            spectral_kpoints_list,
+            spectral_kpoint_path_spacing,
+            spectral_kpoints_mp_grid,
+            spectral_kpoints_mp_spacing,
+            spectral_kpoints_mp_offset,
             symmetry_ops,
             symmetry_tol,
             symmetry_generate,
@@ -689,6 +742,24 @@ impl ToCellFile for CellDocument {
 
         if let Some(kp) = &self.kpoints_list {
             cells.push(kp.to_cell());
+        }
+        if let Some(sp) = &self.spectral_kpoint_path {
+            cells.push(sp.to_cell());
+        }
+        if let Some(sl) = &self.spectral_kpoints_list {
+            cells.push(sl.to_cell());
+        }
+        if let Some(sps) = &self.spectral_kpoint_path_spacing {
+            cells.push(sps.to_cell());
+        }
+        if let Some(smg) = &self.spectral_kpoints_mp_grid {
+            cells.push(smg.to_cell());
+        }
+        if let Some(sms) = &self.spectral_kpoints_mp_spacing {
+            cells.push(sms.to_cell());
+        }
+        if let Some(smo) = &self.spectral_kpoints_mp_offset {
+            cells.push(smo.to_cell());
         }
         if let Some(bp) = &self.bs_kpoint_path {
             cells.push(bp.to_cell());
