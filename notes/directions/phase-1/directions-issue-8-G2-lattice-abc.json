@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "title": "Phase 1: New Keyword Types + Flat CellDocument Wiring",
+    "source_branch": "issue-8"
+  },
+  "architecture_notes": [
+    "Library code in this phase follows ch12-04 TDD: tests claim interfaces first via tdd_interface, then implementations evolve to meet them. See /Users/tony/programming/rust-development-pipeline/skills/elaborate-directions/references/tdd-pattern.md.",
+    "All lib-tdd tasks: the tdd_interface test_code is the RED phase test. The implementer must NOT modify the test code. Write the test, verify it fails (RED), stub the impl to compile (GREEN), then flesh out the impl to make the test pass (REFACTOR).",
+    "All implementation is in castep_cell_io/src/cell/ (domain types crate). No changes to castep_cell_fmt.",
+    "Export chain for every new keyword type: type file -> mod + pub use in parent mod.rs -> import in cell_document.rs -> struct field + parse block + serialize block + Ok() constructor field.",
+    "Key-value wiring pattern: Use FromKeyValue::from_cells(cells)? which returns CResult<Option<Self>>. Handles alias resolution automatically. Returns Ok(None) when absent.",
+    "Block wiring pattern: Use find_block_any(cells, &[...]) for blocks with aliases, or find_block(cells, \"NAME\") for single-name blocks. Chain with .ok().map(|rows| T::from_block_rows(rows)).transpose()? for optional blocks.",
+    "Flag wiring pattern: SymmetryGenerate is parsed via has_flag (matching existing FixCOM/FixAllIons pattern), not FromKeyValue.",
+    "Serialization uses primary BLOCK_NAME/KEY_NAME (not aliases). Aliases are for deserialization only.",
+    "ToCell for block types uses Cell::Block(primary_name, rows); for key-value types uses Cell::KeyValue(primary_name, value).",
+    "CellDocument builder uses #[builder(on(Lattice, into), on(Positions, into))] \u2014 new Option<T> fields auto-generate setters via bon. No manual builder code needed.",
+    "bon::Builder required on block types with Vec fields (SpectralKpointPath, SpectralKpointsList, PhononFineKpointPath) and entry types (SpectralKpointPathEntry). Tuple newtypes and 2-field spacing structs do NOT use bon::Builder \u2014 follow existing KpointsMpGrid/KpointsMpSpacing patterns.",
+    "Alias rules: (1) All k-point keyword types include KPOINTS plural alias. (2) Spectral types with BS_ equivalent (path, list, path_spacing) include BS_ backward compat aliases. (3) Net-new spectral types (MpGrid, MpSpacing, MpOffset): KPOINTS plural only. (4) Phonon types: KPOINTS plural only.",
+    "Each file-creation task (lib-tdd) includes its own mod.rs registration (mod + pub use). Tasks within a group that share a mod.rs file run sequentially to avoid merge conflicts.",
+    "Insertion order in to_cell_file: Lattice/positions first, then k-point sampling, constraints/flags, symmetry, external fields, species, phonon, dynamics. New fields slot into their existing section.",
+    "For G4 wiring: Spectral block types MUST be parsed BEFORE BS_ block types in from_cell_file to handle BS_ alias overlap. Spectral serialization MUST come before BS_ serialization in to_cell_file.",
+    "PhononFineKpointPath reuses PhononKpointPathEntry from the existing phonon_kpoint_path.rs module \u2014 import via use super::phonon_kpoint_path::PhononKpointPathEntry.",
+    "Existing PhononKpointPath does NOT have bon::Builder (inconsistency). PhononFineKpointPath MUST add bon::Builder per plan mandate."
+  ],
+  "known_pitfalls": [
+    "P0: Spectral + BS alias collision \u2014 SpectralKpointPath aliases include BS_KPOINT_PATH/BS_KPOINTS_PATH, and SpectralKpointsList aliases include BS_KPOINT_LIST/BS_KPOINTS_LIST. When parsing a file with BS_ prefix blocks, both spectral AND BS_ fields will populate (find_block_any is read-only). Mitigation: parse spectral BEFORE BS_, document behavior, defer mutual-exclusion validation.",
+    "P1: CellDocument field count \u2014 after all 5 goals, ~50 fields. Acceptable but unwieldy. Consider adding a TODO comment: '// TODO: Group into KpointsParams, SpectralParams, etc.' (deferred).",
+    "P2: Missing pub use chain \u2014 verify: (1) mod xxx; in parent mod.rs, (2) pub use xxx::TypeName;, (3) import in cell_document.rs, (4) field on CellDocument, (5) parsing in from_cell_file, (6) serialization in to_cell_file, (7) field in Ok() constructor.",
+    "P3: Alias omission \u2014 forgetting KEY_ALIASES or BLOCK_ALIASES causes silent parse failures for plural-form inputs. Every new k-point type MUST have KPOINTS plural alias. Spectral path/list/path_spacing MUST also have BS_ aliases.",
+    "P4: SymmetryTol has zero tests. Be aware when wiring. SymmetryGenerate MUST have tests.",
+    "P5: Lattice enum non-exhaustive \u2014 adding Abc variant is a breaking change. External match statements will fail. Intentional per project conventions.",
+    "P6: FixVOL and SymmetryTol KEY_ALIASES false positives \u2014 neither has a valid plural form in CASTEP. Default KEY_ALIASES = &[] is correct. Do NOT add aliases.",
+    "P7: PhononKpointPathEntry import \u2014 use `use super::phonon_kpoint_path::PhononKpointPathEntry;` for PhononFineKpointPath. Do NOT create a new entry type.",
+    "P8: CellDocument Ok() constructor must include all new field bindings. Forgetting one causes a compile error."
+  ],
+  "task_groups": [
+    {
+      "group_id": "G2-lattice-abc",
+      "reason": "Goal 2: Add Lattice::Abc variant and LATTICE_ABC parsing. Standalone change in cell_document.rs.",
+      "tasks": [
+        "TASK-G2-1"
+      ],
+      "depends_on_groups": [
+        "G1-fix-gaps"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-G2-1",
+      "kind": "direct",
+      "description": "Add Lattice::Abc variant and wire LATTICE_ABC parsing. Add From impls, update ToCell, add dual-lattice error.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell_document.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell_document.rs",
+          "action": "modify",
+          "guidance": "All changes in cell_document.rs. LatticeABC is already fully functional in lattice_param.rs.\n\n**Import**: Add LatticeABC to the lattice_param import: `lattice_param::{LatticeCart, LatticeABC}`.\n\n**Lattice enum**: Add `Abc(LatticeABC)` variant after `Cart(LatticeCart)`.\n\n**From impls** (new, after Lattice enum):\n- `impl From<LatticeCart> for Lattice { fn from(v: LatticeCart) -> Self { Lattice::Cart(v) } }`\n- `impl From<LatticeABC> for Lattice { fn from(v: LatticeABC) -> Self { Lattice::Abc(v) } }`\n\n**ToCell update**: Add `Lattice::Abc(abc) => abc.to_cell(),` match arm.\n\n**from_cell_file lattice parsing** (replace lines 371-372):\n1. Boolean checks: `let has_lattice_cart = find_block(cells, \"LATTICE_CART\").is_ok();`, `let has_lattice_abc = find_block(cells, \"LATTICE_ABC\").is_ok();`\n2. If both present: `return Err(Error::Message(\"Both LATTICE_CART and LATTICE_ABC are specified. Only one lattice specification is allowed.\".into()));`\n3. If only LATTICE_CART: parse as `Lattice::Cart(LatticeCart::from_block_rows(rows)?)`\n4. Else (LATTICE_ABC or neither): `let rows = find_block(cells, \"LATTICE_ABC\")?; Lattice::Abc(LatticeABC::from_block_rows(rows)?)` \u2014 missing both preserves current KeyNotFound error on LATTICE_ABC."
+        }
+      ],
+      "wiring_checklist": [
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "LatticeABC imported from lattice_param"
+        },
+        {
+          "kind": "type_annotation",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "Lattice::Abc variant exists"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "From<LatticeCart> and From<LatticeABC> impls exist"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "ToCell handles both Cart and Abc"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "Dual-lattice mutual exclusion check"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "LATTICE_ABC parsing with LatticeABC::from_block_rows"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io lattice"
+      ],
+      "depends_on": [
+        "TASK-G1-3"
+      ]
+    }
+  ]
+}

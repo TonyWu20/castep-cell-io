@@ -1,0 +1,203 @@
+{
+  "meta": {
+    "title": "Phase 1: New Keyword Types + Flat CellDocument Wiring",
+    "source_branch": "issue-8"
+  },
+  "architecture_notes": [
+    "Library code in this phase follows ch12-04 TDD: tests claim interfaces first via tdd_interface, then implementations evolve to meet them. See /Users/tony/programming/rust-development-pipeline/skills/elaborate-directions/references/tdd-pattern.md.",
+    "All lib-tdd tasks: the tdd_interface test_code is the RED phase test. The implementer must NOT modify the test code. Write the test, verify it fails (RED), stub the impl to compile (GREEN), then flesh out the impl to make the test pass (REFACTOR).",
+    "All implementation is in castep_cell_io/src/cell/ (domain types crate). No changes to castep_cell_fmt.",
+    "Export chain for every new keyword type: type file -> mod + pub use in parent mod.rs -> import in cell_document.rs -> struct field + parse block + serialize block + Ok() constructor field.",
+    "Key-value wiring pattern: Use FromKeyValue::from_cells(cells)? which returns CResult<Option<Self>>. Handles alias resolution automatically. Returns Ok(None) when absent.",
+    "Block wiring pattern: Use find_block_any(cells, &[...]) for blocks with aliases, or find_block(cells, \"NAME\") for single-name blocks. Chain with .ok().map(|rows| T::from_block_rows(rows)).transpose()? for optional blocks.",
+    "Flag wiring pattern: SymmetryGenerate is parsed via has_flag (matching existing FixCOM/FixAllIons pattern), not FromKeyValue.",
+    "Serialization uses primary BLOCK_NAME/KEY_NAME (not aliases). Aliases are for deserialization only.",
+    "ToCell for block types uses Cell::Block(primary_name, rows); for key-value types uses Cell::KeyValue(primary_name, value).",
+    "CellDocument builder uses #[builder(on(Lattice, into), on(Positions, into))] \u2014 new Option<T> fields auto-generate setters via bon. No manual builder code needed.",
+    "bon::Builder required on block types with Vec fields (SpectralKpointPath, SpectralKpointsList, PhononFineKpointPath) and entry types (SpectralKpointPathEntry). Tuple newtypes and 2-field spacing structs do NOT use bon::Builder \u2014 follow existing KpointsMpGrid/KpointsMpSpacing patterns.",
+    "Alias rules: (1) All k-point keyword types include KPOINTS plural alias. (2) Spectral types with BS_ equivalent (path, list, path_spacing) include BS_ backward compat aliases. (3) Net-new spectral types (MpGrid, MpSpacing, MpOffset): KPOINTS plural only. (4) Phonon types: KPOINTS plural only.",
+    "Each file-creation task (lib-tdd) includes its own mod.rs registration (mod + pub use). Tasks within a group that share a mod.rs file run sequentially to avoid merge conflicts.",
+    "Insertion order in to_cell_file: Lattice/positions first, then k-point sampling, constraints/flags, symmetry, external fields, species, phonon, dynamics. New fields slot into their existing section.",
+    "For G4 wiring: Spectral block types MUST be parsed BEFORE BS_ block types in from_cell_file to handle BS_ alias overlap. Spectral serialization MUST come before BS_ serialization in to_cell_file.",
+    "PhononFineKpointPath reuses PhononKpointPathEntry from the existing phonon_kpoint_path.rs module \u2014 import via use super::phonon_kpoint_path::PhononKpointPathEntry.",
+    "Existing PhononKpointPath does NOT have bon::Builder (inconsistency). PhononFineKpointPath MUST add bon::Builder per plan mandate."
+  ],
+  "known_pitfalls": [
+    "P0: Spectral + BS alias collision \u2014 SpectralKpointPath aliases include BS_KPOINT_PATH/BS_KPOINTS_PATH, and SpectralKpointsList aliases include BS_KPOINT_LIST/BS_KPOINTS_LIST. When parsing a file with BS_ prefix blocks, both spectral AND BS_ fields will populate (find_block_any is read-only). Mitigation: parse spectral BEFORE BS_, document behavior, defer mutual-exclusion validation.",
+    "P1: CellDocument field count \u2014 after all 5 goals, ~50 fields. Acceptable but unwieldy. Consider adding a TODO comment: '// TODO: Group into KpointsParams, SpectralParams, etc.' (deferred).",
+    "P2: Missing pub use chain \u2014 verify: (1) mod xxx; in parent mod.rs, (2) pub use xxx::TypeName;, (3) import in cell_document.rs, (4) field on CellDocument, (5) parsing in from_cell_file, (6) serialization in to_cell_file, (7) field in Ok() constructor.",
+    "P3: Alias omission \u2014 forgetting KEY_ALIASES or BLOCK_ALIASES causes silent parse failures for plural-form inputs. Every new k-point type MUST have KPOINTS plural alias. Spectral path/list/path_spacing MUST also have BS_ aliases.",
+    "P4: SymmetryTol has zero tests. Be aware when wiring. SymmetryGenerate MUST have tests.",
+    "P5: Lattice enum non-exhaustive \u2014 adding Abc variant is a breaking change. External match statements will fail. Intentional per project conventions.",
+    "P6: FixVOL and SymmetryTol KEY_ALIASES false positives \u2014 neither has a valid plural form in CASTEP. Default KEY_ALIASES = &[] is correct. Do NOT add aliases.",
+    "P7: PhononKpointPathEntry import \u2014 use `use super::phonon_kpoint_path::PhononKpointPathEntry;` for PhononFineKpointPath. Do NOT create a new entry type.",
+    "P8: CellDocument Ok() constructor must include all new field bindings. Forgetting one causes a compile error."
+  ],
+  "task_groups": [
+    {
+      "group_id": "G3-new-simple-types",
+      "reason": "Goal 3: Create KpointsMpOffset and SymmetryGenerate. New-type workflow that G4/G5 follow.",
+      "tasks": [
+        "TASK-G3-1",
+        "TASK-G3-2",
+        "TASK-G3-3"
+      ],
+      "depends_on_groups": [
+        "G2-lattice-abc"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-G3-1",
+      "kind": "lib-tdd",
+      "description": "Create KpointsMpOffset type (key-value newtype [f64;3]) and register in bz_sampling_kpoints/mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/kpoints_mp_offset.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/kpoints_mp_offset.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of kpoints_mp_grid.rs. Define `pub struct KpointsMpOffset(pub [f64; 3])` with #[derive(Debug, Clone, Copy, PartialEq)] (NO Eq \u2014 f64). Implement FromCellValue (parse CellValue::Array of 3 floats via value_as_f64, error on non-array or wrong length), FromKeyValue (KEY_NAME = \"KPOINT_MP_OFFSET\", KEY_ALIASES = &[\"KPOINTS_MP_OFFSET\"], delegate from_cell_value_kv to from_cell_value), ToCell (Cell::KeyValue with CellValue::Array of CellValue::Float), ToCellValue. Add #[cfg(test)] mod tests following KpointsMpGrid pattern: from_cell_value valid/insufficient/too_many/non_array, to_cell_value, to_cell, round_trip, key_name, from_key_value. Write the TDD test first, then implement to pass."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod kpoints_mp_offset;` in module declarations (after `mod kpoints_mp_grid;`). Add `pub use kpoints_mp_offset::KpointsMpOffset;` in pub use section (after `pub use kpoints_mp_grid::KpointsMpGrid;`)."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/kpoints_mp_offset.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_kpoints_mp_offset_from_cell_value",
+        "test_code": "#[test]\nfn test_kpoints_mp_offset_from_cell_value() {\n    let val = CellValue::Array(vec![\n        CellValue::Float(0.25),\n        CellValue::Float(0.25),\n        CellValue::Float(0.25),\n    ]);\n    let offset = KpointsMpOffset::from_cell_value(&val).unwrap();\n    assert_eq!(offset.0, [0.25, 0.25, 0.25]);\n}",
+        "signature": "pub fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses a CellValue::Array of exactly 3 floats into KpointsMpOffset([f64; 3]). Errors on non-array or wrong-length input."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod kpoints_mp_offset declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "KpointsMpOffset re-exported"
+        }
+      ],
+      "type_reference": {
+        "KpointsMpOffset": "pub struct KpointsMpOffset(pub [f64; 3]);"
+      },
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io kpoints_mp_offset"
+      ],
+      "depends_on": [
+        "TASK-G2-1"
+      ]
+    },
+    {
+      "id": "TASK-G3-2",
+      "kind": "lib-tdd",
+      "description": "Create SymmetryGenerate flag type (unit struct) and register in symmetry/mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/symmetry/symmetry_generate.rs",
+        "castep_cell_io/src/cell/symmetry/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/symmetry/symmetry_generate.rs",
+          "action": "create",
+          "guidance": "Define `#[derive(Debug, Clone, Copy, PartialEq, Eq)] pub struct SymmetryGenerate;` (unit struct). Implement ToCell to produce `Cell::Flag(\"SYMMETRY_GENERATE\")`. No FromKeyValue/FromCellValue needed \u2014 parsed via has_flag in CellDocument. Add #[cfg(test)] mod tests with: test_symmetry_generate_to_cell (create SymmetryGenerate, call to_cell(), assert matches Cell::Flag(\"SYMMETRY_GENERATE\")). Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/symmetry/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod symmetry_generate;` in module declarations (after `mod symmetry_tol;`). Add `pub use symmetry_generate::SymmetryGenerate;` in pub use section (after `pub use symmetry_tol::SymmetryTol;`)."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/symmetry/symmetry_generate.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_symmetry_generate_to_cell",
+        "test_code": "#[test]\nfn test_symmetry_generate_to_cell() {\n    let sg = SymmetryGenerate;\n    let cell = sg.to_cell();\n    match cell {\n        Cell::Flag(name) => assert_eq!(name, \"SYMMETRY_GENERATE\"),\n        _ => panic!(\"Expected Cell::Flag, got {:?}\", cell),\n    }\n}",
+        "signature": "pub fn to_cell(&self) -> Cell<'_>",
+        "expected_behavior": "to_cell() produces Cell::Flag(\"SYMMETRY_GENERATE\"). No data attached \u2014 presence of the flag enables symmetry generation."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/symmetry/mod.rs",
+          "detail": "mod symmetry_generate declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/symmetry/mod.rs",
+          "detail": "SymmetryGenerate re-exported"
+        }
+      ],
+      "type_reference": {
+        "SymmetryGenerate": "pub struct SymmetryGenerate;"
+      },
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io symmetry_generate"
+      ],
+      "depends_on": [
+        "TASK-G3-1"
+      ]
+    },
+    {
+      "id": "TASK-G3-3",
+      "kind": "direct",
+      "description": "Wire KpointsMpOffset and SymmetryGenerate into CellDocument: imports, struct fields, parsing, serialization, Ok() constructor fields.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell_document.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell_document.rs",
+          "action": "modify",
+          "guidance": "Wire both G3 types into CellDocument.\n\n**Imports**: Add KpointsMpOffset to bz_sampling_kpoints import. Add SymmetryGenerate to symmetry import.\n\n**Struct fields**:\n- K-point section: `pub kpoints_mp_offset: Option<KpointsMpOffset>,`\n- Symmetry section (after symmetry_tol): `pub symmetry_generate: Option<SymmetryGenerate>,`\n\n**Parsing** (from_cell_file):\n- After kpoints_mp_spacing: `let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;`\n- After symmetry_tol: `let symmetry_generate = if has_flag(cells, \"SYMMETRY_GENERATE\") { Some(SymmetryGenerate) } else { None };` (has_flag already imported from G1-3)\n\n**Serialization** (to_cell_file):\n- After kpoints_mp_spacing: `if let Some(kmo) = &self.kpoints_mp_offset { cells.push(kmo.to_cell()); }`\n- After symmetry_tol: `if let Some(_sg) = &self.symmetry_generate { cells.push(Cell::Flag(\"SYMMETRY_GENERATE\")); }` (consistent with existing FixCOM serialization pattern)\n\n**Ok() constructor**: Add `kpoints_mp_offset,` and `symmetry_generate,` bindings."
+        }
+      ],
+      "wiring_checklist": [
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "KpointsMpOffset and SymmetryGenerate imported"
+        },
+        {
+          "kind": "type_annotation",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "kpoints_mp_offset and symmetry_generate fields on CellDocument"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "KpointsMpOffset::from_cells and SymmetryGenerate has_flag in from_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "Serialization blocks in to_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "Constructor bindings in Ok(CellDocument { ... })"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io"
+      ],
+      "depends_on": [
+        "TASK-G3-2"
+      ]
+    }
+  ]
+}
