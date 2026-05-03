@@ -65,7 +65,7 @@ use castep_cell_fmt::{
 use crate::cell::{
     bz_sampling_kpoints::{
         BSKpointList, BsKpointPath, BsKpointPathSpacing, KpointsList, KpointsMpGrid,
-        KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
+        KpointsMpOffset, KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
     },
     constraints::{
         CellConstraints, FixAllCell, FixAllIons, FixCOM, FixVOL, IonicConstraints,
@@ -79,7 +79,7 @@ use crate::cell::{
     },
     positions::{PositionsAbs, PositionsFrac},
     species::{HubbardU, SedcCustomParams, SpeciesLcaoStates, SpeciesMass, SpeciesPot, SpeciesQ},
-    symmetry::{SymmetryOps, SymmetryTol},
+    symmetry::{SymmetryGenerate, SymmetryOps, SymmetryTol},
     velocities::IonicVelocities,
 };
 
@@ -269,6 +269,10 @@ pub struct CellDocument {
     ///
     /// Corresponds to `KPOINT_MP_SPACING` in CASTEP.
     pub kpoints_mp_spacing: Option<KpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_OFFSET` in CASTEP.
+    pub kpoints_mp_offset: Option<KpointsMpOffset>,
     /// Spacing for band structure k-point path.
     ///
     /// Corresponds to `BS_KPOINT_PATH_SPACING` in CASTEP.
@@ -281,6 +285,10 @@ pub struct CellDocument {
     ///
     /// Corresponds to `SYMMETRY_TOL` in CASTEP.
     pub symmetry_tol: Option<SymmetryTol>,
+    /// Automatically generate symmetry operations.
+    ///
+    /// Corresponds to `SYMMETRY_GENERATE` flag in CASTEP.
+    pub symmetry_generate: Option<SymmetryGenerate>,
     /// Fix center of mass during geometry optimization.
     ///
     /// Corresponds to `FIX_COM : TRUE` in CASTEP.
@@ -471,6 +479,7 @@ impl FromCellFile for CellDocument {
 
         let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
         let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
+        let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
 
         let symmetry_ops = find_block(cells, "SYMMETRY_OPS")
             .ok()
@@ -478,6 +487,12 @@ impl FromCellFile for CellDocument {
             .transpose()?;
 
         let symmetry_tol = SymmetryTol::from_cells(cells)?;
+
+        let symmetry_generate = if has_flag(cells, "SYMMETRY_GENERATE") {
+            Some(SymmetryGenerate)
+        } else {
+            None
+        };
 
         let fix_com = cells.iter().find_map(|c| {
             if let Cell::KeyValue(k, _v) = c
@@ -608,8 +623,10 @@ impl FromCellFile for CellDocument {
             bs_kpoint_path_spacing,
             kpoints_mp_grid,
             kpoints_mp_spacing,
+            kpoints_mp_offset,
             symmetry_ops,
             symmetry_tol,
+            symmetry_generate,
             fix_com,
             ionic_constraints,
             nonlinear_constraints,
@@ -691,6 +708,9 @@ impl ToCellFile for CellDocument {
         if let Some(kms) = &self.kpoints_mp_spacing {
             cells.push(kms.to_cell());
         }
+        if let Some(kmo) = &self.kpoints_mp_offset {
+            cells.push(kmo.to_cell());
+        }
         if let Some(bps) = &self.bs_kpoint_path_spacing {
             cells.push(bps.to_cell());
         }
@@ -699,6 +719,9 @@ impl ToCellFile for CellDocument {
         }
         if let Some(st) = &self.symmetry_tol {
             cells.push(st.to_cell());
+        }
+        if let Some(_sg) = &self.symmetry_generate {
+            cells.push(Cell::Flag("SYMMETRY_GENERATE"));
         }
         if let Some(_fc) = &self.fix_com {
             cells.push(Cell::Flag("FIX_COM"));
