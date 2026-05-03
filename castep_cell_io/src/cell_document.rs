@@ -76,7 +76,10 @@ use crate::cell::{
     external_fields::{ExternalEfield, ExternalPressure},
     lattice_param::{LatticeABC, LatticeCart},
     phonon::{
-        PhononFineKpointList, PhononGammaDirections, PhononKpointList, PhononKpointPath,
+        PhononFineKpointList, PhononFineKpointPath, PhononFineKpointPathSpacing,
+        PhononFineKpointsMpGrid, PhononFineKpointsMpOffset, PhononFineKpointsMpSpacing,
+        PhononGammaDirections, PhononKpointList, PhononKpointPath,
+        PhononKpointsMpGrid, PhononKpointsMpOffset, PhononKpointsMpSpacing,
         PhononSupercellMatrix, SupercellKpointListCastep,
     },
     positions::{PositionsAbs, PositionsFrac},
@@ -383,6 +386,38 @@ pub struct CellDocument {
     ///
     /// Corresponds to `%BLOCK PHONON_KPOINT_PATH` in CASTEP.
     pub phonon_kpoint_path: Option<PhononKpointPath>,
+    /// Monkhorst-Pack grid for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_GRID` in CASTEP.
+    pub phonon_kpoints_mp_grid: Option<PhononKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_SPACING` in CASTEP.
+    pub phonon_kpoints_mp_spacing: Option<PhononKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_OFFSET` in CASTEP.
+    pub phonon_kpoints_mp_offset: Option<PhononKpointsMpOffset>,
+    /// Fine k-point path for phonon dispersion calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_FINE_KPOINT_PATH` in CASTEP.
+    pub phonon_fine_kpoint_path: Option<PhononFineKpointPath>,
+    /// Spacing for fine k-point path.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_PATH_SPACING` in CASTEP.
+    pub phonon_fine_kpoint_path_spacing: Option<PhononFineKpointPathSpacing>,
+    /// Monkhorst-Pack grid for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_GRID` in CASTEP.
+    pub phonon_fine_kpoints_mp_grid: Option<PhononFineKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_SPACING` in CASTEP.
+    pub phonon_fine_kpoints_mp_spacing: Option<PhononFineKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_OFFSET` in CASTEP.
+    pub phonon_fine_kpoints_mp_offset: Option<PhononFineKpointsMpOffset>,
     /// Directions for Gamma-point phonon calculations.
     ///
     /// Corresponds to `%BLOCK PHONON_GAMMA_DIRECTIONS` in CASTEP.
@@ -634,6 +669,23 @@ impl FromCellFile for CellDocument {
             .map(|rows| PhononKpointPath::from_block_rows(rows))
             .transpose()?;
 
+        let phonon_kpoints_mp_grid = PhononKpointsMpGrid::from_cells(cells)?;
+        let phonon_kpoints_mp_spacing = PhononKpointsMpSpacing::from_cells(cells)?;
+        let phonon_kpoints_mp_offset = PhononKpointsMpOffset::from_cells(cells)?;
+
+        let phonon_fine_kpoint_path = find_block_any(
+            cells,
+            &["PHONON_FINE_KPOINT_PATH", "PHONON_FINE_KPOINTS_PATH"],
+        )
+        .ok()
+        .map(|rows| PhononFineKpointPath::from_block_rows(rows))
+        .transpose()?;
+
+        let phonon_fine_kpoint_path_spacing = PhononFineKpointPathSpacing::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_grid = PhononFineKpointsMpGrid::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_spacing = PhononFineKpointsMpSpacing::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_offset = PhononFineKpointsMpOffset::from_cells(cells)?;
+
         let phonon_gamma_directions = find_block(cells, "PHONON_GAMMA_DIRECTIONS")
             .ok()
             .map(|rows| PhononGammaDirections::from_block_rows(rows))
@@ -697,6 +749,14 @@ impl FromCellFile for CellDocument {
             sedc_custom_params,
             phonon_kpoint_list,
             phonon_kpoint_path,
+            phonon_kpoints_mp_grid,
+            phonon_kpoints_mp_spacing,
+            phonon_kpoints_mp_offset,
+            phonon_fine_kpoint_path,
+            phonon_fine_kpoint_path_spacing,
+            phonon_fine_kpoints_mp_grid,
+            phonon_fine_kpoints_mp_spacing,
+            phonon_fine_kpoints_mp_offset,
             phonon_gamma_directions,
             phonon_fine_kpoint_list,
             phonon_supercell_matrix,
@@ -844,6 +904,30 @@ impl ToCellFile for CellDocument {
         }
         if let Some(pp) = &self.phonon_kpoint_path {
             cells.push(pp.to_cell());
+        }
+        if let Some(pmg) = &self.phonon_kpoints_mp_grid {
+            cells.push(pmg.to_cell());
+        }
+        if let Some(pms) = &self.phonon_kpoints_mp_spacing {
+            cells.push(pms.to_cell());
+        }
+        if let Some(pmo) = &self.phonon_kpoints_mp_offset {
+            cells.push(pmo.to_cell());
+        }
+        if let Some(pfp) = &self.phonon_fine_kpoint_path {
+            cells.push(pfp.to_cell());
+        }
+        if let Some(pfps) = &self.phonon_fine_kpoint_path_spacing {
+            cells.push(pfps.to_cell());
+        }
+        if let Some(pfmg) = &self.phonon_fine_kpoints_mp_grid {
+            cells.push(pfmg.to_cell());
+        }
+        if let Some(pfms) = &self.phonon_fine_kpoints_mp_spacing {
+            cells.push(pfms.to_cell());
+        }
+        if let Some(pfmo) = &self.phonon_fine_kpoints_mp_offset {
+            cells.push(pfmo.to_cell());
         }
         if let Some(pg) = &self.phonon_gamma_directions {
             cells.push(pg.to_cell());
