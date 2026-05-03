@@ -3,7 +3,7 @@
   "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G5-phonon-mp-fine",
   "groups": {
     "G5-phonon-mp-fine": {
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         "TASK-G5-1",
         "TASK-G5-2",
