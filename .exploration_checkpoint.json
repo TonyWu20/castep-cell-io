@@ -1,15 +1,21 @@
 {
-  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G3-new-simple-types.json",
-  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G3-new-simple-types",
+  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G5-phonon-mp-fine.json",
+  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G5-phonon-mp-fine",
   "groups": {
-    "G3-new-simple-types": {
-      "status": "completed",
+    "G5-phonon-mp-fine": {
+      "status": "pending",
       "tasks": [
-        "TASK-G3-1",
-        "TASK-G3-2",
-        "TASK-G3-3"
+        "TASK-G5-1",
+        "TASK-G5-2",
+        "TASK-G5-3",
+        "TASK-G5-4",
+        "TASK-G5-5",
+        "TASK-G5-6",
+        "TASK-G5-7",
+        "TASK-G5-8",
+        "TASK-G5-9"
       ],
-      "reason": "Goal 3: Create KpointsMpOffset and SymmetryGenerate. New-type workflow that G4/G5 follow."
+      "reason": "Goal 5: Create 8 phonon MP and fine types. Type creation tasks run sequentially (shared mod.rs). Wiring is a single final task."
     }
   }
 }

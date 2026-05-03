@@ -1,3 +1,4 @@
+mod phonon_kpoints_mp_grid;
 mod phonon_kpoint_path_spacing;
 mod phonon_kpoint_path;
 mod phonon_gamma_directions;
@@ -5,6 +6,7 @@ mod phonon_kpoint_list;
 mod phonon_fine_kpoint_list;
 mod supercell_kpoint_list_castep;
 mod phonon_supercell_matrix;
+pub use phonon_kpoints_mp_grid::PhononKpointsMpGrid;
 pub use phonon_kpoint_path_spacing::PhononKpointPathSpacing;
 pub use phonon_kpoint_path::PhononKpointPath;
 pub use phonon_gamma_directions::PhononGammaDirections;
