@@ -3,7 +3,7 @@
   "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G3-new-simple-types",
   "groups": {
     "G3-new-simple-types": {
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         "TASK-G3-1",
         "TASK-G3-2",
