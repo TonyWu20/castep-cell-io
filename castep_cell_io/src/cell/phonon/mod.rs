@@ -1,4 +1,5 @@
 mod phonon_kpoints_mp_grid;
+mod phonon_kpoints_mp_offset;
 mod phonon_kpoints_mp_spacing;
 mod phonon_kpoint_path_spacing;
 mod phonon_kpoint_path;
@@ -8,6 +9,7 @@ mod phonon_fine_kpoint_list;
 mod supercell_kpoint_list_castep;
 mod phonon_supercell_matrix;
 pub use phonon_kpoints_mp_grid::PhononKpointsMpGrid;
+pub use phonon_kpoints_mp_offset::PhononKpointsMpOffset;
 pub use phonon_kpoints_mp_spacing::PhononKpointsMpSpacing;
 pub use phonon_kpoint_path_spacing::PhononKpointPathSpacing;
 pub use phonon_kpoint_path::PhononKpointPath;
