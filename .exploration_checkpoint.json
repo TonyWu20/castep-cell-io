@@ -1,13 +1,15 @@
 {
-  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G2-lattice-abc.json",
-  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G2-lattice-abc",
+  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G3-new-simple-types.json",
+  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G3-new-simple-types",
   "groups": {
-    "G2-lattice-abc": {
+    "G3-new-simple-types": {
       "status": "pending",
       "tasks": [
-        "TASK-G2-1"
+        "TASK-G3-1",
+        "TASK-G3-2",
+        "TASK-G3-3"
       ],
-      "reason": "Goal 2: Add Lattice::Abc variant and LATTICE_ABC parsing. Standalone change in cell_document.rs."
+      "reason": "Goal 3: Create KpointsMpOffset and SymmetryGenerate. New-type workflow that G4/G5 follow."
     }
   }
 }
