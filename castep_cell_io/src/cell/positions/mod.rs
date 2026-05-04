@@ -1,5 +1,6 @@
 mod positions_frac;
 pub use positions_frac::PositionsFrac;
+pub use positions_frac::PositionFracEntry;
 
 mod positions_frac_intermediate;
 pub use positions_frac_intermediate::PositionsFracIntermediate;
