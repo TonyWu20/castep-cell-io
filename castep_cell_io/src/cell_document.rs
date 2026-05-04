@@ -516,18 +516,6 @@ impl FromCellFile for CellDocument {
             .map(|rows| KpointsList::from_block_rows(rows))
             .transpose()?;
 
-        let bs_kpoint_path = find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
-            .ok()
-            .map(|rows| BsKpointPath::from_block_rows(rows))
-            .transpose()?;
-
-        let bs_kpoints_list = find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| BSKpointList::from_block_rows(rows))
-            .transpose()?;
-
-        let bs_kpoint_path_spacing = BsKpointPathSpacing::from_cells(cells)?;
-
         let optics_kpoints_list = find_block_any(cells, &["OPTICS_KPOINT_LIST", "OPTICS_KPOINTS_LIST"])
             .ok()
             .map(|rows| OpticsKpointsList::from_block_rows(rows))
@@ -537,10 +525,6 @@ impl FromCellFile for CellDocument {
             .ok()
             .map(|rows| MagresKpointsList::from_block_rows(rows))
             .transpose()?;
-
-        let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
-        let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
-        let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
 
         let spectral_kpoint_path = find_block_any(
             cells,
@@ -557,6 +541,22 @@ impl FromCellFile for CellDocument {
         .ok()
         .map(|rows| SpectralKpointsList::from_block_rows(rows))
         .transpose()?;
+
+        let bs_kpoint_path = find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
+            .ok()
+            .map(|rows| BsKpointPath::from_block_rows(rows))
+            .transpose()?;
+
+        let bs_kpoints_list = find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
+            .ok()
+            .map(|rows| BSKpointList::from_block_rows(rows))
+            .transpose()?;
+
+        let bs_kpoint_path_spacing = BsKpointPathSpacing::from_cells(cells)?;
+
+        let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
+        let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
+        let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
 
         let spectral_kpoint_path_spacing = SpectralKpointPathSpacing::from_cells(cells)?;
         let spectral_kpoints_mp_grid = SpectralKpointsMpGrid::from_cells(cells)?;
