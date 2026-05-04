@@ -22,3 +22,4 @@
 castep-param-io
 *.param
 .pipeline-worktrees/
+.claude/
