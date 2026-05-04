@@ -22,6 +22,7 @@ pub use kpoints_mp_spacing::KpointsMpSpacing;
 pub use kpoints_mp_grid::KpointsMpGrid;
 pub use kpoints_mp_offset::KpointsMpOffset;
 pub use bs_kpoint_path::BsKpointPath;
+pub use bs_kpoint_path::BsKpointPathEntry;
 pub use spectral_kpoint_path::SpectralKpointPath;
 pub use spectral_kpoint_path::SpectralKpointPathEntry;
 pub use spectral_kpoints_list::SpectralKpointsList;
