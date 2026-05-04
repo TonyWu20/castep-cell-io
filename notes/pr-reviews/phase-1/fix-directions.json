@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "title": "Phase 1 Fixes: Spectral parse ordering",
+    "source_branch": "issue-8"
+  },
+  "architecture_notes": [
+    "Spectral block types MUST be parsed BEFORE BS_ block types in from_cell_file to handle BS_ alias overlap (P0 mitigation). find_block_any is read-only — both spectral and BS_ fields will independently find the same block when a file uses BS_ prefix blocks. Parsing spectral FIRST ensures that spectral fields are populated correctly, and the existing BS_ parsing can be validated for mutual exclusion in a future phase.",
+    "This is a targeted fix — only reorder parsing, no logic changes."
+  ],
+  "known_pitfalls": [
+    "P0: When a .cell file uses BS_KPOINT_PATH (backward compat alias), both SpectralKpointPath and BsKpointPath blocks get populated. Parsing spectral BEFORE BS_ ensures spectral blocks are consumed first. Conversely, when a file uses SPECTRAL_KPOINT_PATH, the BS_ parsing should find nothing (or produce an irrelevant None). Current behavior is already correct for forward-format files.",
+    "Do NOT reorder the serialization (to_cell_file) — spectral should serialize before BS_ as per directions, but serialization order is cosmetic and does not affect correctness."
+  ],
+  "task_groups": [
+    {
+      "group_id": "FIX-parse-order",
+      "reason": "Fix spectral/BS_ parse ordering in from_cell_file to match documented architectural guidance.",
+      "tasks": ["FIX-G4-parse-order"],
+      "depends_on_groups": []
+    }
+  ],
+  "tasks": [
+    {
+      "id": "FIX-G4-parse-order",
+      "kind": "direct",
+      "description": "Reorder from_cell_file parsing so spectral block types are parsed BEFORE BS_ block types.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell_document.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell_document.rs",
+          "action": "modify",
+          "guidance": "In the `from_cell_file` function, reorder the parsing statements so that spectral block types (`spectral_kpoint_path`, `spectral_kpoints_list`) are parsed BEFORE BS_ block types (`bs_kpoint_path`, `bs_kpoints_list`, `bs_kpoint_path_spacing`).\n\nSpecifically:\n1. Move the `spectral_kpoint_path` block parsing (currently after `kpoints_mp_offset` and before `bs_kpoint_path`) to come immediately after `magres_kpoints_list` parsing and BEFORE `bs_kpoint_path` parsing.\n2. Move the `spectral_kpoints_list` block parsing to also come before `bs_kpoints_list`.\n3. Key-value spectral types (`spectral_kpoint_path_spacing`, `spectral_kpoints_mp_grid`, `spectral_kpoints_mp_spacing`, `spectral_kpoints_mp_offset`) can remain in their current position since they do NOT have BS_ alias overlap.\n\nThe new parse order should be:\n- ...magres_kpoints_list\n- spectral_kpoint_path (MOVED)\n- spectral_kpoints_list (MOVED)  \n- bs_kpoint_path\n- bs_kpoints_list\n- bs_kpoint_path_spacing\n- ...kpoints_mp_* fields\n- spectral_kpoint_path_spacing (unchanged)\n- spectral_kpoints_mp_grid (unchanged)\n- spectral_kpoints_mp_spacing (unchanged)\n- spectral_kpoints_mp_offset (unchanged)\n\nDo NOT change the serialization order in to_cell_file."
+        }
+      ],
+      "wiring_checklist": [
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "spectral_kpoint_path parsed before bs_kpoint_path in from_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "spectral_kpoints_list parsed before bs_kpoints_list in from_cell_file"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io"
+      ],
+      "depends_on": []
+    }
+  ]
+}

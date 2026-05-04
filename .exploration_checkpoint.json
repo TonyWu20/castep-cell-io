@@ -1,0 +1,21 @@
+{
+  "directions_path": "/Users/tony/programming/castep-cell-io/notes/directions/phase-1/directions-issue-8-G5-phonon-mp-fine.json",
+  "worktree_path": "/Users/tony/programming/castep-cell-io/.pipeline-worktrees/issue-8-G5-phonon-mp-fine",
+  "groups": {
+    "G5-phonon-mp-fine": {
+      "status": "completed",
+      "tasks": [
+        "TASK-G5-1",
+        "TASK-G5-2",
+        "TASK-G5-3",
+        "TASK-G5-4",
+        "TASK-G5-5",
+        "TASK-G5-6",
+        "TASK-G5-7",
+        "TASK-G5-8",
+        "TASK-G5-9"
+      ],
+      "reason": "Goal 5: Create 8 phonon MP and fine types. Type creation tasks run sequentially (shared mod.rs). Wiring is a single final task."
+    }
+  }
+}

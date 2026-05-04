@@ -1,0 +1,398 @@
+{
+  "meta": {
+    "title": "Phase 1: New Keyword Types + Flat CellDocument Wiring",
+    "source_branch": "issue-8"
+  },
+  "architecture_notes": [
+    "Library code in this phase follows ch12-04 TDD: tests claim interfaces first via tdd_interface, then implementations evolve to meet them. See /Users/tony/programming/rust-development-pipeline/skills/elaborate-directions/references/tdd-pattern.md.",
+    "All lib-tdd tasks: the tdd_interface test_code is the RED phase test. The implementer must NOT modify the test code. Write the test, verify it fails (RED), stub the impl to compile (GREEN), then flesh out the impl to make the test pass (REFACTOR).",
+    "All implementation is in castep_cell_io/src/cell/ (domain types crate). No changes to castep_cell_fmt.",
+    "Export chain for every new keyword type: type file -> mod + pub use in parent mod.rs -> import in cell_document.rs -> struct field + parse block + serialize block + Ok() constructor field.",
+    "Key-value wiring pattern: Use FromKeyValue::from_cells(cells)? which returns CResult<Option<Self>>. Handles alias resolution automatically. Returns Ok(None) when absent.",
+    "Block wiring pattern: Use find_block_any(cells, &[...]) for blocks with aliases, or find_block(cells, \"NAME\") for single-name blocks. Chain with .ok().map(|rows| T::from_block_rows(rows)).transpose()? for optional blocks.",
+    "Flag wiring pattern: SymmetryGenerate is parsed via has_flag (matching existing FixCOM/FixAllIons pattern), not FromKeyValue.",
+    "Serialization uses primary BLOCK_NAME/KEY_NAME (not aliases). Aliases are for deserialization only.",
+    "ToCell for block types uses Cell::Block(primary_name, rows); for key-value types uses Cell::KeyValue(primary_name, value).",
+    "CellDocument builder uses #[builder(on(Lattice, into), on(Positions, into))] \u2014 new Option<T> fields auto-generate setters via bon. No manual builder code needed.",
+    "bon::Builder required on block types with Vec fields (SpectralKpointPath, SpectralKpointsList, PhononFineKpointPath) and entry types (SpectralKpointPathEntry). Tuple newtypes and 2-field spacing structs do NOT use bon::Builder \u2014 follow existing KpointsMpGrid/KpointsMpSpacing patterns.",
+    "Alias rules: (1) All k-point keyword types include KPOINTS plural alias. (2) Spectral types with BS_ equivalent (path, list, path_spacing) include BS_ backward compat aliases. (3) Net-new spectral types (MpGrid, MpSpacing, MpOffset): KPOINTS plural only. (4) Phonon types: KPOINTS plural only.",
+    "Each file-creation task (lib-tdd) includes its own mod.rs registration (mod + pub use). Tasks within a group that share a mod.rs file run sequentially to avoid merge conflicts.",
+    "Insertion order in to_cell_file: Lattice/positions first, then k-point sampling, constraints/flags, symmetry, external fields, species, phonon, dynamics. New fields slot into their existing section.",
+    "For G4 wiring: Spectral block types MUST be parsed BEFORE BS_ block types in from_cell_file to handle BS_ alias overlap. Spectral serialization MUST come before BS_ serialization in to_cell_file.",
+    "PhononFineKpointPath reuses PhononKpointPathEntry from the existing phonon_kpoint_path.rs module \u2014 import via use super::phonon_kpoint_path::PhononKpointPathEntry.",
+    "Existing PhononKpointPath does NOT have bon::Builder (inconsistency). PhononFineKpointPath MUST add bon::Builder per plan mandate."
+  ],
+  "known_pitfalls": [
+    "P0: Spectral + BS alias collision \u2014 SpectralKpointPath aliases include BS_KPOINT_PATH/BS_KPOINTS_PATH, and SpectralKpointsList aliases include BS_KPOINT_LIST/BS_KPOINTS_LIST. When parsing a file with BS_ prefix blocks, both spectral AND BS_ fields will populate (find_block_any is read-only). Mitigation: parse spectral BEFORE BS_, document behavior, defer mutual-exclusion validation.",
+    "P1: CellDocument field count \u2014 after all 5 goals, ~50 fields. Acceptable but unwieldy. Consider adding a TODO comment: '// TODO: Group into KpointsParams, SpectralParams, etc.' (deferred).",
+    "P2: Missing pub use chain \u2014 verify: (1) mod xxx; in parent mod.rs, (2) pub use xxx::TypeName;, (3) import in cell_document.rs, (4) field on CellDocument, (5) parsing in from_cell_file, (6) serialization in to_cell_file, (7) field in Ok() constructor.",
+    "P3: Alias omission \u2014 forgetting KEY_ALIASES or BLOCK_ALIASES causes silent parse failures for plural-form inputs. Every new k-point type MUST have KPOINTS plural alias. Spectral path/list/path_spacing MUST also have BS_ aliases.",
+    "P4: SymmetryTol has zero tests. Be aware when wiring. SymmetryGenerate MUST have tests.",
+    "P5: Lattice enum non-exhaustive \u2014 adding Abc variant is a breaking change. External match statements will fail. Intentional per project conventions.",
+    "P6: FixVOL and SymmetryTol KEY_ALIASES false positives \u2014 neither has a valid plural form in CASTEP. Default KEY_ALIASES = &[] is correct. Do NOT add aliases.",
+    "P7: PhononKpointPathEntry import \u2014 use `use super::phonon_kpoint_path::PhononKpointPathEntry;` for PhononFineKpointPath. Do NOT create a new entry type.",
+    "P8: CellDocument Ok() constructor must include all new field bindings. Forgetting one causes a compile error."
+  ],
+  "task_groups": [
+    {
+      "group_id": "G4-spectral-types",
+      "reason": "Goal 4: Create 6 spectral k-point types. Type creation tasks run sequentially (shared mod.rs). Wiring is a single final task.",
+      "tasks": [
+        "TASK-G4-1",
+        "TASK-G4-2",
+        "TASK-G4-3",
+        "TASK-G4-4",
+        "TASK-G4-5",
+        "TASK-G4-6",
+        "TASK-G4-7"
+      ],
+      "depends_on_groups": [
+        "G3-new-simple-types"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-G4-1",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointPath block type + SpectralKpointPathEntry. Follows BsKpointPath pattern exactly. Includes bon::Builder, BS_ backward compat aliases. Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of bs_kpoint_path.rs. Define SpectralKpointPathEntry with `pub coord: [f64; 3]` + #[derive(Debug, Clone, Copy, PartialEq, bon::Builder)] + FromCellValue + ToCellValue. Define SpectralKpointPath with `pub points: Vec<SpectralKpointPathEntry>` + #[builder(default)] + #[derive(Debug, Clone, PartialEq, bon::Builder)] + FromBlock + ToCell. FromBlock: BLOCK_NAME = \"SPECTRAL_KPOINT_PATH\", BLOCK_ALIASES = &[\"SPECTRAL_KPOINTS_PATH\", \"BS_KPOINT_PATH\", \"BS_KPOINTS_PATH\"]. ToCell: Cell::Block(\"SPECTRAL_KPOINT_PATH\", ...). Include #[cfg(test)] mod tests following BsKpointPath pattern. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoint_path;` in module declarations. Add `pub use spectral_kpoint_path::{SpectralKpointPath, SpectralKpointPathEntry};` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoint_path_multiple_entries",
+        "test_code": "#[test]\nfn test_spectral_kpoint_path_multiple_entries() {\n    let rows = vec![\n        CellValue::Array(vec![\n            CellValue::Float(0.3333333333),\n            CellValue::Float(0.375),\n            CellValue::Float(0.3333333333),\n        ]),\n        CellValue::Array(vec![\n            CellValue::Float(0.3333333333),\n            CellValue::Float(0.375),\n            CellValue::Float(0.0),\n        ]),\n    ];\n    let result = SpectralKpointPath::from_block_rows(&rows).unwrap();\n    assert_eq!(result.points.len(), 2);\n}",
+        "signature": "pub fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses a block of 3-float arrays into Vec<SpectralKpointPathEntry>. Each row is a k-point. Empty block returns empty vec."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoint_path declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointPath, SpectralKpointPathEntry re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoint_path"
+      ],
+      "depends_on": [
+        "TASK-G3-3"
+      ]
+    },
+    {
+      "id": "TASK-G4-2",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointsList block type. Follows BSKpointList pattern. Reuses Kpoint type. Includes BS_ aliases. Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_list.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_list.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of bs_kpoints_list.rs. Define SpectralKpointsList with `pub kpts: Vec<Kpoint>` + #[builder(default)] + #[derive(Debug, Clone, PartialEq, bon::Builder)] + FromBlock + ToCell. Import Kpoint via `use super::Kpoint;`. FromBlock: BLOCK_NAME = \"SPECTRAL_KPOINT_LIST\", BLOCK_ALIASES = &[\"SPECTRAL_KPOINTS_LIST\", \"BS_KPOINT_LIST\", \"BS_KPOINTS_LIST\"]. ToCell: Cell::Block(\"SPECTRAL_KPOINT_LIST\", ...). Include #[cfg(test)] mod tests following BSKpointList pattern. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoints_list;` in module declarations. Add `pub use spectral_kpoints_list::SpectralKpointsList;` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_list.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoints_list_multiple_entries",
+        "test_code": "#[test]\nfn test_spectral_kpoints_list_multiple_entries() {\n    let rows = vec![\n        CellValue::Array(vec![\n            CellValue::Float(0.0),\n            CellValue::Float(0.0),\n            CellValue::Float(0.0),\n            CellValue::Float(0.25),\n        ]),\n        CellValue::Array(vec![\n            CellValue::Float(0.5),\n            CellValue::Float(0.0),\n            CellValue::Float(0.0),\n            CellValue::Float(0.75),\n        ]),\n    ];\n    let result = SpectralKpointsList::from_block_rows(&rows).unwrap();\n    assert_eq!(result.kpts.len(), 2);\n    assert_eq!(result.kpts[0].weight, 0.25);\n}",
+        "signature": "pub fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses a block of 4-float arrays into Vec<Kpoint>. Each row maps to one Kpoint with coord+weight."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoints_list declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointsList re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoints_list"
+      ],
+      "depends_on": [
+        "TASK-G4-1"
+      ]
+    },
+    {
+      "id": "TASK-G4-3",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointPathSpacing key-value type. Follows BsKpointPathSpacing pattern. Includes BS_ backward compat aliases. Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path_spacing.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path_spacing.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of bs_kpoint_path_spacing.rs. Define SpectralKpointPathSpacing with `pub value: f64` and `pub unit: Option<InvLengthUnit>`. Derive Debug, Clone, Copy, PartialEq, PartialOrd. Implement FromCellValue (accepts scalar float or array [value, unit]), FromKeyValue (KEY_NAME = \"SPECTRAL_KPOINT_PATH_SPACING\", KEY_ALIASES = &[\"SPECTRAL_KPOINTS_PATH_SPACING\", \"BS_KPOINT_PATH_SPACING\", \"BS_KPOINTS_PATH_SPACING\"]), ToCell, ToCellValue. Import InvLengthUnit from crate::units. Include #[cfg(test)] mod tests. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoint_path_spacing;` in module declarations. Add `pub use spectral_kpoint_path_spacing::SpectralKpointPathSpacing;` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoint_path_spacing.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoint_path_spacing_with_unit",
+        "test_code": "#[test]\nfn test_spectral_kpoint_path_spacing_with_unit() {\n    let value = CellValue::Array(vec![\n        CellValue::Float(0.05),\n        CellValue::Str(\"1/ang\"),\n    ]);\n    let result = SpectralKpointPathSpacing::from_cell_value(&value).unwrap();\n    assert_eq!(result.value, 0.05);\n    assert!(result.unit.is_some());\n}",
+        "signature": "pub fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses either scalar float or 2-element array [value, unit] into SpectralKpointPathSpacing. Errors on empty array."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoint_path_spacing declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointPathSpacing re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoint_path_spacing"
+      ],
+      "depends_on": [
+        "TASK-G4-2"
+      ]
+    },
+    {
+      "id": "TASK-G4-4",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointsMpGrid key-value newtype [u32;3]. Follows KpointsMpGrid pattern. No BS_ aliases (net-new). Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_grid.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_grid.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of kpoints_mp_grid.rs. Define `pub struct SpectralKpointsMpGrid(pub [u32; 3])` with #[derive(Debug, Clone, Copy, PartialEq, Eq)]. Implement FromCellValue, FromKeyValue (KEY_NAME = \"SPECTRAL_KPOINT_MP_GRID\", KEY_ALIASES = &[\"SPECTRAL_KPOINTS_MP_GRID\"]), ToCell, ToCellValue. Include #[cfg(test)] mod tests. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoints_mp_grid;` in module declarations. Add `pub use spectral_kpoints_mp_grid::SpectralKpointsMpGrid;` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_grid.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoints_mp_grid_from_cell_value",
+        "test_code": "#[test]\nfn test_spectral_kpoints_mp_grid_from_cell_value() {\n    let val = CellValue::Array(vec![\n        CellValue::UInt(3),\n        CellValue::UInt(4),\n        CellValue::UInt(6),\n    ]);\n    let grid = SpectralKpointsMpGrid::from_cell_value(&val).unwrap();\n    assert_eq!(grid.0, [3, 4, 6]);\n}",
+        "signature": "pub fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses CellValue::Array of exactly 3 u32s into SpectralKpointsMpGrid([u32; 3])."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoints_mp_grid declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointsMpGrid re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoints_mp_grid"
+      ],
+      "depends_on": [
+        "TASK-G4-3"
+      ]
+    },
+    {
+      "id": "TASK-G4-5",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointsMpSpacing key-value type. Follows KpointsMpSpacing pattern. No BS_ aliases (net-new). Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_spacing.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_spacing.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of kpoints_mp_spacing.rs. Define SpectralKpointsMpSpacing with `pub value: f64` and `pub unit: Option<InvLengthUnit>`. Derive Debug, Clone, Copy, PartialEq, PartialOrd. Implement FromCellValue, FromKeyValue (KEY_NAME = \"SPECTRAL_KPOINT_MP_SPACING\", KEY_ALIASES = &[\"SPECTRAL_KPOINTS_MP_SPACING\"]), ToCell, ToCellValue. Include #[cfg(test)] mod tests. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoints_mp_spacing;` in module declarations. Add `pub use spectral_kpoints_mp_spacing::SpectralKpointsMpSpacing;` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_spacing.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoints_mp_spacing_scalar",
+        "test_code": "#[test]\nfn test_spectral_kpoints_mp_spacing_scalar() {\n    let value = CellValue::Float(0.05);\n    let result = SpectralKpointsMpSpacing::from_cell_value(&value).unwrap();\n    assert_eq!(result.value, 0.05);\n    assert_eq!(result.unit, None);\n}",
+        "signature": "pub fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses either scalar float or 2-element array [value, unit] into SpectralKpointsMpSpacing."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoints_mp_spacing declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointsMpSpacing re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoints_mp_spacing"
+      ],
+      "depends_on": [
+        "TASK-G4-4"
+      ]
+    },
+    {
+      "id": "TASK-G4-6",
+      "kind": "lib-tdd",
+      "description": "Create SpectralKpointsMpOffset key-value newtype [f64;3]. Follows KpointsMpOffset pattern. No BS_ aliases (net-new). Register in mod.rs.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_offset.rs",
+        "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_offset.rs",
+          "action": "create",
+          "guidance": "Follow the exact pattern of kpoints_mp_offset.rs (created in TASK-G3-1). Define `pub struct SpectralKpointsMpOffset(pub [f64; 3])` with #[derive(Debug, Clone, Copy, PartialEq)]. Implement FromCellValue, FromKeyValue (KEY_NAME = \"SPECTRAL_KPOINT_MP_OFFSET\", KEY_ALIASES = &[\"SPECTRAL_KPOINTS_MP_OFFSET\"]), ToCell, ToCellValue. Include #[cfg(test)] mod tests. Write the TDD test first."
+        },
+        {
+          "path": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "action": "modify",
+          "guidance": "Add `mod spectral_kpoints_mp_offset;` in module declarations. Add `pub use spectral_kpoints_mp_offset::SpectralKpointsMpOffset;` in pub use section."
+        }
+      ],
+      "tdd_interface": {
+        "test_file": "castep_cell_io/src/cell/bz_sampling_kpoints/spectral_kpoints_mp_offset.rs",
+        "test_module": "tests",
+        "test_fn_name": "test_spectral_kpoints_mp_offset_from_cell_value",
+        "test_code": "#[test]\nfn test_spectral_kpoints_mp_offset_from_cell_value() {\n    let val = CellValue::Array(vec![\n        CellValue::Float(0.0),\n        CellValue::Float(0.5),\n        CellValue::Float(0.5),\n    ]);\n    let offset = SpectralKpointsMpOffset::from_cell_value(&val).unwrap();\n    assert_eq!(offset.0, [0.0, 0.5, 0.5]);\n}",
+        "signature": "pub fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> where Self: Sized",
+        "expected_behavior": "Parses CellValue::Array of exactly 3 f64s into SpectralKpointsMpOffset([f64; 3])."
+      },
+      "wiring_checklist": [
+        {
+          "kind": "pub_mod",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "mod spectral_kpoints_mp_offset declared"
+        },
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell/bz_sampling_kpoints/mod.rs",
+          "detail": "SpectralKpointsMpOffset re-exported"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io spectral_kpoints_mp_offset"
+      ],
+      "depends_on": [
+        "TASK-G4-5"
+      ]
+    },
+    {
+      "id": "TASK-G4-7",
+      "kind": "direct",
+      "description": "Wire all 6 spectral k-point types into CellDocument: imports, 6 struct fields, parsing (spectral BEFORE BS_), serialization, Ok() constructor fields.",
+      "files_in_scope": [
+        "castep_cell_io/src/cell_document.rs"
+      ],
+      "changes": [
+        {
+          "path": "castep_cell_io/src/cell_document.rs",
+          "action": "modify",
+          "guidance": "Wire all 6 spectral types. CRITICAL: parse spectral block types BEFORE existing BS_ block types (see pitfall P0). Serialize spectral BEFORE BS_.\n\n**Imports**: Add SpectralKpointPath, SpectralKpointsList, SpectralKpointPathSpacing, SpectralKpointsMpGrid, SpectralKpointsMpSpacing, SpectralKpointsMpOffset to the bz_sampling_kpoints import. (SpectralKpointPathEntry is consumed by SpectralKpointPath internally \u2014 no need to import at the CellDocument level.)\n\n**Struct fields** (k-point section, after bs_kpoint_path_spacing):\n- `pub spectral_kpoint_path: Option<SpectralKpointPath>,`\n- `pub spectral_kpoints_list: Option<SpectralKpointsList>,`\n- `pub spectral_kpoint_path_spacing: Option<SpectralKpointPathSpacing>,`\n- `pub spectral_kpoints_mp_grid: Option<SpectralKpointsMpGrid>,`\n- `pub spectral_kpoints_mp_spacing: Option<SpectralKpointsMpSpacing>,`\n- `pub spectral_kpoints_mp_offset: Option<SpectralKpointsMpOffset>,`\n\n**Parsing** (in from_cell_file, AFTER magres_kpoints_list, BEFORE bs_kpoint_path):\n- Block types first: `let spectral_kpoint_path = find_block_any(cells, &[\"SPECTRAL_KPOINT_PATH\", \"SPECTRAL_KPOINTS_PATH\", \"BS_KPOINT_PATH\", \"BS_KPOINTS_PATH\"]).ok().map(|rows| SpectralKpointPath::from_block_rows(rows)).transpose()?;`\n- `let spectral_kpoints_list = find_block_any(cells, &[\"SPECTRAL_KPOINT_LIST\", \"SPECTRAL_KPOINTS_LIST\", \"BS_KPOINT_LIST\", \"BS_KPOINTS_LIST\"]).ok().map(|rows| SpectralKpointsList::from_block_rows(rows)).transpose()?;`\n- Key-value types: `let spectral_kpoint_path_spacing = SpectralKpointPathSpacing::from_cells(cells)?;`, `let spectral_kpoints_mp_grid = SpectralKpointsMpGrid::from_cells(cells)?;`, `let spectral_kpoints_mp_spacing = SpectralKpointsMpSpacing::from_cells(cells)?;`, `let spectral_kpoints_mp_offset = SpectralKpointsMpOffset::from_cells(cells)?;`\n\n**Serialization** (in to_cell_file, AFTER magres_kpoints_list, BEFORE bs_kpoint_path):\n- `if let Some(sp) = &self.spectral_kpoint_path { cells.push(sp.to_cell()); }` and similarly for all 6 fields.\n\n**Ok() constructor**: Add all 6 field bindings between bs_kpoint_path_spacing and symmetry_ops bindings."
+        }
+      ],
+      "wiring_checklist": [
+        {
+          "kind": "pub_use",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "All 6 spectral types imported from bz_sampling_kpoints"
+        },
+        {
+          "kind": "type_annotation",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "6 spectral Option<T> fields on CellDocument"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "Spectral block parsing BEFORE BS_ blocks in from_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "4 spectral from_cells calls in from_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "6 spectral serialization blocks BEFORE BS_ in to_cell_file"
+        },
+        {
+          "kind": "fn_call",
+          "file": "castep_cell_io/src/cell_document.rs",
+          "detail": "6 spectral field bindings in Ok(CellDocument { ... })"
+        }
+      ],
+      "acceptance": [
+        "cargo check -p castep_cell_io",
+        "cargo test -p castep_cell_io"
+      ],
+      "depends_on": [
+        "TASK-G4-6"
+      ]
+    }
+  ]
+}

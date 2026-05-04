@@ -57,33 +57,41 @@
 
 use bon::Builder;
 use castep_cell_fmt::{
-    CResult, Cell, CellValue, Error, ToCell, ToCellFile,
+    CResult, Cell, CellValue, Error, FromKeyValue, ToCell, ToCellFile,
     parse::{FromBlock, FromCellFile},
-    query::{find_block, find_block_any},
+    query::{find_block, find_block_any, has_flag},
 };
 
 use crate::cell::{
     bz_sampling_kpoints::{
-        BSKpointList, BsKpointPath, KpointsList, MagresKpointsList, OpticsKpointsList,
+        BSKpointList, BsKpointPath, BsKpointPathSpacing, KpointsList, KpointsMpGrid,
+        KpointsMpOffset, KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
+        SpectralKpointPath, SpectralKpointsList, SpectralKpointPathSpacing,
+        SpectralKpointsMpGrid, SpectralKpointsMpSpacing, SpectralKpointsMpOffset,
     },
-    constraints::{FixAllCell, FixAllIons, FixCOM, IonicConstraints, NonlinearConstraints},
+    constraints::{
+        CellConstraints, FixAllCell, FixAllIons, FixCOM, FixVOL, IonicConstraints,
+        NonlinearConstraints,
+    },
     external_fields::{ExternalEfield, ExternalPressure},
-    lattice_param::LatticeCart,
+    lattice_param::{LatticeABC, LatticeCart},
     phonon::{
-        PhononFineKpointList, PhononGammaDirections, PhononKpointList, PhononKpointPath,
+        PhononFineKpointList, PhononFineKpointPath, PhononFineKpointPathSpacing,
+        PhononFineKpointsMpGrid, PhononFineKpointsMpOffset, PhononFineKpointsMpSpacing,
+        PhononGammaDirections, PhononKpointList, PhononKpointPath,
+        PhononKpointsMpGrid, PhononKpointsMpOffset, PhononKpointsMpSpacing,
         PhononSupercellMatrix, SupercellKpointListCastep,
     },
     positions::{PositionsAbs, PositionsFrac},
     species::{HubbardU, SedcCustomParams, SpeciesLcaoStates, SpeciesMass, SpeciesPot, SpeciesQ},
-    symmetry::SymmetryOps,
+    symmetry::{SymmetryGenerate, SymmetryOps, SymmetryTol},
     velocities::IonicVelocities,
 };
 
 /// Lattice vector specification for the simulation cell.
 ///
 /// Defines the periodic boundary conditions of the crystal structure.
-/// Currently supports Cartesian coordinates; future versions may add
-/// fractional or ABC+angles representations.
+/// Supports both Cartesian and ABC+angles representations.
 ///
 /// # Example
 ///
@@ -99,13 +107,30 @@ pub enum Lattice {
     ///
     /// Corresponds to the `%BLOCK LATTICE_CART` section in CASTEP input files.
     Cart(LatticeCart),
+    /// Lattice vectors in ABC+angles format.
+    ///
+    /// Corresponds to the `%BLOCK LATTICE_ABC` section in CASTEP input files.
+    Abc(LatticeABC),
 }
 
 impl ToCell for Lattice {
     fn to_cell(&self) -> Cell<'_> {
         match self {
             Lattice::Cart(cart) => cart.to_cell(),
+            Lattice::Abc(abc) => abc.to_cell(),
         }
+    }
+}
+
+impl From<LatticeCart> for Lattice {
+    fn from(v: LatticeCart) -> Self {
+        Lattice::Cart(v)
+    }
+}
+
+impl From<LatticeABC> for Lattice {
+    fn from(v: LatticeABC) -> Self {
+        Lattice::Abc(v)
     }
 }
 
@@ -241,10 +266,58 @@ pub struct CellDocument {
     ///
     /// Corresponds to `%BLOCK MAGRES_KPOINTS_LIST` in CASTEP.
     pub magres_kpoints_list: Option<MagresKpointsList>,
+    /// Monkhorst-Pack grid for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_GRID` in CASTEP.
+    pub kpoints_mp_grid: Option<KpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_SPACING` in CASTEP.
+    pub kpoints_mp_spacing: Option<KpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for k-point sampling.
+    ///
+    /// Corresponds to `KPOINT_MP_OFFSET` in CASTEP.
+    pub kpoints_mp_offset: Option<KpointsMpOffset>,
+    /// Spacing for band structure k-point path.
+    ///
+    /// Corresponds to `BS_KPOINT_PATH_SPACING` in CASTEP.
+    pub bs_kpoint_path_spacing: Option<BsKpointPathSpacing>,
+    /// Spectral k-point path for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_PATH` in CASTEP.
+    pub spectral_kpoint_path: Option<SpectralKpointPath>,
+    /// Spectral k-points list for band structure calculations.
+    ///
+    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_LIST` in CASTEP.
+    pub spectral_kpoints_list: Option<SpectralKpointsList>,
+    /// Spacing for spectral k-point path.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_PATH_SPACING` in CASTEP.
+    pub spectral_kpoint_path_spacing: Option<SpectralKpointPathSpacing>,
+    /// Monkhorst-Pack grid for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_GRID` in CASTEP.
+    pub spectral_kpoints_mp_grid: Option<SpectralKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_SPACING` in CASTEP.
+    pub spectral_kpoints_mp_spacing: Option<SpectralKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for spectral k-point sampling.
+    ///
+    /// Corresponds to `SPECTRAL_KPOINT_MP_OFFSET` in CASTEP.
+    pub spectral_kpoints_mp_offset: Option<SpectralKpointsMpOffset>,
     /// Explicit symmetry operations.
     ///
     /// Overrides automatic symmetry detection. Corresponds to `%BLOCK SYMMETRY_OPS`.
     pub symmetry_ops: Option<SymmetryOps>,
+    /// Symmetry detection tolerance.
+    ///
+    /// Corresponds to `SYMMETRY_TOL` in CASTEP.
+    pub symmetry_tol: Option<SymmetryTol>,
+    /// Automatically generate symmetry operations.
+    ///
+    /// Corresponds to `SYMMETRY_GENERATE` flag in CASTEP.
+    pub symmetry_generate: Option<SymmetryGenerate>,
     /// Fix center of mass during geometry optimization.
     ///
     /// Corresponds to `FIX_COM : TRUE` in CASTEP.
@@ -265,6 +338,14 @@ pub struct CellDocument {
     ///
     /// Corresponds to `FIX_ALL_CELL : TRUE` in CASTEP.
     pub fix_all_cell: Option<FixAllCell>,
+    /// Fix the volume of the cell during optimization.
+    ///
+    /// Corresponds to `FIX_VOL : TRUE` in CASTEP.
+    pub fix_vol: Option<FixVOL>,
+    /// Cell constraints for geometry optimization.
+    ///
+    /// Corresponds to `%BLOCK CELL_CONSTRAINTS` in CASTEP.
+    pub cell_constraints: Option<CellConstraints>,
     /// External electric field applied to the system.
     ///
     /// Corresponds to `%BLOCK EXTERNAL_EFIELD` in CASTEP.
@@ -305,6 +386,38 @@ pub struct CellDocument {
     ///
     /// Corresponds to `%BLOCK PHONON_KPOINT_PATH` in CASTEP.
     pub phonon_kpoint_path: Option<PhononKpointPath>,
+    /// Monkhorst-Pack grid for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_GRID` in CASTEP.
+    pub phonon_kpoints_mp_grid: Option<PhononKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_SPACING` in CASTEP.
+    pub phonon_kpoints_mp_spacing: Option<PhononKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_KPOINT_MP_OFFSET` in CASTEP.
+    pub phonon_kpoints_mp_offset: Option<PhononKpointsMpOffset>,
+    /// Fine k-point path for phonon dispersion calculations.
+    ///
+    /// Corresponds to `%BLOCK PHONON_FINE_KPOINT_PATH` in CASTEP.
+    pub phonon_fine_kpoint_path: Option<PhononFineKpointPath>,
+    /// Spacing for fine k-point path.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_PATH_SPACING` in CASTEP.
+    pub phonon_fine_kpoint_path_spacing: Option<PhononFineKpointPathSpacing>,
+    /// Monkhorst-Pack grid for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_GRID` in CASTEP.
+    pub phonon_fine_kpoints_mp_grid: Option<PhononFineKpointsMpGrid>,
+    /// Monkhorst-Pack grid spacing for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_SPACING` in CASTEP.
+    pub phonon_fine_kpoints_mp_spacing: Option<PhononFineKpointsMpSpacing>,
+    /// Monkhorst-Pack grid offset for fine phonon k-point sampling.
+    ///
+    /// Corresponds to `PHONON_FINE_KPOINT_MP_OFFSET` in CASTEP.
+    pub phonon_fine_kpoints_mp_offset: Option<PhononFineKpointsMpOffset>,
     /// Directions for Gamma-point phonon calculations.
     ///
     /// Corresponds to `%BLOCK PHONON_GAMMA_DIRECTIONS` in CASTEP.
@@ -368,8 +481,23 @@ impl FromCellFile for CellDocument {
     /// # Ok::<(), castep_cell_fmt::Error>(())
     /// ```
     fn from_cell_file(cells: &[Cell<'_>]) -> CResult<Self> {
-        let lattice_rows = find_block(cells, "LATTICE_CART")?;
-        let lattice = Lattice::Cart(LatticeCart::from_block_rows(lattice_rows)?);
+        let has_lattice_cart = find_block(cells, "LATTICE_CART").is_ok();
+        let has_lattice_abc = find_block(cells, "LATTICE_ABC").is_ok();
+        if has_lattice_cart && has_lattice_abc {
+            return Err(Error::Message(
+                "Both LATTICE_CART and LATTICE_ABC are specified. Only one lattice specification is allowed."
+                    .into(),
+            ));
+        }
+        let lattice = if has_lattice_cart {
+            Lattice::Cart(LatticeCart::from_block_rows(find_block(
+                cells,
+                "LATTICE_CART",
+            )?)?)
+        } else {
+            let rows = find_block(cells, "LATTICE_ABC")?;
+            Lattice::Abc(LatticeABC::from_block_rows(rows)?)
+        };
 
         let positions = if find_block(cells, "POSITIONS_FRAC").is_ok() {
             Positions::Frac(PositionsFrac::from_block_rows(find_block(
@@ -388,16 +516,6 @@ impl FromCellFile for CellDocument {
             .map(|rows| KpointsList::from_block_rows(rows))
             .transpose()?;
 
-        let bs_kpoint_path = find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
-            .ok()
-            .map(|rows| BsKpointPath::from_block_rows(rows))
-            .transpose()?;
-
-        let bs_kpoints_list = find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| BSKpointList::from_block_rows(rows))
-            .transpose()?;
-
         let optics_kpoints_list = find_block_any(cells, &["OPTICS_KPOINT_LIST", "OPTICS_KPOINTS_LIST"])
             .ok()
             .map(|rows| OpticsKpointsList::from_block_rows(rows))
@@ -408,10 +526,55 @@ impl FromCellFile for CellDocument {
             .map(|rows| MagresKpointsList::from_block_rows(rows))
             .transpose()?;
 
+        let spectral_kpoint_path = find_block_any(
+            cells,
+            &["SPECTRAL_KPOINT_PATH", "SPECTRAL_KPOINTS_PATH", "BS_KPOINT_PATH", "BS_KPOINTS_PATH"],
+        )
+        .ok()
+        .map(|rows| SpectralKpointPath::from_block_rows(rows))
+        .transpose()?;
+
+        let spectral_kpoints_list = find_block_any(
+            cells,
+            &["SPECTRAL_KPOINT_LIST", "SPECTRAL_KPOINTS_LIST", "BS_KPOINT_LIST", "BS_KPOINTS_LIST"],
+        )
+        .ok()
+        .map(|rows| SpectralKpointsList::from_block_rows(rows))
+        .transpose()?;
+
+        let bs_kpoint_path = find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
+            .ok()
+            .map(|rows| BsKpointPath::from_block_rows(rows))
+            .transpose()?;
+
+        let bs_kpoints_list = find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
+            .ok()
+            .map(|rows| BSKpointList::from_block_rows(rows))
+            .transpose()?;
+
+        let bs_kpoint_path_spacing = BsKpointPathSpacing::from_cells(cells)?;
+
+        let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
+        let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
+        let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
+
+        let spectral_kpoint_path_spacing = SpectralKpointPathSpacing::from_cells(cells)?;
+        let spectral_kpoints_mp_grid = SpectralKpointsMpGrid::from_cells(cells)?;
+        let spectral_kpoints_mp_spacing = SpectralKpointsMpSpacing::from_cells(cells)?;
+        let spectral_kpoints_mp_offset = SpectralKpointsMpOffset::from_cells(cells)?;
+
         let symmetry_ops = find_block(cells, "SYMMETRY_OPS")
             .ok()
             .map(|rows| SymmetryOps::from_block_rows(rows))
             .transpose()?;
+
+        let symmetry_tol = SymmetryTol::from_cells(cells)?;
+
+        let symmetry_generate = if has_flag(cells, "SYMMETRY_GENERATE") {
+            Some(SymmetryGenerate)
+        } else {
+            None
+        };
 
         let fix_com = cells.iter().find_map(|c| {
             if let Cell::KeyValue(k, _v) = c
@@ -449,6 +612,12 @@ impl FromCellFile for CellDocument {
             }
             None
         });
+
+        let fix_vol = FixVOL::from_cells(cells)?;
+        let cell_constraints = find_block(cells, "CELL_CONSTRAINTS")
+            .ok()
+            .map(|rows| CellConstraints::from_block_rows(rows))
+            .transpose()?;
 
         let external_efield = find_block(cells, "EXTERNAL_EFIELD")
             .ok()
@@ -500,6 +669,23 @@ impl FromCellFile for CellDocument {
             .map(|rows| PhononKpointPath::from_block_rows(rows))
             .transpose()?;
 
+        let phonon_kpoints_mp_grid = PhononKpointsMpGrid::from_cells(cells)?;
+        let phonon_kpoints_mp_spacing = PhononKpointsMpSpacing::from_cells(cells)?;
+        let phonon_kpoints_mp_offset = PhononKpointsMpOffset::from_cells(cells)?;
+
+        let phonon_fine_kpoint_path = find_block_any(
+            cells,
+            &["PHONON_FINE_KPOINT_PATH", "PHONON_FINE_KPOINTS_PATH"],
+        )
+        .ok()
+        .map(|rows| PhononFineKpointPath::from_block_rows(rows))
+        .transpose()?;
+
+        let phonon_fine_kpoint_path_spacing = PhononFineKpointPathSpacing::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_grid = PhononFineKpointsMpGrid::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_spacing = PhononFineKpointsMpSpacing::from_cells(cells)?;
+        let phonon_fine_kpoints_mp_offset = PhononFineKpointsMpOffset::from_cells(cells)?;
+
         let phonon_gamma_directions = find_block(cells, "PHONON_GAMMA_DIRECTIONS")
             .ok()
             .map(|rows| PhononGammaDirections::from_block_rows(rows))
@@ -533,12 +719,26 @@ impl FromCellFile for CellDocument {
             bs_kpoints_list,
             optics_kpoints_list,
             magres_kpoints_list,
+            bs_kpoint_path_spacing,
+            kpoints_mp_grid,
+            kpoints_mp_spacing,
+            kpoints_mp_offset,
+            spectral_kpoint_path,
+            spectral_kpoints_list,
+            spectral_kpoint_path_spacing,
+            spectral_kpoints_mp_grid,
+            spectral_kpoints_mp_spacing,
+            spectral_kpoints_mp_offset,
             symmetry_ops,
+            symmetry_tol,
+            symmetry_generate,
             fix_com,
             ionic_constraints,
             nonlinear_constraints,
             fix_all_ions,
             fix_all_cell,
+            cell_constraints,
+            fix_vol,
             external_efield,
             external_pressure,
             species_mass,
@@ -549,6 +749,14 @@ impl FromCellFile for CellDocument {
             sedc_custom_params,
             phonon_kpoint_list,
             phonon_kpoint_path,
+            phonon_kpoints_mp_grid,
+            phonon_kpoints_mp_spacing,
+            phonon_kpoints_mp_offset,
+            phonon_fine_kpoint_path,
+            phonon_fine_kpoint_path_spacing,
+            phonon_fine_kpoints_mp_grid,
+            phonon_fine_kpoints_mp_spacing,
+            phonon_fine_kpoints_mp_offset,
             phonon_gamma_directions,
             phonon_fine_kpoint_list,
             phonon_supercell_matrix,
@@ -595,6 +803,24 @@ impl ToCellFile for CellDocument {
         if let Some(kp) = &self.kpoints_list {
             cells.push(kp.to_cell());
         }
+        if let Some(sp) = &self.spectral_kpoint_path {
+            cells.push(sp.to_cell());
+        }
+        if let Some(sl) = &self.spectral_kpoints_list {
+            cells.push(sl.to_cell());
+        }
+        if let Some(sps) = &self.spectral_kpoint_path_spacing {
+            cells.push(sps.to_cell());
+        }
+        if let Some(smg) = &self.spectral_kpoints_mp_grid {
+            cells.push(smg.to_cell());
+        }
+        if let Some(sms) = &self.spectral_kpoints_mp_spacing {
+            cells.push(sms.to_cell());
+        }
+        if let Some(smo) = &self.spectral_kpoints_mp_offset {
+            cells.push(smo.to_cell());
+        }
         if let Some(bp) = &self.bs_kpoint_path {
             cells.push(bp.to_cell());
         }
@@ -607,8 +833,26 @@ impl ToCellFile for CellDocument {
         if let Some(mk) = &self.magres_kpoints_list {
             cells.push(mk.to_cell());
         }
+        if let Some(kmg) = &self.kpoints_mp_grid {
+            cells.push(kmg.to_cell());
+        }
+        if let Some(kms) = &self.kpoints_mp_spacing {
+            cells.push(kms.to_cell());
+        }
+        if let Some(kmo) = &self.kpoints_mp_offset {
+            cells.push(kmo.to_cell());
+        }
+        if let Some(bps) = &self.bs_kpoint_path_spacing {
+            cells.push(bps.to_cell());
+        }
         if let Some(sym) = &self.symmetry_ops {
             cells.push(sym.to_cell());
+        }
+        if let Some(st) = &self.symmetry_tol {
+            cells.push(st.to_cell());
+        }
+        if let Some(_sg) = &self.symmetry_generate {
+            cells.push(Cell::Flag("SYMMETRY_GENERATE"));
         }
         if let Some(_fc) = &self.fix_com {
             cells.push(Cell::Flag("FIX_COM"));
@@ -624,6 +868,12 @@ impl ToCellFile for CellDocument {
         }
         if let Some(_fc) = &self.fix_all_cell {
             cells.push(Cell::Flag("FIX_ALL_CELL"));
+        }
+        if let Some(fv) = &self.fix_vol {
+            cells.push(fv.to_cell());
+        }
+        if let Some(cc) = &self.cell_constraints {
+            cells.push(cc.to_cell());
         }
         if let Some(ef) = &self.external_efield {
             cells.push(ef.to_cell());
@@ -654,6 +904,30 @@ impl ToCellFile for CellDocument {
         }
         if let Some(pp) = &self.phonon_kpoint_path {
             cells.push(pp.to_cell());
+        }
+        if let Some(pmg) = &self.phonon_kpoints_mp_grid {
+            cells.push(pmg.to_cell());
+        }
+        if let Some(pms) = &self.phonon_kpoints_mp_spacing {
+            cells.push(pms.to_cell());
+        }
+        if let Some(pmo) = &self.phonon_kpoints_mp_offset {
+            cells.push(pmo.to_cell());
+        }
+        if let Some(pfp) = &self.phonon_fine_kpoint_path {
+            cells.push(pfp.to_cell());
+        }
+        if let Some(pfps) = &self.phonon_fine_kpoint_path_spacing {
+            cells.push(pfps.to_cell());
+        }
+        if let Some(pfmg) = &self.phonon_fine_kpoints_mp_grid {
+            cells.push(pfmg.to_cell());
+        }
+        if let Some(pfms) = &self.phonon_fine_kpoints_mp_spacing {
+            cells.push(pfms.to_cell());
+        }
+        if let Some(pfmo) = &self.phonon_fine_kpoints_mp_offset {
+            cells.push(pfmo.to_cell());
         }
         if let Some(pg) = &self.phonon_gamma_directions {
             cells.push(pg.to_cell());
