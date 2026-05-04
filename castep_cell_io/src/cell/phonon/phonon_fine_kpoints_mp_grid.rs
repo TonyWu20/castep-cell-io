@@ -1,7 +1,7 @@
 use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue};
 use castep_cell_fmt::parse::{FromCellValue, FromKeyValue};
 use castep_cell_fmt::query::value_as_u32;
-use castep_cell_fmt::CResult;
+use castep_cell_fmt::{CResult, Error};
 
 /// Specifies the fine Monkhorst-Pack grid parameters for phonon calculations.
 ///
@@ -25,7 +25,7 @@ impl FromCellValue for PhononFineKpointsMpGrid {
                 ];
                 Ok(PhononFineKpointsMpGrid(grid))
             }
-            _ => Err(castep_cell_fmt::Error::Message(
+            _ => Err(Error::Message(
                 "PhononFineKpointsMpGrid must be an array of 3 integers".into(),
             )),
         }
