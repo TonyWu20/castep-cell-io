@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-05
+
+### Changed
+- **BREAKING**: Converted `CellDocument` builder to fallible with 4 mutual-exclusion validation rules:
+  `kpoints_list`/`kpoints_mp_grid`/`kpoints_mp_spacing`, spectral/BS k-points,
+  `phonon_kpoint_path`/`phonon_kpoint_list`, `symmetry_generate`/`symmetry_ops` — now
+  mutually exclusive at build time
+- **BREAKING**: `CellDocument::builder().build()` now returns `CResult<CellDocument>`
+  instead of `CellDocument`
+- Converted `from_cell_file` to use builder pattern with BS_ duplication guarding
+
+### Added
+- Integration tests for mutual exclusion validation of k-point specifications
+
+### Fixed
+- BS_ k-point block duplication: `BS_KPOINT_PATH`/`BS_KPOINTS_LIST` parsing now suppressed
+  when `SPECTRAL_KPOINT_PATH`/`SPECTRAL_KPOINTS_LIST` is present
+
 ## [0.4.0] - 2026-04-06
 
 ### Changed
