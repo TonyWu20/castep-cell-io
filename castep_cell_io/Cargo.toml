@@ -8,9 +8,9 @@ readme = "README.md"
 homepage = "https://github.com/TonyWu20/castep-cell-io"
 repository = "https://github.com/TonyWu20/castep-cell-io"
 license = "MIT"
-keywords = ["chemistry", "castep"]
+keywords = ["castep", "chemistry"]
 
 [dependencies]
-castep-cell-fmt = { version = "0.1.0", path = "../castep_cell_fmt" }
 bon = "3.9.1"
+castep-cell-fmt = "0.2.0"
 serde = { version = "1.0.219", features = ["derive"] }
