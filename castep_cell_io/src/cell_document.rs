@@ -296,6 +296,10 @@ impl<S: cell_document_builder::IsComplete> CellDocumentBuilder<S> {
         doc.constraints = doc.constraints.validate().map_err(|e| Error::Message(e.to_string()))?;
         doc.phonon = doc.phonon.validate().map_err(|e| Error::Message(e.to_string()))?;
         doc.phonon_fine = doc.phonon_fine.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.optics_magres = doc.optics_magres.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.external_fields = doc.external_fields.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.species = doc.species.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.dynamics = doc.dynamics.validate().map_err(|e| Error::Message(e.to_string()))?;
         Ok(doc)
     }
 }
