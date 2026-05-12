@@ -108,4 +108,14 @@ mod tests {
         };
         assert!(params.validate().is_ok());
     }
+
+    #[test]
+    fn test_validate_mp_grid_and_mp_spacing_err() {
+        let params = KpointsParams {
+            kpoints_mp_grid: Some(KpointsMpGrid([2, 2, 2])),
+            kpoints_mp_spacing: Some(KpointsMpSpacing { value: 0.05, unit: None }),
+            ..Default::default()
+        };
+        assert!(params.validate().is_err());
+    }
 }
