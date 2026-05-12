@@ -20,7 +20,7 @@ pub struct SpectralKpointsList {
 
 impl FromBlock for SpectralKpointsList {
     const BLOCK_NAME: &'static str = "SPECTRAL_KPOINT_LIST";
-    const BLOCK_ALIASES: &'static [&'static str] = &["SPECTRAL_KPOINTS_LIST", "BS_KPOINT_LIST", "BS_KPOINTS_LIST"];
+    const BLOCK_ALIASES: &'static [&'static str] = &["SPECTRAL_KPOINTS_LIST"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpts = rows

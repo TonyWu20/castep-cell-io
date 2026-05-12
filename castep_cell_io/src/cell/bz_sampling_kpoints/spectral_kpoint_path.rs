@@ -42,7 +42,7 @@ pub struct SpectralKpointPath {
 
 impl FromBlock for SpectralKpointPath {
     const BLOCK_NAME: &'static str = "SPECTRAL_KPOINT_PATH";
-    const BLOCK_ALIASES: &'static [&'static str] = &["SPECTRAL_KPOINTS_PATH", "BS_KPOINT_PATH", "BS_KPOINTS_PATH"];
+    const BLOCK_ALIASES: &'static [&'static str] = &["SPECTRAL_KPOINTS_PATH"];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let points = rows

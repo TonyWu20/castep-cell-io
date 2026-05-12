@@ -26,7 +26,7 @@
 //! println!("Positions: {:?}", doc.positions);
 //!
 //! // Check optional blocks
-//! if let Some(kpoints) = &doc.kpoints_list {
+//! if let Some(kpoints) = &doc.kpoints.kpoints_list {
 //!     println!("K-points defined: {:?}", kpoints);
 //! }
 //! # Ok::<(), Box<dyn std::error::Error>>(())
@@ -57,35 +57,24 @@
 
 use bon::Builder;
 use castep_cell_fmt::{
-    CResult, Cell, CellValue, Error, FromKeyValue, ToCell, ToCellFile,
+    CResult, Cell, CellValue, Error, ToCell, ToCellFile,
     parse::{FromBlock, FromCellFile},
-    query::{find_block, find_block_any, has_flag},
+    query::find_block,
 };
 
 use crate::cell::{
-    bz_sampling_kpoints::{
-        BSKpointList, BsKpointPath, BsKpointPathSpacing, KpointsList, KpointsMpGrid,
-        KpointsMpOffset, KpointsMpSpacing, MagresKpointsList, OpticsKpointsList,
-        SpectralKpointPath, SpectralKpointsList, SpectralKpointPathSpacing,
-        SpectralKpointsMpGrid, SpectralKpointsMpSpacing, SpectralKpointsMpOffset,
-    },
-    constraints::{
-        CellConstraints, FixAllCell, FixAllIons, FixCOM, FixVOL, IonicConstraints,
-        NonlinearConstraints,
-    },
-    external_fields::{ExternalEfield, ExternalPressure},
+    constraints_params::ConstraintsParams,
+    dynamics_params::DynamicsParams,
+    external_field_params::ExternalFieldParams,
+    kpoints_params::KpointsParams,
     lattice_param::{LatticeABC, LatticeCart},
-    phonon::{
-        PhononFineKpointList, PhononFineKpointPath, PhononFineKpointPathSpacing,
-        PhononFineKpointsMpGrid, PhononFineKpointsMpOffset, PhononFineKpointsMpSpacing,
-        PhononGammaDirections, PhononKpointList, PhononKpointPath,
-        PhononKpointsMpGrid, PhononKpointsMpOffset, PhononKpointsMpSpacing,
-        PhononSupercellMatrix, SupercellKpointListCastep,
-    },
+    optics_magres_params::OpticsMagresParams,
+    phonon_params::PhononParams,
+    phonon_fine_params::PhononFineParams,
     positions::{PositionsAbs, PositionsFrac},
-    species::{HubbardU, SedcCustomParams, SpeciesLcaoStates, SpeciesMass, SpeciesPot, SpeciesQ},
-    symmetry::{SymmetryGenerate, SymmetryOps, SymmetryTol},
-    velocities::IonicVelocities,
+    species_params::SpeciesParams,
+    spectral_params::SpectralParams,
+    symmetry_params::SymmetryParams,
 };
 use cell_document_builder::IsComplete;
 
@@ -217,24 +206,21 @@ impl ToCell for Positions {
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 ///
-/// # Optional Blocks
+/// # Optional Blocks (via Cell Document Groups)
 ///
-/// The document supports all standard CASTEP cell file blocks:
+/// The document organizes optional blocks into logical sub-groups,
+/// mirroring the `ParamDocument` pattern:
 ///
-/// - **K-point sampling**: [`kpoints_list`](Self::kpoints_list), [`bs_kpoint_path`](Self::bs_kpoint_path),
-///   [`bs_kpoints_list`](Self::bs_kpoints_list), [`optics_kpoints_list`](Self::optics_kpoints_list),
-///   [`magres_kpoints_list`](Self::magres_kpoints_list)
-/// - **Constraints**: [`ionic_constraints`](Self::ionic_constraints), [`nonlinear_constraints`](Self::nonlinear_constraints),
-///   [`fix_all_ions`](Self::fix_all_ions), [`fix_all_cell`](Self::fix_all_cell), [`fix_com`](Self::fix_com)
-/// - **External fields**: [`external_efield`](Self::external_efield), [`external_pressure`](Self::external_pressure)
-/// - **Species properties**: [`species_mass`](Self::species_mass), [`species_pot`](Self::species_pot),
-///   [`species_lcao_states`](Self::species_lcao_states), [`species_q`](Self::species_q),
-///   [`hubbard_u`](Self::hubbard_u), [`sedc_custom_params`](Self::sedc_custom_params)
-/// - **Phonon calculations**: [`phonon_kpoint_list`](Self::phonon_kpoint_list), [`phonon_kpoint_path`](Self::phonon_kpoint_path),
-///   [`phonon_gamma_directions`](Self::phonon_gamma_directions), [`phonon_fine_kpoint_list`](Self::phonon_fine_kpoint_list),
-///   [`phonon_supercell_matrix`](Self::phonon_supercell_matrix), [`supercell_kpoint_list`](Self::supercell_kpoint_list)
-/// - **Dynamics**: [`ionic_velocities`](Self::ionic_velocities)
-/// - **Symmetry**: [`symmetry_ops`](Self::symmetry_ops)
+/// - **K-points**: [`kpoints`](Self::kpoints) — SCF k-point sampling
+/// - **Spectral**: [`spectral`](Self::spectral) — BS_ and SPECTRAL_ k-point paths
+/// - **Optics/Magres**: [`optics_magres`](Self::optics_magres) — optics and magnetic resonance k-points
+/// - **Symmetry**: [`symmetry`](Self::symmetry) — symmetry operations and generation
+/// - **Constraints**: [`constraints`](Self::constraints) — ionic and cell constraints
+/// - **External fields**: [`external_fields`](Self::external_fields) — electric field and pressure
+/// - **Species**: [`species`](Self::species) — masses, pseudopotentials, Hubbard U
+/// - **Phonon**: [`phonon`](Self::phonon) — coarse phonon k-point settings
+/// - **Phonon fine**: [`phonon_fine`](Self::phonon_fine) — fine phonon k-point settings
+/// - **Dynamics**: [`dynamics`](Self::dynamics) — ionic velocities for MD
 #[allow(clippy::duplicated_attributes)]
 #[derive(Debug, Clone, Builder)]
 #[builder(on(Lattice, into), on(Positions, into), finish_fn(vis = "", name = build_internal))]
@@ -247,234 +233,69 @@ pub struct CellDocument {
     ///
     /// Required field. Can be fractional or absolute coordinates.
     pub positions: Positions,
-    /// K-point sampling grid for electronic structure calculations.
+    /// SCF k-point sampling parameters.
     ///
-    /// Corresponds to `%BLOCK KPOINTS_LIST` in CASTEP.
-    pub kpoints_list: Option<KpointsList>,
-    /// K-point path for band structure calculations.
+    /// Contains KPOINTS_LIST, KPOINTS_MP_GRID, KPOINTS_MP_SPACING, and KPOINTS_MP_OFFSET.
+    #[builder(default)]
+    pub kpoints: KpointsParams,
+    /// Spectral/BS k-point parameters.
     ///
-    /// Corresponds to `%BLOCK BS_KPOINT_PATH` in CASTEP.
-    pub bs_kpoint_path: Option<BsKpointPath>,
-    /// Explicit k-points for band structure calculations.
+    /// Contains BS_ and SPECTRAL_ prefixed k-point types for band structure calculations.
+    #[builder(default)]
+    pub spectral: SpectralParams,
+    /// Optics and magnetic resonance k-point lists.
     ///
-    /// Corresponds to `%BLOCK BS_KPOINTS_LIST` in CASTEP.
-    pub bs_kpoints_list: Option<BSKpointList>,
-    /// K-points for optical property calculations.
+    /// Contains OPTICS_KPOINTS_LIST and MAGRES_KPOINTS_LIST.
+    #[builder(default)]
+    pub optics_magres: OpticsMagresParams,
+    /// Symmetry parameters.
     ///
-    /// Corresponds to `%BLOCK OPTICS_KPOINTS_LIST` in CASTEP.
-    pub optics_kpoints_list: Option<OpticsKpointsList>,
-    /// K-points for magnetic resonance calculations.
+    /// Contains SYMMETRY_OPS, SYMMETRY_GENERATE, and SYMMETRY_TOL.
+    #[builder(default)]
+    pub symmetry: SymmetryParams,
+    /// Movement constraints for ions and cell.
     ///
-    /// Corresponds to `%BLOCK MAGRES_KPOINTS_LIST` in CASTEP.
-    pub magres_kpoints_list: Option<MagresKpointsList>,
-    /// Monkhorst-Pack grid for k-point sampling.
+    /// Contains FIX_COM, IONIC_CONSTRAINTS, NONLINEAR_CONSTRAINTS,
+    /// FIX_ALL_IONS, FIX_ALL_CELL, CELL_CONSTRAINTS, and FIX_VOL.
+    #[builder(default)]
+    pub constraints: ConstraintsParams,
+    /// External field parameters.
     ///
-    /// Corresponds to `KPOINT_MP_GRID` in CASTEP.
-    pub kpoints_mp_grid: Option<KpointsMpGrid>,
-    /// Monkhorst-Pack grid spacing for k-point sampling.
+    /// Contains EXTERNAL_EFIELD and EXTERNAL_PRESSURE.
+    #[builder(default)]
+    pub external_fields: ExternalFieldParams,
+    /// Species properties.
     ///
-    /// Corresponds to `KPOINT_MP_SPACING` in CASTEP.
-    pub kpoints_mp_spacing: Option<KpointsMpSpacing>,
-    /// Monkhorst-Pack grid offset for k-point sampling.
+    /// Contains SPECIES_MASS, SPECIES_POT, SPECIES_LCAO_STATES,
+    /// SPECIES_Q, HUBBARD_U, and SEDC_CUSTOM_PARAMS.
+    #[builder(default)]
+    pub species: SpeciesParams,
+    /// Phonon (coarse) k-point parameters.
     ///
-    /// Corresponds to `KPOINT_MP_OFFSET` in CASTEP.
-    pub kpoints_mp_offset: Option<KpointsMpOffset>,
-    /// Spacing for band structure k-point path.
+    /// Contains phonon k-point lists, paths, MP grids, and related settings.
+    #[builder(default)]
+    pub phonon: PhononParams,
+    /// Phonon fine k-point parameters.
     ///
-    /// Corresponds to `BS_KPOINT_PATH_SPACING` in CASTEP.
-    pub bs_kpoint_path_spacing: Option<BsKpointPathSpacing>,
-    /// Spectral k-point path for band structure calculations.
+    /// Contains fine phonon k-point paths, lists, and MP grids.
+    #[builder(default)]
+    pub phonon_fine: PhononFineParams,
+    /// Molecular dynamics dynamics parameters.
     ///
-    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_PATH` in CASTEP.
-    pub spectral_kpoint_path: Option<SpectralKpointPath>,
-    /// Spectral k-points list for band structure calculations.
-    ///
-    /// Corresponds to `%BLOCK SPECTRAL_KPOINT_LIST` in CASTEP.
-    pub spectral_kpoints_list: Option<SpectralKpointsList>,
-    /// Spacing for spectral k-point path.
-    ///
-    /// Corresponds to `SPECTRAL_KPOINT_PATH_SPACING` in CASTEP.
-    pub spectral_kpoint_path_spacing: Option<SpectralKpointPathSpacing>,
-    /// Monkhorst-Pack grid for spectral k-point sampling.
-    ///
-    /// Corresponds to `SPECTRAL_KPOINT_MP_GRID` in CASTEP.
-    pub spectral_kpoints_mp_grid: Option<SpectralKpointsMpGrid>,
-    /// Monkhorst-Pack grid spacing for spectral k-point sampling.
-    ///
-    /// Corresponds to `SPECTRAL_KPOINT_MP_SPACING` in CASTEP.
-    pub spectral_kpoints_mp_spacing: Option<SpectralKpointsMpSpacing>,
-    /// Monkhorst-Pack grid offset for spectral k-point sampling.
-    ///
-    /// Corresponds to `SPECTRAL_KPOINT_MP_OFFSET` in CASTEP.
-    pub spectral_kpoints_mp_offset: Option<SpectralKpointsMpOffset>,
-    /// Explicit symmetry operations.
-    ///
-    /// Overrides automatic symmetry detection. Corresponds to `%BLOCK SYMMETRY_OPS`.
-    pub symmetry_ops: Option<SymmetryOps>,
-    /// Symmetry detection tolerance.
-    ///
-    /// Corresponds to `SYMMETRY_TOL` in CASTEP.
-    pub symmetry_tol: Option<SymmetryTol>,
-    /// Automatically generate symmetry operations.
-    ///
-    /// Corresponds to `SYMMETRY_GENERATE` flag in CASTEP.
-    pub symmetry_generate: Option<SymmetryGenerate>,
-    /// Fix center of mass during geometry optimization.
-    ///
-    /// Corresponds to `FIX_COM : TRUE` in CASTEP.
-    pub fix_com: Option<FixCOM>,
-    /// Linear constraints on ionic positions.
-    ///
-    /// Corresponds to `%BLOCK IONIC_CONSTRAINTS` in CASTEP.
-    pub ionic_constraints: Option<IonicConstraints>,
-    /// Nonlinear constraints on ionic positions.
-    ///
-    /// Corresponds to `%BLOCK NONLINEAR_CONSTRAINTS` in CASTEP.
-    pub nonlinear_constraints: Option<NonlinearConstraints>,
-    /// Prevent all ions from moving during optimization.
-    ///
-    /// Corresponds to `FIX_ALL_IONS : TRUE` in CASTEP.
-    pub fix_all_ions: Option<FixAllIons>,
-    /// Prevent cell parameters from changing during optimization.
-    ///
-    /// Corresponds to `FIX_ALL_CELL : TRUE` in CASTEP.
-    pub fix_all_cell: Option<FixAllCell>,
-    /// Fix the volume of the cell during optimization.
-    ///
-    /// Corresponds to `FIX_VOL : TRUE` in CASTEP.
-    pub fix_vol: Option<FixVOL>,
-    /// Cell constraints for geometry optimization.
-    ///
-    /// Corresponds to `%BLOCK CELL_CONSTRAINTS` in CASTEP.
-    pub cell_constraints: Option<CellConstraints>,
-    /// External electric field applied to the system.
-    ///
-    /// Corresponds to `%BLOCK EXTERNAL_EFIELD` in CASTEP.
-    pub external_efield: Option<ExternalEfield>,
-    /// External pressure applied to the cell.
-    ///
-    /// Corresponds to `%BLOCK EXTERNAL_PRESSURE` in CASTEP.
-    pub external_pressure: Option<ExternalPressure>,
-    /// Custom atomic masses for isotope calculations.
-    ///
-    /// Corresponds to `%BLOCK SPECIES_MASS` in CASTEP.
-    pub species_mass: Option<SpeciesMass>,
-    /// Pseudopotential files for each species.
-    ///
-    /// Corresponds to `%BLOCK SPECIES_POT` in CASTEP.
-    pub species_pot: Option<SpeciesPot>,
-    /// LCAO basis states for each species.
-    ///
-    /// Corresponds to `%BLOCK SPECIES_LCAO_STATES` in CASTEP.
-    pub species_lcao_states: Option<SpeciesLcaoStates>,
-    /// Ionic charges for each species.
-    ///
-    /// Corresponds to `%BLOCK SPECIES_Q` in CASTEP.
-    pub species_q: Option<SpeciesQ>,
-    /// Hubbard U parameters for DFT+U calculations.
-    ///
-    /// Corresponds to `%BLOCK HUBBARD_U` in CASTEP.
-    pub hubbard_u: Option<HubbardU>,
-    /// Custom parameters for semi-empirical dispersion correction.
-    ///
-    /// Corresponds to `%BLOCK SEDC_CUSTOM_PARAMS` in CASTEP.
-    pub sedc_custom_params: Option<SedcCustomParams>,
-    /// K-points for phonon calculations.
-    ///
-    /// Corresponds to `%BLOCK PHONON_KPOINT_LIST` in CASTEP.
-    pub phonon_kpoint_list: Option<PhononKpointList>,
-    /// K-point path for phonon dispersion calculations.
-    ///
-    /// Corresponds to `%BLOCK PHONON_KPOINT_PATH` in CASTEP.
-    pub phonon_kpoint_path: Option<PhononKpointPath>,
-    /// Monkhorst-Pack grid for phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_KPOINT_MP_GRID` in CASTEP.
-    pub phonon_kpoints_mp_grid: Option<PhononKpointsMpGrid>,
-    /// Monkhorst-Pack grid spacing for phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_KPOINT_MP_SPACING` in CASTEP.
-    pub phonon_kpoints_mp_spacing: Option<PhononKpointsMpSpacing>,
-    /// Monkhorst-Pack grid offset for phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_KPOINT_MP_OFFSET` in CASTEP.
-    pub phonon_kpoints_mp_offset: Option<PhononKpointsMpOffset>,
-    /// Fine k-point path for phonon dispersion calculations.
-    ///
-    /// Corresponds to `%BLOCK PHONON_FINE_KPOINT_PATH` in CASTEP.
-    pub phonon_fine_kpoint_path: Option<PhononFineKpointPath>,
-    /// Spacing for fine k-point path.
-    ///
-    /// Corresponds to `PHONON_FINE_KPOINT_PATH_SPACING` in CASTEP.
-    pub phonon_fine_kpoint_path_spacing: Option<PhononFineKpointPathSpacing>,
-    /// Monkhorst-Pack grid for fine phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_FINE_KPOINT_MP_GRID` in CASTEP.
-    pub phonon_fine_kpoints_mp_grid: Option<PhononFineKpointsMpGrid>,
-    /// Monkhorst-Pack grid spacing for fine phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_FINE_KPOINT_MP_SPACING` in CASTEP.
-    pub phonon_fine_kpoints_mp_spacing: Option<PhononFineKpointsMpSpacing>,
-    /// Monkhorst-Pack grid offset for fine phonon k-point sampling.
-    ///
-    /// Corresponds to `PHONON_FINE_KPOINT_MP_OFFSET` in CASTEP.
-    pub phonon_fine_kpoints_mp_offset: Option<PhononFineKpointsMpOffset>,
-    /// Directions for Gamma-point phonon calculations.
-    ///
-    /// Corresponds to `%BLOCK PHONON_GAMMA_DIRECTIONS` in CASTEP.
-    pub phonon_gamma_directions: Option<PhononGammaDirections>,
-    /// Fine k-point grid for phonon interpolation.
-    ///
-    /// Corresponds to `%BLOCK PHONON_FINE_KPOINT_LIST` in CASTEP.
-    pub phonon_fine_kpoint_list: Option<PhononFineKpointList>,
-    /// Supercell matrix for phonon calculations.
-    ///
-    /// Corresponds to `%BLOCK PHONON_SUPERCELL_MATRIX` in CASTEP.
-    pub phonon_supercell_matrix: Option<PhononSupercellMatrix>,
-    /// K-points for supercell calculations.
-    ///
-    /// Corresponds to `%BLOCK SUPERCELL_KPOINT_LIST` in CASTEP.
-    pub supercell_kpoint_list: Option<SupercellKpointListCastep>,
-    /// Initial ionic velocities for molecular dynamics.
-    ///
-    /// Corresponds to `%BLOCK IONIC_VELOCITIES` in CASTEP.
-    pub ionic_velocities: Option<IonicVelocities>,
+    /// Contains IONIC_VELOCITIES for MD restart.
+    #[builder(default)]
+    pub dynamics: DynamicsParams,
 }
 
 impl<S: cell_document_builder::IsComplete> CellDocumentBuilder<S> {
     pub fn build(self) -> CResult<CellDocument> {
-        let doc = self.build_internal();
-
-        let kpoint_count = [doc.kpoints_list.is_some(), doc.kpoints_mp_grid.is_some(), doc.kpoints_mp_spacing.is_some()]
-            .iter().filter(|&&x| x).count();
-        if kpoint_count > 1 {
-            return Err(Error::Message("At most one of kpoints_list, kpoints_mp_grid, kpoints_mp_spacing may be specified".into()));
-        }
-
-        let spectral_count = [
-            doc.spectral_kpoint_path.is_some(),
-            doc.spectral_kpoints_mp_grid.is_some(),
-            doc.spectral_kpoints_mp_spacing.is_some(),
-            doc.spectral_kpoints_list.is_some(),
-            doc.bs_kpoint_path.is_some(),
-            doc.bs_kpoints_list.is_some(),
-        ].iter().filter(|&&x| x).count();
-        if spectral_count > 1 {
-            return Err(Error::Message("At most one of spectral_kpoint_path, spectral_kpoints_mp_grid, spectral_kpoints_mp_spacing, spectral_kpoints_list, bs_kpoint_path, bs_kpoints_list may be specified".into()));
-        }
-
-        let phonon_count = [doc.phonon_kpoint_path.is_some(), doc.phonon_kpoint_list.is_some()]
-            .iter().filter(|&&x| x).count();
-        if phonon_count > 1 {
-            return Err(Error::Message("At most one of phonon_kpoint_path, phonon_kpoint_list may be specified".into()));
-        }
-
-        let symmetry_count = [doc.symmetry_generate.is_some(), doc.symmetry_ops.is_some()]
-            .iter().filter(|&&x| x).count();
-        if symmetry_count > 1 {
-            return Err(Error::Message("At most one of symmetry_generate, symmetry_ops may be specified".into()));
-        }
-
+        let mut doc = self.build_internal();
+        doc.kpoints = doc.kpoints.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.spectral = doc.spectral.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.symmetry = doc.symmetry.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.constraints = doc.constraints.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.phonon = doc.phonon.validate().map_err(|e| Error::Message(e.to_string()))?;
+        doc.phonon_fine = doc.phonon_fine.validate().map_err(|e| Error::Message(e.to_string()))?;
         Ok(doc)
     }
 }
@@ -529,286 +350,30 @@ impl FromCellFile for CellDocument {
             ));
         }
         let lattice = if has_lattice_cart {
-            Lattice::Cart(LatticeCart::from_block_rows(find_block(
-                cells,
-                "LATTICE_CART",
-            )?)?)
+            Lattice::Cart(LatticeCart::from_block_rows(find_block(cells, "LATTICE_CART")?)?)
         } else {
-            let rows = find_block(cells, "LATTICE_ABC")?;
-            Lattice::Abc(LatticeABC::from_block_rows(rows)?)
+            Lattice::Abc(LatticeABC::from_block_rows(find_block(cells, "LATTICE_ABC")?)?)
         };
 
         let positions = if find_block(cells, "POSITIONS_FRAC").is_ok() {
-            Positions::Frac(PositionsFrac::from_block_rows(find_block(
-                cells,
-                "POSITIONS_FRAC",
-            )?)?)
+            Positions::Frac(PositionsFrac::from_block_rows(find_block(cells, "POSITIONS_FRAC")?)?)
         } else {
-            Positions::Abs(PositionsAbs::from_block_rows(find_block(
-                cells,
-                "POSITIONS_ABS",
-            )?)?)
+            Positions::Abs(PositionsAbs::from_block_rows(find_block(cells, "POSITIONS_ABS")?)?)
         };
 
-        let kpoints_list = find_block_any(cells, &["KPOINT_LIST", "KPOINTS_LIST"])
-            .ok()
-            .map(|rows| KpointsList::from_block_rows(rows))
-            .transpose()?;
-
-        let optics_kpoints_list = find_block_any(cells, &["OPTICS_KPOINT_LIST", "OPTICS_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| OpticsKpointsList::from_block_rows(rows))
-            .transpose()?;
-
-        let magres_kpoints_list = find_block_any(cells, &["MAGRES_KPOINT_LIST", "MAGRES_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| MagresKpointsList::from_block_rows(rows))
-            .transpose()?;
-
-        let spectral_kpoint_path = find_block_any(
-            cells,
-            &["SPECTRAL_KPOINT_PATH", "SPECTRAL_KPOINTS_PATH", "BS_KPOINT_PATH", "BS_KPOINTS_PATH"],
-        )
-        .ok()
-        .map(|rows| SpectralKpointPath::from_block_rows(rows))
-        .transpose()?;
-
-        let spectral_kpoints_list = find_block_any(
-            cells,
-            &["SPECTRAL_KPOINT_LIST", "SPECTRAL_KPOINTS_LIST", "BS_KPOINT_LIST", "BS_KPOINTS_LIST"],
-        )
-        .ok()
-        .map(|rows| SpectralKpointsList::from_block_rows(rows))
-        .transpose()?;
-
-        let bs_kpoint_path = if spectral_kpoint_path.is_some() {
-            None
-        } else {
-            find_block_any(cells, &["BS_KPOINT_PATH", "BS_KPOINTS_PATH"])
-                .ok()
-                .map(|rows| BsKpointPath::from_block_rows(rows))
-                .transpose()?
-        };
-
-        let bs_kpoints_list = if spectral_kpoints_list.is_some() {
-            None
-        } else {
-            find_block_any(cells, &["BS_KPOINT_LIST", "BS_KPOINTS_LIST"])
-                .ok()
-                .map(|rows| BSKpointList::from_block_rows(rows))
-                .transpose()?
-        };
-
-        let bs_kpoint_path_spacing = BsKpointPathSpacing::from_cells(cells)?;
-
-        let kpoints_mp_grid = KpointsMpGrid::from_cells(cells)?;
-        let kpoints_mp_spacing = KpointsMpSpacing::from_cells(cells)?;
-        let kpoints_mp_offset = KpointsMpOffset::from_cells(cells)?;
-
-        let spectral_kpoint_path_spacing = SpectralKpointPathSpacing::from_cells(cells)?;
-        let spectral_kpoints_mp_grid = SpectralKpointsMpGrid::from_cells(cells)?;
-        let spectral_kpoints_mp_spacing = SpectralKpointsMpSpacing::from_cells(cells)?;
-        let spectral_kpoints_mp_offset = SpectralKpointsMpOffset::from_cells(cells)?;
-
-        let symmetry_ops = find_block(cells, "SYMMETRY_OPS")
-            .ok()
-            .map(|rows| SymmetryOps::from_block_rows(rows))
-            .transpose()?;
-
-        let symmetry_tol = SymmetryTol::from_cells(cells)?;
-
-        let symmetry_generate = if has_flag(cells, "SYMMETRY_GENERATE") {
-            Some(SymmetryGenerate)
-        } else {
-            None
-        };
-
-        let fix_com = cells.iter().find_map(|c| {
-            if let Cell::KeyValue(k, _v) = c
-                && k.eq_ignore_ascii_case("FIX_COM")
-            {
-                return Some(FixCOM(true));
-            }
-            None
-        });
-
-        let ionic_constraints = find_block(cells, "IONIC_CONSTRAINTS")
-            .ok()
-            .map(|rows| IonicConstraints::from_block_rows(rows))
-            .transpose()?;
-
-        let nonlinear_constraints = find_block(cells, "NONLINEAR_CONSTRAINTS")
-            .ok()
-            .map(|rows| NonlinearConstraints::from_block_rows(rows))
-            .transpose()?;
-
-        let fix_all_ions = cells.iter().find_map(|c| {
-            if let Cell::KeyValue(k, _v) = c
-                && k.eq_ignore_ascii_case("FIX_ALL_IONS")
-            {
-                return Some(FixAllIons(true));
-            }
-            None
-        });
-
-        let fix_all_cell = cells.iter().find_map(|c| {
-            if let Cell::KeyValue(k, _v) = c
-                && k.eq_ignore_ascii_case("FIX_ALL_CELL")
-            {
-                return Some(FixAllCell(true));
-            }
-            None
-        });
-
-        let fix_vol = FixVOL::from_cells(cells)?;
-        let cell_constraints = find_block(cells, "CELL_CONSTRAINTS")
-            .ok()
-            .map(|rows| CellConstraints::from_block_rows(rows))
-            .transpose()?;
-
-        let external_efield = find_block(cells, "EXTERNAL_EFIELD")
-            .ok()
-            .map(|rows| ExternalEfield::from_block_rows(rows))
-            .transpose()?;
-
-        let external_pressure = find_block(cells, "EXTERNAL_PRESSURE")
-            .ok()
-            .map(|rows| ExternalPressure::from_block_rows(rows))
-            .transpose()?;
-
-        let species_mass = find_block(cells, "SPECIES_MASS")
-            .ok()
-            .map(|rows| SpeciesMass::from_block_rows(rows))
-            .transpose()?;
-
-        let species_pot = find_block(cells, "SPECIES_POT")
-            .ok()
-            .map(|rows| SpeciesPot::from_block_rows(rows))
-            .transpose()?;
-
-        let species_lcao_states = find_block(cells, "SPECIES_LCAO_STATES")
-            .ok()
-            .map(|rows| SpeciesLcaoStates::from_block_rows(rows))
-            .transpose()?;
-
-        let species_q = find_block(cells, "SPECIES_Q")
-            .ok()
-            .map(|rows| SpeciesQ::from_block_rows(rows))
-            .transpose()?;
-
-        let hubbard_u = find_block(cells, "HUBBARD_U")
-            .ok()
-            .map(|rows| HubbardU::from_block_rows(rows))
-            .transpose()?;
-
-        let sedc_custom_params = find_block(cells, "SEDC_CUSTOM_PARAMS")
-            .ok()
-            .map(|rows| SedcCustomParams::from_block_rows(rows))
-            .transpose()?;
-
-        let phonon_kpoint_list = find_block_any(cells, &["PHONON_KPOINT_LIST", "PHONON_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| PhononKpointList::from_block_rows(rows))
-            .transpose()?;
-
-        let phonon_kpoint_path = find_block_any(cells, &["PHONON_KPOINT_PATH", "PHONON_KPOINTS_PATH"])
-            .ok()
-            .map(|rows| PhononKpointPath::from_block_rows(rows))
-            .transpose()?;
-
-        let phonon_kpoints_mp_grid = PhononKpointsMpGrid::from_cells(cells)?;
-        let phonon_kpoints_mp_spacing = PhononKpointsMpSpacing::from_cells(cells)?;
-        let phonon_kpoints_mp_offset = PhononKpointsMpOffset::from_cells(cells)?;
-
-        let phonon_fine_kpoint_path = find_block_any(
-            cells,
-            &["PHONON_FINE_KPOINT_PATH", "PHONON_FINE_KPOINTS_PATH"],
-        )
-        .ok()
-        .map(|rows| PhononFineKpointPath::from_block_rows(rows))
-        .transpose()?;
-
-        let phonon_fine_kpoint_path_spacing = PhononFineKpointPathSpacing::from_cells(cells)?;
-        let phonon_fine_kpoints_mp_grid = PhononFineKpointsMpGrid::from_cells(cells)?;
-        let phonon_fine_kpoints_mp_spacing = PhononFineKpointsMpSpacing::from_cells(cells)?;
-        let phonon_fine_kpoints_mp_offset = PhononFineKpointsMpOffset::from_cells(cells)?;
-
-        let phonon_gamma_directions = find_block(cells, "PHONON_GAMMA_DIRECTIONS")
-            .ok()
-            .map(|rows| PhononGammaDirections::from_block_rows(rows))
-            .transpose()?;
-
-        let phonon_fine_kpoint_list = find_block_any(cells, &["PHONON_FINE_KPOINT_LIST", "PHONON_FINE_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| PhononFineKpointList::from_block_rows(rows))
-            .transpose()?;
-
-        let phonon_supercell_matrix = find_block(cells, "PHONON_SUPERCELL_MATRIX")
-            .ok()
-            .map(|rows| PhononSupercellMatrix::from_block_rows(rows))
-            .transpose()?;
-
-        let supercell_kpoint_list = find_block_any(cells, &["SUPERCELL_KPOINT_LIST", "SUPERCELL_KPOINTS_LIST"])
-            .ok()
-            .map(|rows| SupercellKpointListCastep::from_block_rows(rows))
-            .transpose()?;
-
-        let ionic_velocities = find_block(cells, "IONIC_VELOCITIES")
-            .ok()
-            .map(|rows| IonicVelocities::from_block_rows(rows))
-            .transpose()?;
-
-        CellDocument::builder()
+        Self::builder()
             .lattice(lattice)
             .positions(positions)
-            .maybe_kpoints_list(kpoints_list)
-            .maybe_bs_kpoint_path(bs_kpoint_path)
-            .maybe_bs_kpoints_list(bs_kpoints_list)
-            .maybe_optics_kpoints_list(optics_kpoints_list)
-            .maybe_magres_kpoints_list(magres_kpoints_list)
-            .maybe_bs_kpoint_path_spacing(bs_kpoint_path_spacing)
-            .maybe_kpoints_mp_grid(kpoints_mp_grid)
-            .maybe_kpoints_mp_spacing(kpoints_mp_spacing)
-            .maybe_kpoints_mp_offset(kpoints_mp_offset)
-            .maybe_spectral_kpoint_path(spectral_kpoint_path)
-            .maybe_spectral_kpoints_list(spectral_kpoints_list)
-            .maybe_spectral_kpoint_path_spacing(spectral_kpoint_path_spacing)
-            .maybe_spectral_kpoints_mp_grid(spectral_kpoints_mp_grid)
-            .maybe_spectral_kpoints_mp_spacing(spectral_kpoints_mp_spacing)
-            .maybe_spectral_kpoints_mp_offset(spectral_kpoints_mp_offset)
-            .maybe_symmetry_ops(symmetry_ops)
-            .maybe_symmetry_tol(symmetry_tol)
-            .maybe_symmetry_generate(symmetry_generate)
-            .maybe_fix_com(fix_com)
-            .maybe_ionic_constraints(ionic_constraints)
-            .maybe_nonlinear_constraints(nonlinear_constraints)
-            .maybe_fix_all_ions(fix_all_ions)
-            .maybe_fix_all_cell(fix_all_cell)
-            .maybe_cell_constraints(cell_constraints)
-            .maybe_fix_vol(fix_vol)
-            .maybe_external_efield(external_efield)
-            .maybe_external_pressure(external_pressure)
-            .maybe_species_mass(species_mass)
-            .maybe_species_pot(species_pot)
-            .maybe_species_lcao_states(species_lcao_states)
-            .maybe_species_q(species_q)
-            .maybe_hubbard_u(hubbard_u)
-            .maybe_sedc_custom_params(sedc_custom_params)
-            .maybe_phonon_kpoint_list(phonon_kpoint_list)
-            .maybe_phonon_kpoint_path(phonon_kpoint_path)
-            .maybe_phonon_kpoints_mp_grid(phonon_kpoints_mp_grid)
-            .maybe_phonon_kpoints_mp_spacing(phonon_kpoints_mp_spacing)
-            .maybe_phonon_kpoints_mp_offset(phonon_kpoints_mp_offset)
-            .maybe_phonon_fine_kpoint_path(phonon_fine_kpoint_path)
-            .maybe_phonon_fine_kpoint_path_spacing(phonon_fine_kpoint_path_spacing)
-            .maybe_phonon_fine_kpoints_mp_grid(phonon_fine_kpoints_mp_grid)
-            .maybe_phonon_fine_kpoints_mp_spacing(phonon_fine_kpoints_mp_spacing)
-            .maybe_phonon_fine_kpoints_mp_offset(phonon_fine_kpoints_mp_offset)
-            .maybe_phonon_gamma_directions(phonon_gamma_directions)
-            .maybe_phonon_fine_kpoint_list(phonon_fine_kpoint_list)
-            .maybe_phonon_supercell_matrix(phonon_supercell_matrix)
-            .maybe_supercell_kpoint_list(supercell_kpoint_list)
-            .maybe_ionic_velocities(ionic_velocities)
+            .kpoints(KpointsParams::from_cell_file(cells)?)
+            .spectral(SpectralParams::from_cell_file(cells)?)
+            .optics_magres(OpticsMagresParams::from_cell_file(cells)?)
+            .symmetry(SymmetryParams::from_cell_file(cells)?)
+            .constraints(ConstraintsParams::from_cell_file(cells)?)
+            .external_fields(ExternalFieldParams::from_cell_file(cells)?)
+            .species(SpeciesParams::from_cell_file(cells)?)
+            .phonon(PhononParams::from_cell_file(cells)?)
+            .phonon_fine(PhononFineParams::from_cell_file(cells)?)
+            .dynamics(DynamicsParams::from_cell_file(cells)?)
             .build()
     }
 }
@@ -846,152 +411,16 @@ impl ToCellFile for CellDocument {
     /// ```
     fn to_cell_file(&self) -> Vec<Cell<'_>> {
         let mut cells = vec![self.lattice.to_cell(), self.positions.to_cell()];
-
-        if let Some(kp) = &self.kpoints_list {
-            cells.push(kp.to_cell());
-        }
-        if let Some(sp) = &self.spectral_kpoint_path {
-            cells.push(sp.to_cell());
-        }
-        if let Some(sl) = &self.spectral_kpoints_list {
-            cells.push(sl.to_cell());
-        }
-        if let Some(sps) = &self.spectral_kpoint_path_spacing {
-            cells.push(sps.to_cell());
-        }
-        if let Some(smg) = &self.spectral_kpoints_mp_grid {
-            cells.push(smg.to_cell());
-        }
-        if let Some(sms) = &self.spectral_kpoints_mp_spacing {
-            cells.push(sms.to_cell());
-        }
-        if let Some(smo) = &self.spectral_kpoints_mp_offset {
-            cells.push(smo.to_cell());
-        }
-        if let Some(bp) = &self.bs_kpoint_path {
-            cells.push(bp.to_cell());
-        }
-        if let Some(bk) = &self.bs_kpoints_list {
-            cells.push(bk.to_cell());
-        }
-        if let Some(ok) = &self.optics_kpoints_list {
-            cells.push(ok.to_cell());
-        }
-        if let Some(mk) = &self.magres_kpoints_list {
-            cells.push(mk.to_cell());
-        }
-        if let Some(kmg) = &self.kpoints_mp_grid {
-            cells.push(kmg.to_cell());
-        }
-        if let Some(kms) = &self.kpoints_mp_spacing {
-            cells.push(kms.to_cell());
-        }
-        if let Some(kmo) = &self.kpoints_mp_offset {
-            cells.push(kmo.to_cell());
-        }
-        if let Some(bps) = &self.bs_kpoint_path_spacing {
-            cells.push(bps.to_cell());
-        }
-        if let Some(sym) = &self.symmetry_ops {
-            cells.push(sym.to_cell());
-        }
-        if let Some(st) = &self.symmetry_tol {
-            cells.push(st.to_cell());
-        }
-        if let Some(_sg) = &self.symmetry_generate {
-            cells.push(Cell::Flag("SYMMETRY_GENERATE"));
-        }
-        if let Some(_fc) = &self.fix_com {
-            cells.push(Cell::Flag("FIX_COM"));
-        }
-        if let Some(ic) = &self.ionic_constraints {
-            cells.push(ic.to_cell());
-        }
-        if let Some(nc) = &self.nonlinear_constraints {
-            cells.push(nc.to_cell());
-        }
-        if let Some(_fi) = &self.fix_all_ions {
-            cells.push(Cell::Flag("FIX_ALL_IONS"));
-        }
-        if let Some(_fc) = &self.fix_all_cell {
-            cells.push(Cell::Flag("FIX_ALL_CELL"));
-        }
-        if let Some(fv) = &self.fix_vol {
-            cells.push(fv.to_cell());
-        }
-        if let Some(cc) = &self.cell_constraints {
-            cells.push(cc.to_cell());
-        }
-        if let Some(ef) = &self.external_efield {
-            cells.push(ef.to_cell());
-        }
-        if let Some(ep) = &self.external_pressure {
-            cells.push(ep.to_cell());
-        }
-        if let Some(sm) = &self.species_mass {
-            cells.push(sm.to_cell());
-        }
-        if let Some(sp) = &self.species_pot {
-            cells.push(sp.to_cell());
-        }
-        if let Some(sl) = &self.species_lcao_states {
-            cells.push(sl.to_cell());
-        }
-        if let Some(sq) = &self.species_q {
-            cells.push(sq.to_cell());
-        }
-        if let Some(hu) = &self.hubbard_u {
-            cells.push(hu.to_cell());
-        }
-        if let Some(sc) = &self.sedc_custom_params {
-            cells.push(sc.to_cell());
-        }
-        if let Some(pk) = &self.phonon_kpoint_list {
-            cells.push(pk.to_cell());
-        }
-        if let Some(pp) = &self.phonon_kpoint_path {
-            cells.push(pp.to_cell());
-        }
-        if let Some(pmg) = &self.phonon_kpoints_mp_grid {
-            cells.push(pmg.to_cell());
-        }
-        if let Some(pms) = &self.phonon_kpoints_mp_spacing {
-            cells.push(pms.to_cell());
-        }
-        if let Some(pmo) = &self.phonon_kpoints_mp_offset {
-            cells.push(pmo.to_cell());
-        }
-        if let Some(pfp) = &self.phonon_fine_kpoint_path {
-            cells.push(pfp.to_cell());
-        }
-        if let Some(pfps) = &self.phonon_fine_kpoint_path_spacing {
-            cells.push(pfps.to_cell());
-        }
-        if let Some(pfmg) = &self.phonon_fine_kpoints_mp_grid {
-            cells.push(pfmg.to_cell());
-        }
-        if let Some(pfms) = &self.phonon_fine_kpoints_mp_spacing {
-            cells.push(pfms.to_cell());
-        }
-        if let Some(pfmo) = &self.phonon_fine_kpoints_mp_offset {
-            cells.push(pfmo.to_cell());
-        }
-        if let Some(pg) = &self.phonon_gamma_directions {
-            cells.push(pg.to_cell());
-        }
-        if let Some(pf) = &self.phonon_fine_kpoint_list {
-            cells.push(pf.to_cell());
-        }
-        if let Some(pm) = &self.phonon_supercell_matrix {
-            cells.push(pm.to_cell());
-        }
-        if let Some(sk) = &self.supercell_kpoint_list {
-            cells.push(sk.to_cell());
-        }
-        if let Some(iv) = &self.ionic_velocities {
-            cells.push(iv.to_cell());
-        }
-
+        cells.extend(self.kpoints.to_cell_file());
+        cells.extend(self.spectral.to_cell_file());
+        cells.extend(self.optics_magres.to_cell_file());
+        cells.extend(self.symmetry.to_cell_file());
+        cells.extend(self.constraints.to_cell_file());
+        cells.extend(self.external_fields.to_cell_file());
+        cells.extend(self.species.to_cell_file());
+        cells.extend(self.phonon.to_cell_file());
+        cells.extend(self.phonon_fine.to_cell_file());
+        cells.extend(self.dynamics.to_cell_file());
         cells
     }
 }
@@ -999,29 +428,35 @@ impl ToCellFile for CellDocument {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cell::species::Species;
+    use crate::cell::bz_sampling_kpoints::{
+        BsKpointPath, BsKpointPathEntry, Kpoint, KpointsList, KpointsMpGrid, KpointsMpOffset,
+        KpointsMpSpacing, SpectralKpointPath, SpectralKpointPathEntry, SpectralKpointsMpGrid,
+        SpectralKpointsMpOffset,
+    };
+    use crate::cell::phonon::{PhononKpointList, PhononKpointListEntry, PhononKpointPath, PhononKpointPathEntry};
     use crate::cell::positions::PositionFracEntry;
-    use crate::cell::bz_sampling_kpoints::{Kpoint, SpectralKpointPathEntry, BsKpointPathEntry};
-    use crate::cell::phonon::{PhononKpointPathEntry, PhononKpointListEntry};
-    use crate::cell::symmetry::SymmetryOp;
+    use crate::cell::species::Species;
+    use crate::cell::symmetry::{SymmetryGenerate, SymmetryOp, SymmetryOps};
 
     #[test]
-    #[ignore]
-    fn test_parse_mg2sio4_cell() {
-        // TODO: Add test fixture file at tests/fixtures/Mg2SiO4_Cr_1.cell
-        let input = "";
-        let doc = castep_cell_fmt::parse::<CellDocument>(input).expect("Failed to parse");
-
+    fn test_parse_fe2o3_cell() {
+        let input = std::fs::read_to_string("tests/fixtures/Fe2O3.cell").unwrap();
+        let doc = castep_cell_fmt::parse::<CellDocument>(&input).expect("Failed to parse Fe2O3.cell");
         assert!(matches!(doc.lattice, Lattice::Cart(_)));
-        assert!(matches!(doc.positions, Positions::Frac(_)));
-        assert!(doc.kpoints_list.is_some());
-        assert!(doc.symmetry_ops.is_some());
-        assert!(doc.fix_com.is_some());
-        assert!(doc.ionic_constraints.is_some());
-        assert!(doc.external_efield.is_some());
-        assert!(doc.species_mass.is_some());
-        assert!(doc.species_pot.is_some());
-        assert!(doc.species_lcao_states.is_some());
+        assert!(doc.kpoints.kpoints_list.is_some());
+        assert!(doc.constraints.fix_all_cell.is_some());
+        assert!(doc.external_fields.external_pressure.is_some());
+        assert!(doc.species.hubbard_u.is_some());
+    }
+
+    #[test]
+    fn test_parse_zno_lr_cell() {
+        let input = std::fs::read_to_string("tests/fixtures/ZnO_LR.cell").unwrap();
+        let doc = castep_cell_fmt::parse::<CellDocument>(&input).expect("Failed to parse ZnO_LR.cell");
+        assert!(matches!(doc.lattice, Lattice::Cart(_)));
+        assert!(doc.kpoints.kpoints_list.is_some());
+        assert!(doc.symmetry.symmetry_ops.is_some());
+        assert!(doc.constraints.cell_constraints.is_some());
     }
 
     fn minimal_lattice() -> Lattice {
@@ -1049,23 +484,13 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_kpoints_list(Some(KpointsList::builder()
-                .kpts(vec![Kpoint::builder().coord([0.0, 0.0, 0.0]).weight(1.0).build()])
-                .build()))
-            .maybe_kpoints_mp_grid(Some(KpointsMpGrid([2, 2, 2])))
-            .build();
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn build_rejects_multiple_spectral_specs() {
-        let result = CellDocument::builder()
-            .lattice(minimal_lattice())
-            .positions(minimal_positions())
-            .maybe_spectral_kpoint_path(Some(SpectralKpointPath::builder()
-                .points(vec![SpectralKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
-                .build()))
-            .maybe_spectral_kpoints_mp_grid(Some(SpectralKpointsMpGrid([2, 2, 2])))
+            .kpoints(KpointsParams {
+                kpoints_list: Some(KpointsList::builder()
+                    .kpts(vec![Kpoint::builder().coord([0.0, 0.0, 0.0]).weight(1.0).build()])
+                    .build()),
+                kpoints_mp_grid: Some(KpointsMpGrid([2, 2, 2])),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_err());
     }
@@ -1075,12 +500,15 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_spectral_kpoint_path(Some(SpectralKpointPath::builder()
-                .points(vec![SpectralKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
-                .build()))
-            .maybe_bs_kpoint_path(Some(BsKpointPath::builder()
-                .points(vec![BsKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
-                .build()))
+            .spectral(SpectralParams {
+                spectral_kpoint_path: Some(SpectralKpointPath::builder()
+                    .points(vec![SpectralKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
+                    .build()),
+                bs_kpoint_path: Some(BsKpointPath::builder()
+                    .points(vec![BsKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
+                    .build()),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_err());
     }
@@ -1090,12 +518,15 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_phonon_kpoint_path(Some(PhononKpointPath {
-                points: vec![PhononKpointPathEntry { coord: [0.0, 0.0, 0.0] }],
-            }))
-            .maybe_phonon_kpoint_list(Some(PhononKpointList::builder()
-                .kpoints(vec![PhononKpointListEntry { coord: [0.0, 0.0, 0.0], weight: 1.0 }])
-                .build()))
+            .phonon(PhononParams {
+                phonon_kpoint_path: Some(PhononKpointPath {
+                    points: vec![PhononKpointPathEntry { coord: [0.0, 0.0, 0.0] }],
+                }),
+                phonon_kpoint_list: Some(PhononKpointList::builder()
+                    .kpoints(vec![PhononKpointListEntry { coord: [0.0, 0.0, 0.0], weight: 1.0 }])
+                    .build()),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_err());
     }
@@ -1105,13 +536,16 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_symmetry_generate(Some(SymmetryGenerate))
-            .maybe_symmetry_ops(Some(SymmetryOps::builder()
-                .ops(vec![SymmetryOp::builder()
-                    .rotation([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-                    .translation([0.0, 0.0, 0.0])
-                    .build()])
-                .build()))
+            .symmetry(SymmetryParams {
+                symmetry_generate: Some(SymmetryGenerate),
+                symmetry_ops: Some(SymmetryOps::builder()
+                    .ops(vec![SymmetryOp::builder()
+                        .rotation([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+                        .translation([0.0, 0.0, 0.0])
+                        .build()])
+                    .build()),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_err());
     }
@@ -1121,8 +555,11 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_kpoints_mp_grid(Some(KpointsMpGrid([2, 2, 2])))
-            .maybe_kpoints_mp_offset(Some(KpointsMpOffset([0.0, 0.0, 0.0])))
+            .kpoints(KpointsParams {
+                kpoints_mp_grid: Some(KpointsMpGrid([2, 2, 2])),
+                kpoints_mp_offset: Some(KpointsMpOffset([0.0, 0.0, 0.0])),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_ok());
     }
@@ -1132,8 +569,11 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_spectral_kpoints_mp_grid(Some(SpectralKpointsMpGrid([2, 2, 2])))
-            .maybe_spectral_kpoints_mp_offset(Some(SpectralKpointsMpOffset([0.0, 0.0, 0.0])))
+            .spectral(SpectralParams {
+                spectral_kpoints_mp_grid: Some(SpectralKpointsMpGrid([2, 2, 2])),
+                spectral_kpoints_mp_offset: Some(SpectralKpointsMpOffset([0.0, 0.0, 0.0])),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_ok());
     }
@@ -1143,34 +583,46 @@ mod tests {
         let r1 = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_kpoints_mp_grid(Some(KpointsMpGrid([2, 2, 2])))
+            .kpoints(KpointsParams {
+                kpoints_mp_grid: Some(KpointsMpGrid([2, 2, 2])),
+                ..Default::default()
+            })
             .build();
         assert!(r1.is_ok());
         let r2 = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_spectral_kpoint_path(Some(SpectralKpointPath::builder()
-                .points(vec![SpectralKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
-                .build()))
+            .spectral(SpectralParams {
+                spectral_kpoint_path: Some(SpectralKpointPath::builder()
+                    .points(vec![SpectralKpointPathEntry { coord: [0.0, 0.0, 0.0] }])
+                    .build()),
+                ..Default::default()
+            })
             .build();
         assert!(r2.is_ok());
         let r3 = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_phonon_kpoint_path(Some(PhononKpointPath {
-                points: vec![PhononKpointPathEntry { coord: [0.0, 0.0, 0.0] }],
-            }))
+            .phonon(PhononParams {
+                phonon_kpoint_path: Some(PhononKpointPath {
+                    points: vec![PhononKpointPathEntry { coord: [0.0, 0.0, 0.0] }],
+                }),
+                ..Default::default()
+            })
             .build();
         assert!(r3.is_ok());
         let r4 = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_symmetry_ops(Some(SymmetryOps::builder()
-                .ops(vec![SymmetryOp::builder()
-                    .rotation([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-                    .translation([0.0, 0.0, 0.0])
-                    .build()])
-                .build()))
+            .symmetry(SymmetryParams {
+                symmetry_ops: Some(SymmetryOps::builder()
+                    .ops(vec![SymmetryOp::builder()
+                        .rotation([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+                        .translation([0.0, 0.0, 0.0])
+                        .build()])
+                    .build()),
+                ..Default::default()
+            })
             .build();
         assert!(r4.is_ok());
     }
@@ -1180,11 +632,14 @@ mod tests {
         let result = CellDocument::builder()
             .lattice(minimal_lattice())
             .positions(minimal_positions())
-            .maybe_kpoints_list(Some(KpointsList::builder()
-                .kpts(vec![Kpoint::builder().coord([0.0, 0.0, 0.0]).weight(1.0).build()])
-                .build()))
-            .maybe_kpoints_mp_grid(Some(KpointsMpGrid([2, 2, 2])))
-            .maybe_kpoints_mp_spacing(Some(KpointsMpSpacing { value: 0.05, unit: None }))
+            .kpoints(KpointsParams {
+                kpoints_list: Some(KpointsList::builder()
+                    .kpts(vec![Kpoint::builder().coord([0.0, 0.0, 0.0]).weight(1.0).build()])
+                    .build()),
+                kpoints_mp_grid: Some(KpointsMpGrid([2, 2, 2])),
+                kpoints_mp_spacing: Some(KpointsMpSpacing { value: 0.05, unit: None }),
+                ..Default::default()
+            })
             .build();
         assert!(result.is_err());
     }
