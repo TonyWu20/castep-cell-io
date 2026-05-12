@@ -3,16 +3,32 @@ use castep_cell_fmt::{Cell, CellValue, ToCell, ToCellValue, parse::{FromBlock, F
 use crate::units::LengthUnit;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, bon::Builder)]
-/// Lattice vectors
-/// This data block contains the cell lattice vectors in Cartesian coordinates. It has the following format:
+/// Lattice vectors in Cartesian coordinates.
+///
+/// This data block contains the cell lattice vectors in Cartesian coordinates.
+/// **Row-major order**: Row 1 = lattice vector **A** (field `.a`),
+/// Row 2 = lattice vector **B** (field `.b`), Row 3 = lattice vector **C** (field `.c`).
+///
+/// Format in CASTEP `.cell` file:
+/// ```text
 /// %BLOCK LATTICE_CART
 /// [units]
-///     R1x R1y R1z
-///     R2x R2y R2z
-///     R3x R3y R3z
+///     A11 A12 A13        → field `.a`
+///     B21 B22 B23        → field `.b`
+///     C31 C32 C33        → field `.c`
 /// %ENDBLOCK LATTICE_CART
-/// Where R1x is the x-component of the first lattice vector, R2y is the y-component of the second lattice vector, and so on.
-/// [units] specifies the units in which the lattice vectors are defined. If no units are given, the default of Å is used.
+/// ```
+/// Where each row is one lattice vector. `[units]` specifies the units (defaults to Å).
+///
+/// # Converting to matrix types
+///
+/// The row-major order means downstream users constructing a 3×3 matrix
+/// should place `.a` as row 1, `.b` as row 2, `.c` as row 3:
+/// ```text
+///     | a[0]  a[1]  a[2] |   ← lattice vector A
+/// M = | b[0]  b[1]  b[2] |   ← lattice vector B
+///     | c[0]  c[1]  c[2] |   ← lattice vector C
+/// ```
 pub struct LatticeCart {
     pub unit: Option<LengthUnit>,
     pub a: [f64; 3],

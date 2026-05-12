@@ -439,14 +439,40 @@ mod tests {
     use crate::cell::symmetry::{SymmetryGenerate, SymmetryOp, SymmetryOps};
 
     #[test]
+    fn test_parse_mg2sio4_forsterite_cell() {
+        let input = std::fs::read_to_string("tests/fixtures/Mg2SiO4_Cr_1.cell").unwrap();
+        let doc = castep_cell_fmt::parse::<CellDocument>(&input).expect("Failed to parse Mg2SiO4_Cr_1.cell");
+        assert!(matches!(doc.lattice, Lattice::Cart(ref c)
+            if (c.a[0] - 10.183).abs() < 0.001
+            && (c.b[1] - 5.970).abs() < 0.001
+            && (c.c[2] - 4.751).abs() < 0.001));
+        assert!(doc.kpoints.kpoints_list.is_some());
+        assert_eq!(doc.kpoints.kpoints_list.as_ref().unwrap().kpts.len(), 3);
+        assert!(doc.symmetry.symmetry_ops.is_some());
+        assert_eq!(doc.symmetry.symmetry_ops.as_ref().unwrap().ops.len(), 2);
+        assert!(doc.constraints.fix_com.is_some());
+        assert_eq!(doc.constraints.fix_com.as_ref().unwrap().0, false);
+        assert!(doc.species.species_mass.is_some());
+        assert_eq!(doc.species.species_mass.as_ref().unwrap().masses.len(), 4);
+    }
+
+    #[test]
     fn test_parse_fe2o3_cell() {
         let input = std::fs::read_to_string("tests/fixtures/Fe2O3.cell").unwrap();
         let doc = castep_cell_fmt::parse::<CellDocument>(&input).expect("Failed to parse Fe2O3.cell");
-        assert!(matches!(doc.lattice, Lattice::Cart(_)));
+        assert!(matches!(doc.lattice, Lattice::Cart(ref c)
+            if (c.a[0] - 4.360).abs() < 0.001
+            && (c.b[1] - 5.035).abs() < 0.001
+            && (c.c[2] - 13.72).abs() < 0.01));
         assert!(doc.kpoints.kpoints_list.is_some());
+        assert_eq!(doc.kpoints.kpoints_list.as_ref().unwrap().kpts.len(), 5);
         assert!(doc.constraints.fix_all_cell.is_some());
+        assert_eq!(doc.constraints.fix_all_cell.as_ref().unwrap().0, true);
         assert!(doc.external_fields.external_pressure.is_some());
         assert!(doc.species.hubbard_u.is_some());
+        assert_eq!(doc.species.hubbard_u.as_ref().unwrap().atom_u_values.len(), 12);
+        assert!(doc.species.species_mass.is_some());
+        assert_eq!(doc.species.species_mass.as_ref().unwrap().masses.len(), 2);
     }
 
     #[test]
@@ -455,8 +481,13 @@ mod tests {
         let doc = castep_cell_fmt::parse::<CellDocument>(&input).expect("Failed to parse ZnO_LR.cell");
         assert!(matches!(doc.lattice, Lattice::Cart(_)));
         assert!(doc.kpoints.kpoints_list.is_some());
+        assert_eq!(doc.kpoints.kpoints_list.as_ref().unwrap().kpts.len(), 10);
         assert!(doc.symmetry.symmetry_ops.is_some());
+        assert_eq!(doc.symmetry.symmetry_ops.as_ref().unwrap().ops.len(), 12);
         assert!(doc.constraints.cell_constraints.is_some());
+        let cc = doc.constraints.cell_constraints.as_ref().unwrap();
+        assert_eq!(cc.lengths, [1, 1, 3]);
+        assert_eq!(cc.angles, [0, 0, 0]);
     }
 
     fn minimal_lattice() -> Lattice {
