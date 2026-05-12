@@ -476,6 +476,43 @@ pub mod dynamics_params;
 
 ---
 
+## Deferred: Unit Round-Trip Consistency
+
+### DISCOVERED: All unit enums emit CellValue::String instead of CellValue::Str
+
+**Finding**: Every unit `ToCellValue` impl emits `CellValue::String(...)` (owned) but the
+corresponding `from_cell_value()` uses `value_as_str()` which only accepts `CellValue::Str`
+(borrowed). This breaks the direct IR round-trip (`to_cell()` → `from_block_rows()`) for any
+block type that includes a unit field, even though the full text round-trip (file → parse →
+format → file) works because the formatter outputs the string and the parser re-reads it.
+
+**Affected files** (all under `castep_cell_io/src/units/`):
+
+| File | Emits | Reads via | Round-trip |
+|------|-------|-----------|------------|
+| `length_units.rs` | `String` | `value_as_str` | ❌ (FIXED) |
+| `energy_units.rs` | `String` | `value_as_str` | ❌ |
+| `force_units.rs` | `String` | `value_as_str` | ❌ |
+| `frequency_unit.rs` | `String` | `value_as_str` | ❌ |
+| `pressure_unit.rs` | `String` | `value_as_str` | ❌ |
+| `velocity_unit.rs` | `String` | `value_as_str` | ❌ |
+| `inv_length_units.rs` | `String` | `value_as_str` | ❌ |
+| `mass_units.rs` | `String` | `value_as_str` | ❌ |
+| `temperature_unit.rs` | `String` | `value_as_str` | ❌ |
+| `time_unit.rs` | `String` | `value_as_str` | ❌ |
+| `volume_unit.rs` | `String` | `value_as_str` | ❌ |
+| `efield_units.rs` | `String` | `value_as_str` | ❌ |
+| `force_constant_unit.rs` | `String` | `value_as_string` | ✅ (reads both) |
+| `quadrupole_moment_units.rs` | `String` | `value_as_string` | ✅ (reads both) |
+
+**Fix**: All static-string unit enums should emit `CellValue::Str(...)` (static `'a` str)
+instead of `CellValue::String(...)` (owned). 12 of 14 need the fix; `length_units.rs` is
+already fixed. Update corresponding test assertions that check for `CellValue::String`.
+
+**Filed as**: Clean-up task for implementation after CellDocument migration completes.
+
+---
+
 ## Task Dependency Graph
 
 ```
