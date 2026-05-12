@@ -492,6 +492,10 @@ mod tests {
         let cc = doc.constraints.cell_constraints.as_ref().unwrap();
         assert_eq!(cc.lengths, [1, 1, 3]);
         assert_eq!(cc.angles, [0, 0, 0]);
+        assert!(matches!(doc.positions, Positions::Frac(_)));
+        if let Positions::Frac(ref pos) = doc.positions {
+            assert_eq!(pos.positions.len(), 4);
+        }
     }
 
     fn minimal_lattice() -> Lattice {
