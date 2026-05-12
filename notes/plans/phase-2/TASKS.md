@@ -9,16 +9,27 @@
 
 | Alias | Path | Description |
 |-------|------|-------------|
-| `fixture-cell-forsterite` | `castep_cell_fmt/Mg2SiO4_Cr_1.cell` | Forsterite Cr-doped, 28 atoms, exercises 12 block types |
+| `fixture-cell-forsterite` | `castep_cell_io/tests/fixtures/Mg2SiO4_Cr_1.cell` | Forsterite Cr-doped, 28 atoms, exercises ~12 block types |
+| `fixture-cell-fe2o3` | `castep_cell_io/tests/fixtures/Fe2O3.cell` | Fe₂O₃ (haematite) single-point, adds HUBBARD_U, EXTERNAL_PRESSURE, FIX_ALL_CELL, QUANTIZATION_AXIS |
+| `fixture-cell-zno-lr` | `castep_cell_io/tests/fixtures/ZnO_LR.cell` | ZnO (zinc oxide) linear response, 12 symmetry ops, CELL_CONSTRAINTS |
 
 ## Exploration Notes
 
 **2026-05-13 — Pre-migration baseline**:
 - 1080 tests pass in `castep-cell-io` (all library tests + doctests).
 - One `#[ignore]`d test (`test_parse_mg2sio4_cell`) uses empty input `let input = "";` — fixture file exists but is not wired up. This test is rewritten in Task D-1.
-- `Mg2SiO4_Cr_1.cell` fixture exercises 12 of ~43 CellDocument fields. Gap: 31 fields not exercised by existing fixture.
-- LATTICE_CART parsed, POSITIONS_FRAC with 28 entries, KPOINTS_LIST with 3 k-points, SYMMETRY_OPS with 2 ops, CELL_CONSTRAINTS, FIX_COM, IONIC_CONSTRAINTS (empty), EXTERNAL_EFIELD, SPECIES_MASS, SPECIES_POT, SPECIES_LCAO_STATES.
-- No SPECTRAL_, BS_, OPTICS_, MAGRES_, PHONON_, or velocity blocks in the fixture.
+- `Mg2SiO4_Cr_1.cell` fixture exercises ~12 of 43 CellDocument fields. Gap: 31 fields not exercised.
+- New fixtures added:
+  - **Fe2O3.cell**: LATTICE_CART, POSITIONS_FRAC (30 atoms: 18 O + 12 Fe with SPIN), KPOINTS_LIST (5 k-points), FIX_ALL_CELL, FIX_COM, IONIC_CONSTRAINTS (empty), EXTERNAL_EFIELD, EXTERNAL_PRESSURE, SPECIES_MASS, SPECIES_POT, SPECIES_LCAO_STATES, HUBBARD_U (12 entries), QUANTIZATION_AXIS
+  - **ZnO_LR.cell**: LATTICE_CART, POSITIONS_FRAC (4 atoms: 2 O + 2 Zn), KPOINTS_LIST (10 k-points), SYMMETRY_OPS (12 ops), CELL_CONSTRAINTS, FIX_COM, IONIC_CONSTRAINTS (empty), EXTERNAL_EFIELD, SPECIES_MASS, SPECIES_POT, SPECIES_LCAO_STATES
+
+**LatticeCart row-major convention**:
+- `LatticeCart` field names are already `.a`, `.b`, `.c` → row-major is implicit.
+- CASTEP `.cell` file format: LATTICE_CART block has 3 rows, each is one lattice vector:
+  - Row 1 → lattice vector **A** (field `.a`)
+  - Row 2 → lattice vector **B** (field `.b`)
+  - Row 3 → lattice vector **C** (field `.c`)
+- Known gaps: doc comments don't explicitly call out this convention. See Task E-1.
 
 **Adjusted criteria during exploration**: None yet (migration is behavior-preserving — criteria will be validated during implementation).
 
@@ -361,24 +372,38 @@ pub mod dynamics_params;
 
 ## Group D: Tests and Verification
 
-### TASK-D-1: Fix fixture-anchored test
+### TASK-D-1: Implement fixture-anchored tests for all three fixtures
 
 **Kind:** lib-tdd
-**Goal:** Rewrite `test_parse_mg2sio4_cell` to read the real fixture file and assert concrete values against the group-based CellDocument.
+**Goal:** Write tests that read each real fixture file and assert concrete values against the group-based CellDocument. Replace the empty-input `#[ignore]`d test.
 
 **File:** `castep_cell_io/src/cell_document.rs` (tests module)
 
 **Success Criteria:**
-- Test reads `Mg2SiO4_Cr_1.cell` from the filesystem (at `castep_cell_fmt/Mg2SiO4_Cr_1.cell`)
-- Parses it as `CellDocument`
-- Asserts concrete values matching the fixture:
-  - `doc.lattice` is `Cart` with 3 vectors (lattice vector a ≈ (10.183, 0, 0) in bohr) (Source: Mg2SiO4_Cr_1.cell, lines 1-6)
-  - `doc.positions` is `Frac` with 28 entries, `count_by_species` yields: O=16, Mg=6, Si=4, Cr=2 (Source: Mg2SiO4_Cr_1.cell, lines 8-37 — counting lines and species labels)
+- **Test for Mg2SiO4_Cr_1.cell** (`test_parse_forsterite`):
+  - Reads from `tests/fixtures/Mg2SiO4_Cr_1.cell`
+  - `doc.lattice` is `Cart` with vectors: a ≈ (10.183, 0, 0) in bohr, b ≈ (0, 5.970, 0), c ≈ (0, 0, 4.751) (Source: Mg2SiO4_Cr_1.cell, lines 1-6)
+  - `doc.positions` is `Frac` with 28 entries, O=16, Mg=6, Si=4, Cr=2 (Source: Mg2SiO4_Cr_1.cell, lines 8-37)
   - `doc.kpoints.kpoints_list` has 3 entries (Source: Mg2SiO4_Cr_1.cell, lines 39-43)
   - `doc.symmetry.symmetry_ops` has 2 operations (Source: Mg2SiO4_Cr_1.cell, lines 45-54)
   - `doc.constraints.fix_com` is `Some(FixCOM { enabled: false })` (Source: Mg2SiO4_Cr_1.cell, line 61)
-- No vacuous assertions (no bare `is_some()` without value checks on the contained data)
-- Test is NOT `#[ignore]`d
+  - `doc.species.species_mass` → 4 entries: O, Mg, Si, Cr (Source: Mg2SiO4_Cr_1.cell, lines 69-74)
+
+- **Test for Fe2O3.cell** (`test_parse_fe2o3`):
+  - Reads from `tests/fixtures/Fe2O3.cell`
+  - `doc.constraints.fix_all_cell` is `Some(FixAllCell { .. })` (Source: Fe2O3.cell, line 48)
+  - `doc.external_fields.external_pressure` is `Some(ExternalPressure { .. })` (Source: Fe2O3.cell, lines 58-62)
+  - `doc.species.hubbard_u` is `Some(HubbardU { .. })` with 12 Fe entries (Source: Fe2O3.cell, lines 79-92)
+  - `doc.lattice` is `Lattice::Cart(LatticeCart { a: [4.360, ..], b: [0, 5.035, 0], c: [0, 0, 13.72], .. })` (Source: Fe2O3.cell, lines 1-5 — truncated to 4dp tolerance)
+
+- **Test for ZnO_LR.cell** (`test_parse_zno_lr`):
+  - Reads from `tests/fixtures/ZnO_LR.cell`
+  - `doc.symmetry.symmetry_ops` has 12 operations (Source: ZnO_LR.cell, lines 27-76)
+  - `doc.constraints.cell_constraints` has 2 constraints (Source: ZnO_LR.cell, lines 78-81)
+  - `doc.positions` is `Frac` with 4 entries: 2 O + 2 Zn (Source: ZnO_LR.cell, lines 7-11)
+
+- Tests are NOT `#[ignore]`d
+- No vacuous assertions — every assertion checks a concrete value, not just `is_some()`
 
 ---
 
@@ -413,6 +438,44 @@ pub mod dynamics_params;
 
 ---
 
+---
+
+## Group E: LatticeCart Row-Major Documentation
+
+### TASK-E-1: Clarify LatticeCart row-major convention in doc comments
+
+**Kind:** direct
+**Goal:** `LatticeCart` already uses named fields `.a`, `.b`, `.c` (row-major is implicit). Add explicit doc comments confirming the convention: row 1 in the CASTEP file maps to field `.a` (lattice vector A), row 2 → `.b`, row 3 → `.c`. This prevents confusion when downstream users convert to matrix types.
+
+**File:** `castep_cell_io/src/cell/lattice_param.rs`
+
+**Changes:**
+- In `LatticeCart` struct doc comment, explicitly state: "Row 1 = lattice vector A (.a), Row 2 = lattice vector B (.b), Row 3 = lattice vector C (.c)"
+- In `LatticeCart::from_block_rows()` doc, note the row mapping convention
+- In `LatticeCart::to_cell()` doc, note the row-major emission order
+
+**Success Criteria:**
+- Doc comment on `LatticeCart` struct explicitly states which row maps to which field
+- No code changes — comments only
+- `cargo doc -p castep-cell-io --no-deps` generates the updated docs without warnings
+
+---
+
+## Additional Fixture Verification
+
+### TASK-E-2: Verify new fixtures parse correctly with current code
+
+**Kind:** lib-tdd
+**Goal:** Before the migration, verify that `Fe2O3.cell` and `ZnO_LR.cell` parse correctly with the CURRENT (pre-migration) CellDocument. This establishes that the new fixture files are valid and known-good, so post-migration tests can compare against pre-migration output.
+
+**File:** `castep_cell_io/src/cell_document.rs` (tests module, temporary — removed after migration)
+
+**Success Criteria:**
+- `parse::<CellDocument>("tests/fixtures/Fe2O3.cell")` succeeds with current code (1080-pre-migration baseline)
+- `parse::<CellDocument>("tests/fixtures/ZnO_LR.cell")` succeeds with current code
+
+---
+
 ## Task Dependency Graph
 
 ```
@@ -439,17 +502,22 @@ Group C
        │
        v (C tasks must complete before D)
 Group D
-  ├── TASK-D-1 (Fix fixture test)   ← after B-1 + C-1
-  ├── TASK-D-2 (Validation tests)   ← after A tasks
-  └── TASK-D-3 (Full suite)         ← after all above
+  ├── TASK-D-1 (Fixture-anchored tests)   ← after B-1 + C-1
+  ├── TASK-D-2 (Validation tests)         ← after A tasks
+  └── TASK-D-3 (Full suite)               ← after all above
+Group E
+  ├── TASK-E-1 (LatticeCart docs)         ← independent, can run any time
+  └── TASK-E-2 (Verify new fixtures)      ← runs before migration (pre-migration baseline)
 ```
 
 ## Implementation Order
 
-1. **Group A** (all 10 in parallel or sequentially): Create group struct files with `FromCellFile`, `ToCellFile`, `validate()`. Each is a standalone file with no dependencies between groups.
-2. **Group C-1**: Register all 10 new modules in `cell/mod.rs`.
-3. **Group B-1**: Rewrite `CellDocument` to use group fields instead of 41 flat fields.
-4. **Group C-2**: Clean up imports in `cell_document.rs`.
-5. **Group D-2**: Add validation unit tests for each group.
-6. **Group D-1**: Fix the Mg2SiO4 fixture test.
-7. **Group D-3**: Full test suite + clippy validation.
+1. **TASK-E-2** (pre-migration): Verify new fixture files parse correctly with current code.
+2. **Group A** (all 10 in parallel or sequentially): Create group struct files with `FromCellFile`, `ToCellFile`, `validate()`. Each is a standalone file with no dependencies between groups.
+3. **TASK-C-1**: Register all 10 new modules in `cell/mod.rs`.
+4. **TASK-B-1**: Rewrite `CellDocument` to use group fields instead of 41 flat fields.
+5. **TASK-C-2**: Clean up imports in `cell_document.rs`.
+6. **TASK-D-2**: Add validation unit tests for each group.
+7. **TASK-D-1**: Write fixture-anchored tests for all three fixtures.
+8. **TASK-D-3**: Full test suite + clippy validation.
+9. **TASK-E-1**: LatticeCart doc comments (any time after baseline, but after D-3 for clippy check).
