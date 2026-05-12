@@ -15,6 +15,9 @@
 /target
 # /Cargo.lock
 *.cell
+*.param
+!castep_cell_io/tests/fixtures/*.cell
+!castep_cell_io/tests/fixtures/*.param
 
 **/target
 # **/Cargo.lock
