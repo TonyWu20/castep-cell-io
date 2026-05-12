@@ -276,36 +276,25 @@ mod tests {
 
     #[test]
     fn test_lattice_cart_round_trip() {
-        // Verify that the row-major convention is consistent:
-        // Row 1 = .a, Row 2 = .b, Row 3 = .c in both serialization and parsing.
-        // Uses from_block_rows directly with properly typed test data.
-        let rows = vec![
-            CellValue::Array(vec![
-                CellValue::Float(5.0), CellValue::Float(1.0), CellValue::Float(2.0),
-            ]),
-            CellValue::Array(vec![
-                CellValue::Float(3.0), CellValue::Float(5.0), CellValue::Float(4.0),
-            ]),
-            CellValue::Array(vec![
-                CellValue::Float(6.0), CellValue::Float(7.0), CellValue::Float(5.0),
-            ]),
-        ];
-        let parsed = LatticeCart::from_block_rows(&rows).unwrap();
-        assert_eq!(parsed.unit, None);
-        assert_eq!(parsed.a, [5.0, 1.0, 2.0]);
-        assert_eq!(parsed.b, [3.0, 5.0, 4.0]);
-        assert_eq!(parsed.c, [6.0, 7.0, 5.0]);
-        // Serialize back and verify structure
-        let cell = parsed.to_cell();
-        match cell {
-            Cell::Block(name, values) => {
-                assert_eq!(name, "LATTICE_CART");
-                assert_eq!(values.len(), 3);
-                assert_eq!(values[0], CellValue::Array(vec![
-                    CellValue::Float(5.0), CellValue::Float(1.0), CellValue::Float(2.0),
-                ]));
-            }
-            _ => panic!("Expected Cell::Block"),
+        // Verify row-major convention: Row 1 = .a, Row 2 = .b, Row 3 = .c
+        // across the full to_cell → from_block_rows cycle, including unit.
+        for unit in [None, Some(LengthUnit::Ang), Some(LengthUnit::Bohr)] {
+            let original = LatticeCart {
+                unit,
+                a: [5.0, 1.0, 2.0],
+                b: [3.0, 5.0, 4.0],
+                c: [6.0, 7.0, 5.0],
+            };
+            let cell = original.to_cell();
+            let rows = match &cell {
+                Cell::Block(_, r) => r.as_slice(),
+                _ => panic!("Expected Cell::Block"),
+            };
+            let parsed = LatticeCart::from_block_rows(rows).unwrap();
+            assert_eq!(parsed.unit, original.unit, "unit mismatch for {unit:?}");
+            assert_eq!(parsed.a, original.a, "a vector mismatch");
+            assert_eq!(parsed.b, original.b, "b vector mismatch");
+            assert_eq!(parsed.c, original.c, "c vector mismatch");
         }
     }
 

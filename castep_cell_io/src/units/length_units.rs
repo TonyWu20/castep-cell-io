@@ -54,17 +54,14 @@ impl FromKeyValue for LengthUnit {
 
 impl ToCellValue for LengthUnit {
     fn to_cell_value(&self) -> CellValue<'_> {
-        CellValue::String(
-            match self {
-                LengthUnit::Bohr => "bohr",
-                LengthUnit::BohrA0 => "a0",
-                LengthUnit::Meter => "m",
-                LengthUnit::Centimeter => "cm",
-                LengthUnit::Nanometer => "nm",
-                LengthUnit::Ang => "ang",
-            }
-            .to_string(),
-        )
+        CellValue::Str(match self {
+            LengthUnit::Bohr => "bohr",
+            LengthUnit::BohrA0 => "a0",
+            LengthUnit::Meter => "m",
+            LengthUnit::Centimeter => "cm",
+            LengthUnit::Nanometer => "nm",
+            LengthUnit::Ang => "ang",
+        })
     }
 }
 
@@ -116,11 +113,11 @@ mod tests {
 
     #[test]
     fn test_to_cell_value() {
-        assert_eq!(LengthUnit::Bohr.to_cell_value(), CellValue::String("bohr".to_string()));
-        assert_eq!(LengthUnit::Meter.to_cell_value(), CellValue::String("m".to_string()));
-        assert_eq!(LengthUnit::Centimeter.to_cell_value(), CellValue::String("cm".to_string()));
-        assert_eq!(LengthUnit::Nanometer.to_cell_value(), CellValue::String("nm".to_string()));
-        assert_eq!(LengthUnit::Ang.to_cell_value(), CellValue::String("ang".to_string()));
+        assert_eq!(LengthUnit::Bohr.to_cell_value(), CellValue::Str("bohr"));
+        assert_eq!(LengthUnit::Meter.to_cell_value(), CellValue::Str("m"));
+        assert_eq!(LengthUnit::Centimeter.to_cell_value(), CellValue::Str("cm"));
+        assert_eq!(LengthUnit::Nanometer.to_cell_value(), CellValue::Str("nm"));
+        assert_eq!(LengthUnit::Ang.to_cell_value(), CellValue::Str("ang"));
     }
 
     #[test]
