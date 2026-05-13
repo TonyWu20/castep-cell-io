@@ -6,11 +6,16 @@
 
 ## Summary
 
-**Overall: PASS — minor issues found, non-blocking**
+**Overall: PASS — all issues resolved**
 
-Runtime verification: 1116 tests pass (0 failed), 14 doctests pass, `cargo clippy --workspace -D warnings` clean. The previously `#[ignore]`d test is replaced with a real fixture-anchored test. All three fixture files parse correctly against the new group-based CellDocument.
+Runtime verification: 1117 tests pass (0 failed), 14 doctests pass, `cargo clippy --workspace -D warnings` clean. The 3 fix tasks from `fix-tasks.md` are all verified and merged.
 
-3 issues found (1 required, 2 recommended), 2 deferred items.
+3 original issues found during initial review:
+- **Issue #1 (Required)**: Missing validate() calls in `CellDocument::build()` → **FIXED** (FIX-1)
+- **Issue #2 (Recommended)**: Test coverage gaps (ZnO positions + mp_grid/mp_spacing) → **FIXED** (FIX-2, FIX-3)
+- **Issue #3 (Cosmetic)**: Library `eprintln!` usage → **DEFERRED** (out of scope for fix-tasks)
+
+3 deferred items carried forward (unchanged).
 
 ## Per-Task Results
 
@@ -21,9 +26,9 @@ Runtime verification: 1116 tests pass (0 failed), 14 doctests pass, `cargo clipp
 - **Strategic review**: Architecture cleanly mirrors ParamDocument pattern. No scope creep.
 
 ### TASK-B-1: Restructure CellDocument
-- **Status**: ⚠ Passed with minor issue
+- **Status**: ✓ Passed (fix applied)
 - **Runtime verification**: Full round-trip works — all existing tests pass
-- **Diff validation**: `build()` calls `validate()` on 6 of 10 groups, omitting optics_magres, external_fields, species, dynamics. These are pass-through today so no functional gap, but it's a maintenance trap (Issue #1).
+- **Diff validation**: `build()` now calls `validate()` on all 10 groups (6 pre-existing + 4 added by FIX-1). Maintenance trap closed.
 - **Strategic review**: 41 flat fields → 10 group fields as specified. `from_cell_file()` and `to_cell_file()` correctly delegate to group implementations.
 
 ### TASK-C-1: Update cell/mod.rs
@@ -35,17 +40,17 @@ Runtime verification: 1116 tests pass (0 failed), 14 doctests pass, `cargo clipp
 - **Diff validation**: Group types imported, flat field types removed where unused
 
 ### TASK-D-1: Fixture-anchored tests
-- **Status**: ⚠ Passed with minor issue
+- **Status**: ✓ Passed (fix applied)
 - **Runtime verification**: All three fixture tests pass with concrete value assertions
-- **Issue**: `test_parse_zno_lr_cell` does not assert on `doc.positions` (missing Frac + 4 entries check as specified in TASKS.md) — Issue #2
+- **Fix applied**: `test_parse_zno_lr_cell` now asserts `Positions::Frac` with 4 entries (FIX-2)
 
 ### TASK-D-2: Mutual-exclusion validation tests
-- **Status**: ⚠ Passed with minor issue
+- **Status**: ✓ Passed (fix applied)
 - **Runtime verification**: All validation tests pass
-- **Issue**: `kpoints_params.rs` missing the `mp_grid + mp_spacing → Err` inline test prescribed by TASKS.md — Issue #2 (same fix-tasks group)
+- **Fix applied**: `test_validate_mp_grid_and_mp_spacing_err` added to `kpoints_params.rs` (FIX-3)
 
 ### TASK-D-3: Full suite
-- **Status**: ✓ Passed — 1116 tests, workspace tests, clippy all clean
+- **Status**: ✓ Passed — 1117 tests, workspace tests, clippy all clean
 
 ### TASK-E-1: LatticeCart row-major docs
 - **Status**: ✓ Passed — struct doc clearly states row-major convention with ASCII diagram
@@ -53,39 +58,28 @@ Runtime verification: 1116 tests pass (0 failed), 14 doctests pass, `cargo clipp
 ### TASK-E-2: Verify new fixtures (pre-migration)
 - **Status**: ✓ Implicitly passed — all three fixtures parse correctly in post-migration tests
 
+## Fix Tasks Validation
+
+### FIX-1: Add missing validate() calls in CellDocument::build()
+- **Status**: ✓ Fully implemented as directed
+- **Runtime verification**: Build, tests, clippy all pass
+- **Diff validation**: 4 validate() calls added at `cell_document.rs:299-302` matching the spec exactly
+
+### FIX-2: Add missing positions assertion in test_parse_zno_lr_cell
+- **Status**: ✓ Implemented (corrective deviation)
+- **Runtime verification**: Test passes against ZnO_LR fixture
+- **Diff validation**: Uses `pos.positions.len()` (correct field name) instead of spec's erroneous `pos.ions.len()`
+
+### FIX-3: Add mp_grid + mp_spacing validation test to KpointsParams
+- **Status**: ✓ Fully implemented as directed
+- **Runtime verification**: Test passes, validates mutual exclusion
+- **Diff validation**: Test matches spec exactly — `KpointsMpGrid([2,2,2])` + `KpointsMpSpacing({0.05})` → `is_err()`
+
 ## Issues Found
 
-### Issue #1 (Required): Missing validate() calls in CellDocument::build()
+All fixable issues from the initial review have been resolved. No new issues found.
 
-**Severity**: Minor (maintenance trap)
-**File**: `castep_cell_io/src/cell_document.rs`, lines 291-301
-
-The builder's `build()` method validates 6 of 10 groups:
-- Validated: kpoints, spectral, symmetry, constraints, phonon, phonon_fine
-- **Not validated**: optics_magres, external_fields, species, dynamics
-
-The 4 omitted groups have pass-through `validate()` today, so there is no functional gap. However, if any of those groups later acquires real validation logic, the `CellDocument::builder()...build()` path will silently bypass it (the `from_cell_file()` path is fine since each group's `from_cell_file()` calls its own `validate()` internally).
-
-**Recommendation**: Add the 4 missing validate() calls for consistency and future-proofing:
-```rust
-doc.optics_magres = doc.optics_magres.validate().map_err(|e| Error::Message(e.to_string()))?;
-doc.external_fields = doc.external_fields.validate().map_err(|e| Error::Message(e.to_string()))?;
-doc.species = doc.species.validate().map_err(|e| Error::Message(e.to_string()))?;
-doc.dynamics = doc.dynamics.validate().map_err(|e| Error::Message(e.to_string()))?;
-```
-
-### Issue #2 (Recommended): Test coverage gaps
-
-**Severity**: Minor
-**Files**: `castep_cell_io/src/cell_document.rs`, `castep_cell_io/src/cell/kpoints_params.rs`
-
-Two gaps in TASKS.md success criteria coverage:
-
-1. **ZnO test missing positions assertion** (`cell_document.rs`): `test_parse_zno_lr_cell` does not assert that `doc.positions` is `Positions::Frac` with 4 entries (2 O + 2 Zn), as specified in TASKS.md D-1.
-
-2. **KpointsParams missing mp_grid + mp_spacing test** (`kpoints_params.rs`): TASKS.md D-2 prescribes `mp_grid + mp_spacing → Err` but the inline tests have `mp_grid + offset → Ok` instead (different coverage target). The mp_grid + mp_spacing case is only implicitly covered by `build_rejects_all_three_kpoint_specs` in cell_document.rs.
-
-### Issue #3 (Recommended): Library should not use eprintln!
+### Remaining Issue #3 (Deferred): Library should not use eprintln!
 
 **Severity**: Cosmetic
 **File**: `castep_cell_io/src/cell/constraints_params.rs`, line 59
@@ -94,8 +88,4 @@ Two gaps in TASKS.md success criteria coverage:
 
 ## Deferred Items
 
-See also `deferred.md`.
-
-1. **Unit enum CellValue::String vs CellValue::Str round-trip fix** (DISCOVERED in TASKS.md): 12 of 14 unit files need `CellValue::String`→`CellValue::Str` migration. Only `length_units.rs` is fixed. Independent of group migration.
-2. **eprintln! in library code**: Migrate to `log::warn!` (Issue #3 above).
-3. **Serialization order change**: The group field order changes block emission order vs pre-migration. Not functionally breaking but could affect diff-stability-dependent workflows.
+See `deferred.md`.
