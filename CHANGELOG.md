@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-14
+
+### Changed
+- **BREAKING**: Migrated `CellDocument` from flat single-struct to group substructs (`CellDocumentGroups`) for logical organization
+- **BREAKING**: `CellDocument` now stores `LatticeCart`, `KpointsParams`, `SymmetryOps`, `CellConstraints`, `SpeciesPot`, `IonicPositions`, `Specie`, `PhononKpoints`, `SpectralKpoints`, `BlockComment`, and `CellComment` instead of flat fields
+- Builder API updated to reflect new nested group structure
+
+### Fixed
+- Length-unit values now emit `CellValue::Str` instead of `CellValue::String` for round-trip compatibility
+- Missing `validate()` calls added in `CellDocument::build()`
+- `mp_grid` + `mp_spacing` mutual exclusion validation enforced in `KpointsParams`
+
+### Added
+- Fixture-anchored tests for `CellDocumentGroups` migration (Fe2O3, ZnO_LR, Co3O4)
+- Round-trip test for `LatticeCart` confirming row-major convention
+
 ## [0.5.0] - 2026-05-05
 
 ### Changed
