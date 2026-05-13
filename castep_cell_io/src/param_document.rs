@@ -493,7 +493,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_parse_co3o4_2_param() {
-        let input = std::fs::read_to_string("../Co3O4_2.param").unwrap();
+        let input = std::fs::read_to_string("tests/fixtures/Co3O4_2.param").unwrap();
         let doc: ParamDocument = parse(&input).unwrap();
 
         assert_eq!(
