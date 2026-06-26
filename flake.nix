@@ -41,6 +41,14 @@
                   pynvim
                 ]))
                 uv
+              ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin ([
+                pkgs.libiconv
+              ]);
+              env = pkgs.lib.optionals pkgs.stdenv.isDarwin [
+                {
+                  name = "RUSTFLAGS";
+                  value = "-C link-arg=-L${pkgs.libiconv}/lib";
+                }
               ];
               commands = [
                 {

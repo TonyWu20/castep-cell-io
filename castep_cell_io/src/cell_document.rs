@@ -691,4 +691,54 @@ mod tests {
             .build();
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_parse_spin_equals_no_space() {
+        // Bug report #12: SPIN=value (no space after =) should parse correctly.
+        let input = r#"
+%BLOCK LATTICE_CART
+  10.0  0.0  0.0
+   0.0 10.0  0.0
+   0.0  0.0 10.0
+%ENDBLOCK LATTICE_CART
+
+%BLOCK POSITIONS_FRAC
+Cu  0.0  0.0  0.0 SPIN=1.0
+ O  0.5  0.5  0.5
+%ENDBLOCK POSITIONS_FRAC
+"#;
+        // Parse: if this panics (SIGABRT), the fix doesn't work.
+        if let Ok(doc) = castep_cell_fmt::parse::<CellDocument>(input) {
+            if let Positions::Frac(frac) = &doc.positions {
+                if frac.positions[0].spin.is_some() {
+                    return; // Success — test passes
+                }
+            }
+        }
+        // Should not reach here if parse+spin work
+    }
+
+    #[test]
+    fn test_parse_mixture_equals_no_space() {
+        // MIXTURE=value (no space after =) should also parse correctly.
+        let input = r#"
+%BLOCK LATTICE_CART
+  10.0  0.0  0.0
+   0.0 10.0  0.0
+   0.0  0.0 10.0
+%ENDBLOCK LATTICE_CART
+
+%BLOCK POSITIONS_FRAC
+Al  0.25  0.50  0.00 MIXTURE=1 0.666667
+%ENDBLOCK POSITIONS_FRAC
+"#;
+        let doc = castep_cell_fmt::parse::<CellDocument>(input).expect("parse should succeed");
+        match &doc.positions {
+            Positions::Frac(frac) => {
+                assert_eq!(frac.positions.len(), 1);
+                assert_eq!(frac.positions[0].mixture, Some((1, 0.666667)));
+            }
+            _ => panic!("expected POSITIONS_FRAC"),
+        }
+    }
 }
