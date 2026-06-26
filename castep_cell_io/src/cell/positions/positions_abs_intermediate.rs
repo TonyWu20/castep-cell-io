@@ -35,42 +35,63 @@ impl FromCellValue for PositionAbsIntermediateEntry {
                 let mut mixture = None;
                 let mut idx = 4;
 
-                // Parse optional qualifiers (SPIN, MIXTURE) in any order
+                // Parse optional qualifiers (SPIN, MIXTURE) in any order.
+                // Handles: "SPIN 1.0", "SPIN= 1.0", and "SPIN=1.0" (inline value)
                 while idx < arr.len() {
                     let keyword = value_as_str(&arr[idx])?.to_ascii_uppercase();
 
-                    if keyword == "SPIN" || keyword == "SPIN=" {
+                    if keyword == "SPIN" {
                         if idx + 1 < arr.len() {
                             spin = Some(value_as_f64(&arr[idx + 1])?);
                             idx += 2;
                         } else {
-                            return Err(castep_cell_fmt::Error::Message(
-                                "SPIN qualifier requires a value".into(),
-                            ));
+                            return Err(castep_cell_fmt::Error::Message("SPIN qualifier requires a value".into()));
                         }
-                    } else if keyword == "MIXTURE" || keyword == "MIXTURE=" {
+                    } else if keyword == "SPIN=" {
+                        if idx + 1 < arr.len() {
+                            spin = Some(value_as_f64(&arr[idx + 1])?);
+                            idx += 2;
+                        } else {
+                            return Err(castep_cell_fmt::Error::Message("SPIN qualifier requires a value".into()));
+                        }
+                    } else if keyword.starts_with("SPIN=") {
+                        let val_str = &keyword["SPIN=".len()..];
+                        spin = Some(val_str.parse::<f64>().map_err(|_| {
+                            castep_cell_fmt::Error::Message(format!("invalid SPIN value: {val_str}"))
+                        })?);
+                        idx += 1;
+                    } else if keyword == "MIXTURE" {
                         if idx + 2 < arr.len() {
-                            let mix_idx = match &arr[idx + 1] {
-                                CellValue::UInt(u) => *u,
-                                CellValue::Int(i) if *i >= 0 => *i as u32,
-                                _ => {
-                                    return Err(castep_cell_fmt::Error::Message(
-                                        "MIXTURE index must be a positive integer".into(),
-                                    ))
-                                }
-                            };
+                            let mix_idx = super::positions_frac::parse_mixture_index(&arr[idx + 1])?;
                             let mix_weight = value_as_f64(&arr[idx + 2])?;
                             mixture = Some((mix_idx, mix_weight));
                             idx += 3;
                         } else {
-                            return Err(castep_cell_fmt::Error::Message(
-                                "MIXTURE qualifier requires index and weight".into(),
-                            ));
+                            return Err(castep_cell_fmt::Error::Message("MIXTURE qualifier requires index and weight".into()));
+                        }
+                    } else if keyword == "MIXTURE=" {
+                        if idx + 2 < arr.len() {
+                            let mix_idx = super::positions_frac::parse_mixture_index(&arr[idx + 1])?;
+                            let mix_weight = value_as_f64(&arr[idx + 2])?;
+                            mixture = Some((mix_idx, mix_weight));
+                            idx += 3;
+                        } else {
+                            return Err(castep_cell_fmt::Error::Message("MIXTURE qualifier requires index and weight".into()));
+                        }
+                    } else if keyword.starts_with("MIXTURE=") {
+                        let val_str = &keyword["MIXTURE=".len()..];
+                        let mix_idx = val_str.parse::<u32>().map_err(|_| {
+                            castep_cell_fmt::Error::Message(format!("invalid MIXTURE index: {val_str}"))
+                        })?;
+                        if idx + 1 < arr.len() {
+                            let mix_weight = value_as_f64(&arr[idx + 1])?;
+                            mixture = Some((mix_idx, mix_weight));
+                            idx += 2;
+                        } else {
+                            return Err(castep_cell_fmt::Error::Message("MIXTURE qualifier requires weight after index".into()));
                         }
                     } else {
-                        return Err(castep_cell_fmt::Error::Message(
-                            format!("unknown qualifier: {keyword}"),
-                        ));
+                        return Err(castep_cell_fmt::Error::Message(format!("unknown qualifier: {keyword}")));
                     }
                 }
 

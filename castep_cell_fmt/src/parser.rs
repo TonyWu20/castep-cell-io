@@ -49,7 +49,7 @@ fn cell_primitives<'src>()
                 .or_else(|_| s.parse::<f64>().map(CellValue::Float))
                 .unwrap()
         });
-    let word = none_of(" %!#=\r\n\n")
+    let word = none_of(" %!#\r\n\n")
         .repeated()
         .at_least(1)
         .to_slice()
