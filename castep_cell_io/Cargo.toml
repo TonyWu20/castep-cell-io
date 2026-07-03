@@ -1,6 +1,6 @@
 [package]
 name = "castep-cell-io"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2024"
 authors = ["TonyWu20"]
 description = "I/O library for CASTEP .cell and .param file formats"
