@@ -12,5 +12,5 @@ keywords = ["castep", "chemistry"]
 
 [dependencies]
 bon = "3.9.1"
-castep-cell-fmt = { path = "../castep_cell_fmt" }
+castep-cell-fmt = "0.2.1"
 serde = { version = "1.0.219", features = ["derive"] }
