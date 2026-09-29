@@ -7,11 +7,34 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     devshell.url = "github:numtide/devshell";
+    rushi-config = {
+      url = "git+ssh://git@github.com/TonyWu20/rushi-config";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.fenix.follows = "fenix";
+    };
   };
-  outputs = { nixpkgs, fenix, devshell, ... }:
+  outputs =
+    {
+      nixpkgs,
+      fenix,
+      devshell,
+      rushi-config,
+      ...
+    }:
     let
-      systems = [ "x86_64-linux" "aarch64-darwin" ];
-      pkgsFor = system: import nixpkgs { inherit system; overlays = [ fenix.overlays.default devshell.overlays.default ]; };
+      systems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ];
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [
+            fenix.overlays.default
+            devshell.overlays.default
+          ];
+        };
 
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
@@ -20,11 +43,14 @@
         system:
         let
           pkgs = pkgsFor system;
+          rushi = rushi-config.packages.${system}.default;
+          rushi-tui = rushi-config.packages.${system}.rushi-tui;
         in
         {
-          default = pkgs.devshell.mkShell
-            {
-              packages = with pkgs; [
+          default = pkgs.devshell.mkShell {
+            packages =
+              with pkgs;
+              [
                 (fenix.packages.${system}.stable.withComponents [
                   "cargo"
                   "clippy"
@@ -35,37 +61,27 @@
                 ])
                 stdenv
                 fish
-                (python313.withPackages (ps: with ps; [
-                  beautifulsoup4
-                  requests
-                  pynvim
-                ]))
+                (python313.withPackages (
+                  ps: with ps; [
+                    beautifulsoup4
+                    requests
+                    pynvim
+                  ]
+                ))
                 uv
-              ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin ([
+                rushi
+                rushi-tui
+              ]
+              ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
                 pkgs.libiconv
-              ]);
-              env = pkgs.lib.optionals pkgs.stdenv.isDarwin [
-                {
-                  name = "RUSTFLAGS";
-                  value = "-C link-arg=-L${pkgs.libiconv}/lib";
-                }
               ];
-              commands = [
-                {
-                  name = "claude-deepseek";
-                  command = ''
-                    ANTHROPIC_BASE_URL=$DEEPSEEK_BASE_URL \
-                    ANTHROPIC_AUTH_TOKEN=$DEEPSEEK_TOKEN \
-                    CLAUDE_CODE_ATTRIBUTION_HEADER="0" \
-                    CLAUDE_CODE_EFFORT_LEVEL=max \
-                    ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro[1m] \
-                    ANTHROPIC_DEFAULT_SONNET_MODEL=deepseek-v4-flash[1m] \
-                    ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash[1m] \
-                    claude --model "opusplan" --plugin-dir ~/programming/rust-development-pipeline
-                  '';
-                }
-              ];
-            };
+            env = pkgs.lib.optionals pkgs.stdenv.isDarwin [
+              {
+                name = "RUSTFLAGS";
+                value = "-C link-arg=-L${pkgs.libiconv}/lib";
+              }
+            ];
+          };
         }
       );
     };
