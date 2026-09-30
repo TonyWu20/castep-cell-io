@@ -6,6 +6,7 @@ mod geom_frequency_est;
 mod geom_max_iter;
 mod geom_method;
 mod geom_modulus_est;
+#[cfg(feature = "castep-23")]
 mod geom_preconditioner;
 mod geom_spin_fix;
 mod geom_stress_tol;
@@ -18,6 +19,7 @@ pub use geom_frequency_est::GeomFrequencyEst;
 pub use geom_max_iter::GeomMaxIter;
 pub use geom_method::GeomMethod;
 pub use geom_modulus_est::GeomModulusEst;
+#[cfg(feature = "castep-23")]
 pub use geom_preconditioner::GeomPreconditioner;
 pub use geom_spin_fix::GeomSpinFix;
 pub use geom_stress_tol::GeomStressTol;

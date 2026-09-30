@@ -333,7 +333,7 @@ INV_LENGTH_UNIT: 1/bohr
 
     #[test]
     fn test_file() {
-        let example_file = "Mg2SiO4_Cr_1.cell";
+        let example_file = "tests/fixtures/Mg2SiO4_Cr_1.cell";
         let example = read_to_string(example_file).unwrap();
         let parsed = parse_cell_file(&example)
             .map_err(|errors| {

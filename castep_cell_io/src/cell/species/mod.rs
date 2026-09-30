@@ -3,17 +3,25 @@ use castep_cell_fmt::parse::FromCellValue;
 use castep_cell_fmt::{CResult, Error};
 use serde::{Deserialize, Serialize};
 
+mod hubbard_alpha;
 mod hubbard_u;
+mod chemical_potential;
 mod quantization_axis;
+#[cfg(feature = "castep-23")]
 mod sedc_custom_params;
+mod species_gamma;
 mod species_lcao_states;
 mod species_mass;
 mod species_pot;
 mod species_q;
 
+pub use hubbard_alpha::{AtomHubbardAlpha, HubbardAlpha, OrbitalAlpha};
 pub use hubbard_u::{AtomHubbardU, HubbardU, HubbardUUnit, OrbitalU};
+pub use chemical_potential::{ChemicalPotential, ChemicalPotentialEntry};
 pub use quantization_axis::QuantizationAxis;
+#[cfg(feature = "castep-23")]
 pub use sedc_custom_params::{SedcCustomParams, SedcCustomParamsEntry, SedcParameter};
+pub use species_gamma::{SpeciesGamma, SpeciesGammaEntry};
 pub use species_lcao_states::{SpeciesLcaoState, SpeciesLcaoStates};
 pub use species_mass::{SpeciesMass, SpeciesMassEntry};
 pub use species_pot::{SpeciesPot, SpeciesPotEntry};

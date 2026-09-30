@@ -47,7 +47,10 @@ impl FromCellValue for PhononFineKpointPathSpacing {
 
 impl FromKeyValue for PhononFineKpointPathSpacing {
     const KEY_NAME: &'static str = "PHONON_FINE_KPOINT_PATH_SPACING";
+    #[cfg(feature = "castep-23")]
     const KEY_ALIASES: &'static [&'static str] = &["PHONON_FINE_KPOINTS_PATH_SPACING"];
+    #[cfg(not(feature = "castep-23"))]
+    const KEY_ALIASES: &'static [&'static str] = &[];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)

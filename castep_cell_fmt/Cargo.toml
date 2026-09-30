@@ -10,6 +10,22 @@ repository = "https://github.com/TonyWu20/castep-cell-io"
 license = "MIT"
 keywords = ["castep", "chemistry"]
 
+# Target CASTEP releases.
+#
+# One feature per supported release. Each release's keyword names, defaults,
+# and validation rules are gated behind its feature, so a build declares
+# explicitly which CASTEP release it targets. Enable more than one to accept
+# the union of their keyword sets; the build targets the highest enabled
+# release (`CastepVersion::target()`).
+#
+# `castep-23` is a placeholder for CASTEP releases after 6.11 whose keyword
+# sets are not yet pinned to a specific release number. It is not a default
+# feature: a 6.11 build leaves the post-6.11 keywords disabled.
+[features]
+default = ["castep-6-11"]
+castep-6-11 = []
+castep-23 = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

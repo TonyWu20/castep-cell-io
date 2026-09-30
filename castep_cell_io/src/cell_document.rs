@@ -59,10 +59,11 @@ use bon::Builder;
 use castep_cell_fmt::{
     CResult, Cell, CellValue, Error, ToCell, ToCellFile,
     parse::{FromBlock, FromCellFile},
-    query::find_block,
+    query::{find_block, has_flag},
 };
 
 use crate::cell::{
+    atomic_init::AtomicInit,
     constraints_params::ConstraintsParams,
     dynamics_params::DynamicsParams,
     external_field_params::ExternalFieldParams,
@@ -285,6 +286,12 @@ pub struct CellDocument {
     /// Contains IONIC_VELOCITIES for MD restart.
     #[builder(default)]
     pub dynamics: DynamicsParams,
+    /// 6.11: the `ATOMIC_INIT` marker keyword.
+    ///
+    /// Present/absent only; CASTEP 6.11 treats it as a no-op ("Dummy!
+    /// No action"), so it carries no payload. Modeled so a document that
+    /// carries the keyword round-trips it.
+    pub atomic_init: Option<AtomicInit>,
 }
 
 impl<S: cell_document_builder::IsComplete> CellDocumentBuilder<S> {
@@ -378,6 +385,7 @@ impl FromCellFile for CellDocument {
             .phonon(PhononParams::from_cell_file(cells)?)
             .phonon_fine(PhononFineParams::from_cell_file(cells)?)
             .dynamics(DynamicsParams::from_cell_file(cells)?)
+            .maybe_atomic_init(has_flag(cells, "ATOMIC_INIT").then_some(AtomicInit))
             .build()
     }
 }
@@ -425,6 +433,9 @@ impl ToCellFile for CellDocument {
         cells.extend(self.phonon.to_cell_file());
         cells.extend(self.phonon_fine.to_cell_file());
         cells.extend(self.dynamics.to_cell_file());
+        if let Some(v) = &self.atomic_init {
+            cells.push(v.to_cell());
+        }
         cells
     }
 }

@@ -7,12 +7,16 @@ use super::symmetry::*;
 /// Symmetry parameters
 ///
 /// At most one of [`SymmetryOps`] or [`SymmetryGenerate`] may be present.
-/// [`SymmetryTol`] is independent and can coexist with either.
+/// [`SymmetryTol`] and [`SnapToSymmetry`] are independent and can coexist
+/// with either.
 #[derive(Debug, Clone, Default, Builder)]
 pub struct SymmetryParams {
     pub symmetry_ops: Option<SymmetryOps>,
     pub symmetry_generate: Option<SymmetryGenerate>,
     pub symmetry_tol: Option<SymmetryTol>,
+    /// 6.11: when present, forces the lattice and ionic positions to obey
+    /// the supplied/generated symmetries. Independent of the other fields.
+    pub snap_to_symmetry: Option<SnapToSymmetry>,
 }
 
 impl SymmetryParams {
@@ -27,10 +31,12 @@ impl SymmetryParams {
 impl FromCellFile for SymmetryParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
         let symmetry_generate = has_flag(tokens, "SYMMETRY_GENERATE").then_some(SymmetryGenerate);
+        let snap_to_symmetry = has_flag(tokens, "SNAP_TO_SYMMETRY").then_some(SnapToSymmetry);
         Self::builder()
             .maybe_symmetry_ops(SymmetryOps::from_cells(tokens).ok())
             .maybe_symmetry_generate(symmetry_generate)
             .maybe_symmetry_tol(SymmetryTol::from_cells(tokens).ok().flatten())
+            .maybe_snap_to_symmetry(snap_to_symmetry)
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -43,6 +49,7 @@ impl ToCellFile for SymmetryParams {
         if let Some(v) = &self.symmetry_ops { cells.push(v.to_cell()); }
         if let Some(v) = &self.symmetry_generate { cells.push(v.to_cell()); }
         if let Some(v) = &self.symmetry_tol { cells.push(v.to_cell()); }
+        if let Some(v) = &self.snap_to_symmetry { cells.push(v.to_cell()); }
         cells
     }
 }

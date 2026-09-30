@@ -9,6 +9,7 @@ mod nlxc_page_ex_pot;
 mod nlxc_ppd_size_x;
 mod nlxc_ppd_size_y;
 mod nlxc_ppd_size_z;
+#[cfg(feature = "castep-23")]
 mod xc_definition;
 
 pub use k_scrn_averaging_scheme::KScrnAveragingScheme;
@@ -22,4 +23,5 @@ pub use nlxc_page_ex_pot::NlxcPageExPot;
 pub use nlxc_ppd_size_x::NlxcPpdSizeX;
 pub use nlxc_ppd_size_y::NlxcPpdSizeY;
 pub use nlxc_ppd_size_z::NlxcPpdSizeZ;
+#[cfg(feature = "castep-23")]
 pub use xc_definition::{XcDefinition, XcFunctionalEntry};

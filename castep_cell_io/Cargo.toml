@@ -12,5 +12,17 @@ keywords = ["castep", "chemistry"]
 
 [dependencies]
 bon = "3.9.1"
-castep-cell-fmt = "0.2.1"
+castep-cell-fmt = { version = "0.2.1", path = "../castep_cell_fmt" }
 serde = { version = "1.0.219", features = ["derive"] }
+
+# Target CASTEP release. The `castep-6-11` feature enables the keyword names,
+# defaults, and validation rules verified against the CASTEP 6.11 source.
+# The default build targets CASTEP 6.11.
+#
+# `castep-23` is a placeholder for CASTEP releases after 6.11 whose keyword
+# sets are not yet pinned to a specific release number. It propagates the
+# same placeholder to `castep-cell-fmt` and is not a default feature.
+[features]
+default = ["castep-6-11"]
+castep-6-11 = ["castep-cell-fmt/castep-6-11"]
+castep-23 = ["castep-cell-fmt/castep-23"]

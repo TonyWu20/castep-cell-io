@@ -50,8 +50,10 @@ pub mod format;
 pub mod parse;
 mod parser;
 pub mod query;
+mod version;
 
 pub use error::{CResult, Error};
+pub use version::CastepVersion;
 pub use format::{to_string, to_string_many};
 pub use parse::{FromBlock, FromCellFile, FromCellValue, FromKeyValue, parse};
 pub use parser::parse_cell_file;

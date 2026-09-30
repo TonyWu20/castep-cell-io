@@ -30,6 +30,7 @@ pub struct GeneralParams {
     pub rand_seed: Option<RandSeed>,
     pub run_time: Option<RunTime>,
     pub stop: Option<Stop>,
+    #[cfg(feature = "castep-23")]
     pub write_checkpoint: Option<WriteCheckpoint>,
     pub write_formatted_density: Option<WriteFormattedDensity>,
     pub write_formatted_elf: Option<WriteFormattedElf>,
@@ -47,7 +48,7 @@ impl GeneralParams {
 
 impl FromCellFile for GeneralParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_task(Task::from_cells(tokens).ok().flatten())
             .maybe_comment(Comment::from_cells(tokens).ok().flatten())
             .maybe_continuation(Continuation::from_cells(tokens).ok().flatten())
@@ -69,11 +70,14 @@ impl FromCellFile for GeneralParams {
             .maybe_rand_seed(RandSeed::from_cells(tokens).ok().flatten())
             .maybe_run_time(RunTime::from_cells(tokens).ok().flatten())
             .maybe_stop(Stop::from_cells(tokens).ok().flatten())
-            .maybe_write_checkpoint(WriteCheckpoint::from_cells(tokens).ok().flatten())
             .maybe_write_formatted_density(WriteFormattedDensity::from_cells(tokens).ok().flatten())
             .maybe_write_formatted_elf(WriteFormattedElf::from_cells(tokens).ok().flatten())
             .maybe_write_formatted_potential(WriteFormattedPotential::from_cells(tokens).ok().flatten())
-            .maybe_write_orbitals(WriteOrbitals::from_cells(tokens).ok().flatten())
+            .maybe_write_orbitals(WriteOrbitals::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_write_checkpoint(WriteCheckpoint::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -104,6 +108,7 @@ impl ToCellFile for GeneralParams {
         if let Some(v) = &self.rand_seed { cells.push(v.to_cell()); }
         if let Some(v) = &self.run_time { cells.push(v.to_cell()); }
         if let Some(v) = &self.stop { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.write_checkpoint { cells.push(v.to_cell()); }
         if let Some(v) = &self.write_formatted_density { cells.push(v.to_cell()); }
         if let Some(v) = &self.write_formatted_elf { cells.push(v.to_cell()); }
@@ -166,6 +171,7 @@ mod tests {
         let _ = params.rand_seed;
         let _ = params.run_time;
         let _ = params.stop;
+        #[cfg(feature = "castep-23")]
         let _ = params.write_checkpoint;
         let _ = params.write_formatted_density;
         let _ = params.write_formatted_elf;

@@ -185,7 +185,7 @@ mod format_test {
         use std::fs::read_to_string;
         use crate::parse_cell_file;
 
-        let example = read_to_string("Mg2SiO4_Cr_1.cell").unwrap();
+        let example = read_to_string("tests/fixtures/Mg2SiO4_Cr_1.cell").unwrap();
         let tokens = parse_cell_file(&example).unwrap();
         let output = to_string_many(&tokens);
         // The formatted output must not contain any double-newline sequences

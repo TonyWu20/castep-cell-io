@@ -1,11 +1,14 @@
+pub mod atomic_init;
 pub mod bz_sampling_kpoints;
 pub mod constraints;
 pub mod constraints_params;
 pub mod dynamics_params;
 pub mod external_field_params;
 pub mod external_fields;
+pub mod jcoupling_site;
 pub mod kpoints_params;
 pub mod lattice_param;
+pub mod noise;
 pub mod optics_magres_params;
 pub mod phonon;
 pub mod phonon_fine_params;

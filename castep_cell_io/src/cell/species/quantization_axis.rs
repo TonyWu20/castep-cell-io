@@ -37,6 +37,9 @@ impl FromCellValue for QuantizationAxis {
 
 impl FromKeyValue for QuantizationAxis {
     const KEY_NAME: &'static str = "QUANTIZATION_AXIS";
+    /// 6.11 registers both spellings; the reader and writer use the British
+    /// form, so accept it as an alias.
+    const KEY_ALIASES: &'static [&'static str] = &["QUANTISATION_AXIS"];
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)
     }
@@ -95,6 +98,18 @@ mod tests {
     #[test]
     fn test_quantization_axis_key_name() {
         assert_eq!(QuantizationAxis::KEY_NAME, "QUANTIZATION_AXIS");
+        // CASTEP 6.11 also registers the British spelling.
+        assert_eq!(QuantizationAxis::KEY_ALIASES, &["QUANTISATION_AXIS"]);
+    }
+
+    #[test]
+    fn test_quantization_axis_british_alias_parses() {
+        // 6.11 writes the keyword in the British spelling; the alias must
+        // resolve it through the real parser.
+        let tokens =
+            castep_cell_fmt::parse_cell_file("QUANTISATION_AXIS : 1 1 -1\n").unwrap();
+        let qa = QuantizationAxis::from_cells(&tokens).unwrap();
+        assert_eq!(qa.unwrap().direction, [1.0, 1.0, -1.0]);
     }
 
     #[test]

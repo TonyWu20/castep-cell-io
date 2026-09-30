@@ -8,12 +8,19 @@ use super::solvation::*;
 /// including boundary conditions, dielectric embedding, and surface tension parameters.
 #[derive(Debug, Clone, Default, Builder)]
 pub struct SolvationParams {
+    #[cfg(feature = "castep-23")]
     pub boundary_type: Option<BoundaryType>,
+    #[cfg(feature = "castep-23")]
     pub dielec_emb_func_method: Option<DielecEmbFuncMethod>,
+    #[cfg(feature = "castep-23")]
     pub dielec_emb_bulk_permittivity: Option<DielecEmbBulkPermittivity>,
+    #[cfg(feature = "castep-23")]
     pub implicit_solvent_apolar_factor: Option<ImplicitSolventApolarFactor>,
+    #[cfg(feature = "castep-23")]
     pub implicit_solvent_apolar_term: Option<ImplicitSolventApolarTerm>,
+    #[cfg(feature = "castep-23")]
     pub implicit_solvent_surface_tension: Option<ImplicitSolventSurfaceTension>,
+    #[cfg(feature = "castep-23")]
     pub use_smeared_ions: Option<UseSmearediIons>,
 }
 
@@ -27,14 +34,19 @@ impl SolvationParams {
 
 impl FromCellFile for SolvationParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        #[cfg(not(feature = "castep-23"))]
+        let _ = tokens;
+        let builder = Self::builder();
+        #[cfg(feature = "castep-23")]
+        let builder = builder
             .maybe_boundary_type(BoundaryType::from_cells(tokens).ok().flatten())
             .maybe_dielec_emb_func_method(DielecEmbFuncMethod::from_cells(tokens).ok().flatten())
             .maybe_dielec_emb_bulk_permittivity(DielecEmbBulkPermittivity::from_cells(tokens).ok().flatten())
             .maybe_implicit_solvent_apolar_factor(ImplicitSolventApolarFactor::from_cells(tokens).ok().flatten())
             .maybe_implicit_solvent_apolar_term(ImplicitSolventApolarTerm::from_cells(tokens).ok().flatten())
             .maybe_implicit_solvent_surface_tension(ImplicitSolventSurfaceTension::from_cells(tokens).ok().flatten())
-            .maybe_use_smeared_ions(UseSmearediIons::from_cells(tokens).ok().flatten())
+            .maybe_use_smeared_ions(UseSmearediIons::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -42,14 +54,22 @@ impl FromCellFile for SolvationParams {
 }
 
 impl ToCellFile for SolvationParams {
+    #[allow(unused_mut)]
     fn to_cell_file(&self) -> Vec<Cell<'_>> {
         let mut cells = Vec::new();
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.boundary_type { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.dielec_emb_func_method { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.dielec_emb_bulk_permittivity { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.implicit_solvent_apolar_factor { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.implicit_solvent_apolar_term { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.implicit_solvent_surface_tension { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.use_smeared_ions { cells.push(v.to_cell()); }
         cells
     }
@@ -59,6 +79,7 @@ impl ToCellFile for SolvationParams {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "castep-23")]
     #[test]
     fn test_default_construction() {
         let params = SolvationParams::default();
@@ -66,6 +87,7 @@ mod tests {
         assert!(params.use_smeared_ions.is_none());
     }
 
+    #[cfg(feature = "castep-23")]
     #[test]
     fn test_builder_construction() {
         let params = SolvationParams::builder().build();

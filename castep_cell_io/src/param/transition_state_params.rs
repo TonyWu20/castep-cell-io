@@ -11,9 +11,11 @@ pub struct TransitionStateParams {
     pub tssearch_method: Option<TssearchMethod>,
     pub tssearch_lstqst_protocol: Option<TssearchLstqstProtocol>,
     pub tssearch_cg_max_iter: Option<TssearchCgMaxIter>,
+    #[cfg(feature = "castep-23")]
     pub tssearch_max_path_points: Option<TssearchMaxPathPoints>,
     pub tssearch_qst_max_iter: Option<TssearchQstMaxIter>,
     pub tssearch_disp_tol: Option<TssearchDispTol>,
+    #[cfg(feature = "castep-23")]
     pub tssearch_energy_tol: Option<TssearchEnergyTol>,
     pub tssearch_force_tol: Option<TssearchForceTol>,
 }
@@ -28,15 +30,18 @@ impl TransitionStateParams {
 
 impl FromCellFile for TransitionStateParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_tssearch_method(TssearchMethod::from_cells(tokens).ok().flatten())
             .maybe_tssearch_lstqst_protocol(TssearchLstqstProtocol::from_cells(tokens).ok().flatten())
             .maybe_tssearch_cg_max_iter(TssearchCgMaxIter::from_cells(tokens).ok().flatten())
-            .maybe_tssearch_max_path_points(TssearchMaxPathPoints::from_cells(tokens).ok().flatten())
             .maybe_tssearch_qst_max_iter(TssearchQstMaxIter::from_cells(tokens).ok().flatten())
             .maybe_tssearch_disp_tol(TssearchDispTol::from_cells(tokens).ok().flatten())
-            .maybe_tssearch_energy_tol(TssearchEnergyTol::from_cells(tokens).ok().flatten())
-            .maybe_tssearch_force_tol(TssearchForceTol::from_cells(tokens).ok().flatten())
+            .maybe_tssearch_force_tol(TssearchForceTol::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_tssearch_max_path_points(TssearchMaxPathPoints::from_cells(tokens).ok().flatten())
+            .maybe_tssearch_energy_tol(TssearchEnergyTol::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -49,9 +54,11 @@ impl ToCellFile for TransitionStateParams {
         if let Some(v) = &self.tssearch_method { cells.push(v.to_cell()); }
         if let Some(v) = &self.tssearch_lstqst_protocol { cells.push(v.to_cell()); }
         if let Some(v) = &self.tssearch_cg_max_iter { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.tssearch_max_path_points { cells.push(v.to_cell()); }
         if let Some(v) = &self.tssearch_qst_max_iter { cells.push(v.to_cell()); }
         if let Some(v) = &self.tssearch_disp_tol { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.tssearch_energy_tol { cells.push(v.to_cell()); }
         if let Some(v) = &self.tssearch_force_tol { cells.push(v.to_cell()); }
         cells

@@ -6,6 +6,7 @@ mod phonon_kpoint_path;
 mod phonon_gamma_directions;
 mod phonon_kpoint_list;
 mod phonon_fine_kpoint_list;
+#[cfg(feature = "castep-23")]
 mod supercell_kpoint_list_castep;
 mod phonon_fine_kpoint_path;
 mod phonon_fine_kpoints_mp_spacing;
@@ -23,6 +24,7 @@ pub use phonon_gamma_directions::PhononGammaDirections;
 pub use phonon_kpoint_list::PhononKpointList;
 pub use phonon_kpoint_list::PhononKpointListEntry;
 pub use phonon_fine_kpoint_list::PhononFineKpointList;
+#[cfg(feature = "castep-23")]
 pub use supercell_kpoint_list_castep::SupercellKpointListCastep;
 pub use phonon_fine_kpoint_path::PhononFineKpointPath;
 pub use phonon_fine_kpoints_mp_spacing::PhononFineKpointsMpSpacing;
