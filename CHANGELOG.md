@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-09-30
+
+### Added
+- `castep-6-11` (default) and `castep-23` release features in both crates select the target CASTEP release
+- `CastepVersion` in `castep-cell-fmt`, re-exported by `castep-cell-io`, lists supported releases and the target
+- 8 cell keywords verified against the CASTEP 6.11 source: `HUBBARD_ALPHA`, `CELL_NOISE`, `POSITIONS_NOISE`, `CHEMICAL_POTENTIAL`, `JCOUPLING_SITE`, `ATOMIC_INIT`, `SNAP_TO_SYMMETRY`, `SPECIES_GAMMA`
+- New `GammaUnit` type for `SPECIES_GAMMA`
+- 27 post-6.11 keyword types available under the `castep-23` placeholder feature
+
+### Changed
+- **BREAKING**: renamed `EfieldIgnoreMolModes` to `EfieldIgnoreMolecModes`. The keyword is `EFIELD_IGNORE_MOLEC_MODES`, the spelling 6.11 registers
+- **BREAKING**: the 27 post-6.11 keyword types and 10 plural k-point aliases are off by default. Enable `castep-23` to accept them
+- Alias policy: the crate accepts an alias only when the target release registers that spelling
+- `castep-cell-io` now depends on `castep-cell-fmt` 0.3.0
+
 ## [0.6.0] - 2026-05-14
 
 ### Changed
