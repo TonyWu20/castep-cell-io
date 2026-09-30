@@ -22,3 +22,10 @@ mod param_document;
 
 pub use cell_document::{CellDocument, CellDocumentBuilder, Lattice, Positions};
 pub use param_document::{ParamDocument, ParamDocumentBuilder};
+
+/// The CASTEP release this build targets, re-exported from `castep-cell-fmt`.
+///
+/// A build may enable several release features; parsing then accepts the
+/// union of their keyword sets and output targets the highest enabled
+/// release. See `castep_cell_fmt::CastepVersion::supported()`.
+pub use castep_cell_fmt::CastepVersion;

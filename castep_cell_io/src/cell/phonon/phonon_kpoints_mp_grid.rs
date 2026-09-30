@@ -25,7 +25,10 @@ impl FromCellValue for PhononKpointsMpGrid {
 
 impl FromKeyValue for PhononKpointsMpGrid {
     const KEY_NAME: &'static str = "PHONON_KPOINT_MP_GRID";
+    #[cfg(feature = "castep-23")]
     const KEY_ALIASES: &'static [&'static str] = &["PHONON_KPOINTS_MP_GRID"];
+    #[cfg(not(feature = "castep-23"))]
+    const KEY_ALIASES: &'static [&'static str] = &[];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)
@@ -60,5 +63,15 @@ mod tests {
         ]);
         let grid = PhononKpointsMpGrid::from_cell_value(&val).unwrap();
         assert_eq!(grid.0, [4, 4, 4]);
+    }
+
+    // The plural alias is only accepted by releases after 6.11, so it is
+    // gated behind the placeholder release feature. A 6.11 build accepts no alias.
+    #[test]
+    fn test_key_aliases_gated_by_release() {
+        #[cfg(feature = "castep-23")]
+        assert_eq!(PhononKpointsMpGrid::KEY_ALIASES, &["PHONON_KPOINTS_MP_GRID"]);
+        #[cfg(not(feature = "castep-23"))]
+        assert!(PhononKpointsMpGrid::KEY_ALIASES.is_empty());
     }
 }

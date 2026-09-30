@@ -10,6 +10,7 @@ use super::pseudopotential::*;
 pub struct PseudopotentialParams {
     pub pspot_beta_phi_type: Option<PspotBetaPhiType>,
     pub pspot_nonlocal_type: Option<PspotNonlocalType>,
+    #[cfg(feature = "castep-23")]
     pub relativistic_treatment: Option<RelativisticTreatment>,
 }
 
@@ -23,10 +24,13 @@ impl PseudopotentialParams {
 
 impl FromCellFile for PseudopotentialParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_pspot_beta_phi_type(PspotBetaPhiType::from_cells(tokens).ok().flatten())
-            .maybe_pspot_nonlocal_type(PspotNonlocalType::from_cells(tokens).ok().flatten())
-            .maybe_relativistic_treatment(RelativisticTreatment::from_cells(tokens).ok().flatten())
+            .maybe_pspot_nonlocal_type(PspotNonlocalType::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_relativistic_treatment(RelativisticTreatment::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -38,6 +42,7 @@ impl ToCellFile for PseudopotentialParams {
         let mut cells = Vec::new();
         if let Some(v) = &self.pspot_beta_phi_type { cells.push(v.to_cell()); }
         if let Some(v) = &self.pspot_nonlocal_type { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.relativistic_treatment { cells.push(v.to_cell()); }
         cells
     }
@@ -51,6 +56,7 @@ mod tests {
     fn test_default_construction() {
         let params = PseudopotentialParams::default();
         assert!(params.pspot_beta_phi_type.is_none());
+        #[cfg(feature = "castep-23")]
         assert!(params.relativistic_treatment.is_none());
     }
 

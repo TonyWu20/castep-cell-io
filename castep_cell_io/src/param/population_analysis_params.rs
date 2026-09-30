@@ -11,6 +11,7 @@ pub struct PopulationAnalysisParams {
     pub pdos_calculate_weights: Option<PdosCalculateWeights>,
     pub popn_bond_cutoff: Option<PopnBondCutoff>,
     pub popn_calculate: Option<PopnCalculate>,
+    #[cfg(feature = "castep-23")]
     pub popn_write: Option<PopnWrite>,
 }
 
@@ -24,11 +25,14 @@ impl PopulationAnalysisParams {
 
 impl FromCellFile for PopulationAnalysisParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_pdos_calculate_weights(PdosCalculateWeights::from_cells(tokens).ok().flatten())
             .maybe_popn_bond_cutoff(PopnBondCutoff::from_cells(tokens).ok().flatten())
-            .maybe_popn_calculate(PopnCalculate::from_cells(tokens).ok().flatten())
-            .maybe_popn_write(PopnWrite::from_cells(tokens).ok().flatten())
+            .maybe_popn_calculate(PopnCalculate::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_popn_write(PopnWrite::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -41,6 +45,7 @@ impl ToCellFile for PopulationAnalysisParams {
         if let Some(v) = &self.pdos_calculate_weights { cells.push(v.to_cell()); }
         if let Some(v) = &self.popn_bond_cutoff { cells.push(v.to_cell()); }
         if let Some(v) = &self.popn_calculate { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.popn_write { cells.push(v.to_cell()); }
         cells
     }
@@ -54,6 +59,7 @@ mod tests {
     fn test_default_construction() {
         let params = PopulationAnalysisParams::default();
         assert!(params.pdos_calculate_weights.is_none());
+        #[cfg(feature = "castep-23")]
         assert!(params.popn_write.is_none());
     }
 

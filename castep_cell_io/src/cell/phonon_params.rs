@@ -10,8 +10,8 @@ use super::phonon::*;
 /// or [`PhononKpointsMpSpacing`] may be present.
 ///
 /// [`PhononKpointsMpOffset`] is an optional companion to MP grid/spacing.
-/// [`PhononGammaDirections`], [`PhononSupercellMatrix`], and [`SupercellKpointListCastep`]
-/// are independent.
+/// [`PhononGammaDirections`], [`PhononSupercellMatrix`], and
+/// `SupercellKpointListCastep` (feature `castep-23`) are independent.
 #[derive(Debug, Clone, Default, Builder)]
 pub struct PhononParams {
     pub phonon_kpoint_list: Option<PhononKpointList>,
@@ -22,6 +22,7 @@ pub struct PhononParams {
     pub phonon_kpoints_mp_offset: Option<PhononKpointsMpOffset>,
     pub phonon_gamma_directions: Option<PhononGammaDirections>,
     pub phonon_supercell_matrix: Option<PhononSupercellMatrix>,
+    #[cfg(feature = "castep-23")]
     pub supercell_kpoint_list: Option<SupercellKpointListCastep>,
 }
 
@@ -49,7 +50,7 @@ impl PhononParams {
 
 impl FromCellFile for PhononParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_phonon_kpoint_list(PhononKpointList::from_cells(tokens).ok())
             .maybe_phonon_kpoint_path(PhononKpointPath::from_cells(tokens).ok())
             .maybe_phonon_kpoint_path_spacing(PhononKpointPathSpacing::from_cells(tokens).ok().flatten())
@@ -57,8 +58,11 @@ impl FromCellFile for PhononParams {
             .maybe_phonon_kpoints_mp_spacing(PhononKpointsMpSpacing::from_cells(tokens).ok().flatten())
             .maybe_phonon_kpoints_mp_offset(PhononKpointsMpOffset::from_cells(tokens).ok().flatten())
             .maybe_phonon_gamma_directions(PhononGammaDirections::from_cells(tokens).ok())
-            .maybe_phonon_supercell_matrix(PhononSupercellMatrix::from_cells(tokens).ok())
-            .maybe_supercell_kpoint_list(SupercellKpointListCastep::from_cells(tokens).ok())
+            .maybe_phonon_supercell_matrix(PhononSupercellMatrix::from_cells(tokens).ok());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_supercell_kpoint_list(SupercellKpointListCastep::from_cells(tokens).ok());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -76,6 +80,7 @@ impl ToCellFile for PhononParams {
         if let Some(v) = &self.phonon_kpoints_mp_offset { cells.push(v.to_cell()); }
         if let Some(v) = &self.phonon_gamma_directions { cells.push(v.to_cell()); }
         if let Some(v) = &self.phonon_supercell_matrix { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.supercell_kpoint_list { cells.push(v.to_cell()); }
         cells
     }

@@ -60,7 +60,10 @@ pub struct MagresKpointsList {
 
 impl FromBlock for MagresKpointsList {
     const BLOCK_NAME: &'static str = "MAGRES_KPOINT_LIST";
+    #[cfg(feature = "castep-23")]
     const BLOCK_ALIASES: &'static [&'static str] = &["MAGRES_KPOINTS_LIST"];
+    #[cfg(not(feature = "castep-23"))]
+    const BLOCK_ALIASES: &'static [&'static str] = &[];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let kpoints = rows

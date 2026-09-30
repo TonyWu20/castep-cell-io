@@ -19,6 +19,7 @@ mod reuse;
 mod run_time;
 mod stop;
 mod task;
+#[cfg(feature = "castep-23")]
 mod write_checkpoint;
 mod write_formatted_density;
 mod write_formatted_elf;
@@ -46,6 +47,7 @@ pub use reuse::Reuse;
 pub use run_time::RunTime;
 pub use stop::Stop;
 pub use task::Task;
+#[cfg(feature = "castep-23")]
 pub use write_checkpoint::WriteCheckpoint;
 pub use write_formatted_density::WriteFormattedDensity;
 pub use write_formatted_elf::WriteFormattedElf;

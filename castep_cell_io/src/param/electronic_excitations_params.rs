@@ -9,6 +9,7 @@ use super::electronic_excitations::*;
 #[derive(Debug, Clone, Default, Builder)]
 pub struct ElectronicExcitationsParams {
     pub spectral_task: Option<SpectralTask>,
+    #[cfg(feature = "castep-23")]
     pub tddft_position_method: Option<TddftPositionMethod>,
     pub tddft_num_states: Option<TddftNumStates>,
     pub tddft_selected_state: Option<TddftSelectedState>,
@@ -24,11 +25,14 @@ impl ElectronicExcitationsParams {
 
 impl FromCellFile for ElectronicExcitationsParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_spectral_task(SpectralTask::from_cells(tokens).ok().flatten())
-            .maybe_tddft_position_method(TddftPositionMethod::from_cells(tokens).ok().flatten())
             .maybe_tddft_num_states(TddftNumStates::from_cells(tokens).ok().flatten())
-            .maybe_tddft_selected_state(TddftSelectedState::from_cells(tokens).ok().flatten())
+            .maybe_tddft_selected_state(TddftSelectedState::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_tddft_position_method(TddftPositionMethod::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -39,6 +43,7 @@ impl ToCellFile for ElectronicExcitationsParams {
     fn to_cell_file(&self) -> Vec<Cell<'_>> {
         let mut cells = Vec::new();
         if let Some(v) = &self.spectral_task { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.tddft_position_method { cells.push(v.to_cell()); }
         if let Some(v) = &self.tddft_num_states { cells.push(v.to_cell()); }
         if let Some(v) = &self.tddft_selected_state { cells.push(v.to_cell()); }

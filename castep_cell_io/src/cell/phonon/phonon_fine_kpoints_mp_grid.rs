@@ -34,7 +34,10 @@ impl FromCellValue for PhononFineKpointsMpGrid {
 
 impl FromKeyValue for PhononFineKpointsMpGrid {
     const KEY_NAME: &'static str = "PHONON_FINE_KPOINT_MP_GRID";
+    #[cfg(feature = "castep-23")]
     const KEY_ALIASES: &'static [&'static str] = &["PHONON_FINE_KPOINTS_MP_GRID"];
+    #[cfg(not(feature = "castep-23"))]
+    const KEY_ALIASES: &'static [&'static str] = &[];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)

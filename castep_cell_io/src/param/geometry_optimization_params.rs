@@ -16,6 +16,7 @@ pub struct GeometryOptimizationParams {
     pub geom_max_iter: Option<GeomMaxIter>,
     pub geom_method: Option<GeomMethod>,
     pub geom_modulus_est: Option<GeomModulusEst>,
+    #[cfg(feature = "castep-23")]
     pub geom_preconditioner: Option<GeomPreconditioner>,
     pub geom_spin_fix: Option<GeomSpinFix>,
     pub geom_stress_tol: Option<GeomStressTol>,
@@ -31,7 +32,7 @@ impl GeometryOptimizationParams {
 
 impl FromCellFile for GeometryOptimizationParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_geom_convergence_win(GeomConvergenceWin::from_cells(tokens).ok().flatten())
             .maybe_geom_disp_tol(GeomDispTol::from_cells(tokens).ok().flatten())
             .maybe_geom_energy_tol(GeomEnergyTol::from_cells(tokens).ok().flatten())
@@ -40,9 +41,12 @@ impl FromCellFile for GeometryOptimizationParams {
             .maybe_geom_max_iter(GeomMaxIter::from_cells(tokens).ok().flatten())
             .maybe_geom_method(GeomMethod::from_cells(tokens).ok().flatten())
             .maybe_geom_modulus_est(GeomModulusEst::from_cells(tokens).ok().flatten())
-            .maybe_geom_preconditioner(GeomPreconditioner::from_cells(tokens).ok().flatten())
             .maybe_geom_spin_fix(GeomSpinFix::from_cells(tokens).ok().flatten())
-            .maybe_geom_stress_tol(GeomStressTol::from_cells(tokens).ok().flatten())
+            .maybe_geom_stress_tol(GeomStressTol::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_geom_preconditioner(GeomPreconditioner::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -60,6 +64,7 @@ impl ToCellFile for GeometryOptimizationParams {
         if let Some(v) = &self.geom_max_iter { cells.push(v.to_cell()); }
         if let Some(v) = &self.geom_method { cells.push(v.to_cell()); }
         if let Some(v) = &self.geom_modulus_est { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.geom_preconditioner { cells.push(v.to_cell()); }
         if let Some(v) = &self.geom_spin_fix { cells.push(v.to_cell()); }
         if let Some(v) = &self.geom_stress_tol { cells.push(v.to_cell()); }

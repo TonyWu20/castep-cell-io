@@ -33,7 +33,10 @@ impl FromCellValue for PhononKpointsMpOffset {
 
 impl FromKeyValue for PhononKpointsMpOffset {
     const KEY_NAME: &'static str = "PHONON_KPOINT_MP_OFFSET";
+    #[cfg(feature = "castep-23")]
     const KEY_ALIASES: &'static [&'static str] = &["PHONON_KPOINTS_MP_OFFSET"];
+    #[cfg(not(feature = "castep-23"))]
+    const KEY_ALIASES: &'static [&'static str] = &[];
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)

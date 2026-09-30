@@ -19,7 +19,10 @@ pub struct PhononFineKpointPath {
 
 impl FromBlock for PhononFineKpointPath {
     const BLOCK_NAME: &'static str = "PHONON_FINE_KPOINT_PATH";
+    #[cfg(feature = "castep-23")]
     const BLOCK_ALIASES: &'static [&'static str] = &["PHONON_FINE_KPOINTS_PATH"];
+    #[cfg(not(feature = "castep-23"))]
+    const BLOCK_ALIASES: &'static [&'static str] = &[];
 
     fn from_block_rows(rows: &[CellValue<'_>]) -> CResult<Self> {
         let points = rows

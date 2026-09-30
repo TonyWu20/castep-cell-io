@@ -27,3 +27,4 @@ castep-param-io
 .pipeline-worktrees/
 .claude/
 castep_cell_fmt/Cargo.lock
+sessions/

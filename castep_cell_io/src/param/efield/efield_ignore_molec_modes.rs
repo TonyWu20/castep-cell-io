@@ -7,13 +7,13 @@ use castep_cell_fmt::query::value_as_str;
 ///
 /// Keyword type: String
 ///
-/// Default: EfieldIgnoreMolModes::Crystal
+/// Default: EfieldIgnoreMolecModes::Crystal
 ///
 /// Example:
-/// EFIELD_IGNORE_MOL_MODES : Molecule
+/// EFIELD_IGNORE_MOLEC_MODES : Molecule
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[derive(Default)]
-pub enum EfieldIgnoreMolModes {
+pub enum EfieldIgnoreMolecModes {
     /// Ignore the three lowest lying modes
     #[default]
     Crystal,
@@ -24,38 +24,38 @@ pub enum EfieldIgnoreMolModes {
 }
 
 
-impl FromCellValue for EfieldIgnoreMolModes {
+impl FromCellValue for EfieldIgnoreMolecModes {
     fn from_cell_value(value: &CellValue<'_>) -> CResult<Self> {
         match value_as_str(value)?.to_ascii_lowercase().as_str() {
             "crystal" => Ok(Self::Crystal),
             "molecule" => Ok(Self::Molecule),
             "linear_molecule" => Ok(Self::LinearMolecule),
-            other => Err(Error::Message(format!("unknown EfieldIgnoreMolModes: {other}"))),
+            other => Err(Error::Message(format!("unknown EfieldIgnoreMolecModes: {other}"))),
         }
     }
 }
 
-impl FromKeyValue for EfieldIgnoreMolModes {
-    const KEY_NAME: &'static str = "EFIELD_IGNORE_MOL_MODES";
+impl FromKeyValue for EfieldIgnoreMolecModes {
+    const KEY_NAME: &'static str = "EFIELD_IGNORE_MOLEC_MODES";
 
     fn from_cell_value_kv(value: &CellValue<'_>) -> CResult<Self> {
         Self::from_cell_value(value)
     }
 }
 
-impl ToCell for EfieldIgnoreMolModes {
+impl ToCell for EfieldIgnoreMolecModes {
     fn to_cell(&self) -> Cell<'_> {
-        Cell::KeyValue("EFIELD_IGNORE_MOL_MODES", self.to_cell_value())
+        Cell::KeyValue("EFIELD_IGNORE_MOLEC_MODES", self.to_cell_value())
     }
 }
 
-impl ToCellValue for EfieldIgnoreMolModes {
+impl ToCellValue for EfieldIgnoreMolecModes {
     fn to_cell_value(&self) -> CellValue<'_> {
         CellValue::String(
             match self {
-                EfieldIgnoreMolModes::Crystal => "Crystal",
-                EfieldIgnoreMolModes::Molecule => "Molecule",
-                EfieldIgnoreMolModes::LinearMolecule => "Linear_molecule",
+                EfieldIgnoreMolecModes::Crystal => "Crystal",
+                EfieldIgnoreMolecModes::Molecule => "Molecule",
+                EfieldIgnoreMolecModes::LinearMolecule => "Linear_molecule",
             }
             .to_string(),
         )
@@ -69,23 +69,23 @@ mod tests {
 
     #[test]
     fn test_case_insensitive() {
-        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("crystal")).unwrap(), EfieldIgnoreMolModes::Crystal);
-        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("CRYSTAL")).unwrap(), EfieldIgnoreMolModes::Crystal);
+        assert_eq!(EfieldIgnoreMolecModes::from_cell_value(&CellValue::Str("crystal")).unwrap(), EfieldIgnoreMolecModes::Crystal);
+        assert_eq!(EfieldIgnoreMolecModes::from_cell_value(&CellValue::Str("CRYSTAL")).unwrap(), EfieldIgnoreMolecModes::Crystal);
     }
 
     #[test]
     fn test_all_variants() {
-        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("molecule")).unwrap(), EfieldIgnoreMolModes::Molecule);
-        assert_eq!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("linear_molecule")).unwrap(), EfieldIgnoreMolModes::LinearMolecule);
+        assert_eq!(EfieldIgnoreMolecModes::from_cell_value(&CellValue::Str("molecule")).unwrap(), EfieldIgnoreMolecModes::Molecule);
+        assert_eq!(EfieldIgnoreMolecModes::from_cell_value(&CellValue::Str("linear_molecule")).unwrap(), EfieldIgnoreMolecModes::LinearMolecule);
     }
 
     #[test]
     fn test_invalid() {
-        assert!(EfieldIgnoreMolModes::from_cell_value(&CellValue::Str("invalid")).is_err());
+        assert!(EfieldIgnoreMolecModes::from_cell_value(&CellValue::Str("invalid")).is_err());
     }
 
     #[test]
     fn test_key_name() {
-        assert_eq!(EfieldIgnoreMolModes::KEY_NAME, "EFIELD_IGNORE_MOL_MODES");
+        assert_eq!(EfieldIgnoreMolecModes::KEY_NAME, "EFIELD_IGNORE_MOLEC_MODES");
     }
 }

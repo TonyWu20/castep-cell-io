@@ -19,6 +19,7 @@ pub struct ExchangeCorrelationParams {
     pub nlxc_ppd_size_x: Option<NlxcPpdSizeX>,
     pub nlxc_ppd_size_y: Option<NlxcPpdSizeY>,
     pub nlxc_ppd_size_z: Option<NlxcPpdSizeZ>,
+    #[cfg(feature = "castep-23")]
     pub xc_definition: Option<XcDefinition>,
 }
 
@@ -31,7 +32,7 @@ impl ExchangeCorrelationParams {
 
 impl FromCellFile for ExchangeCorrelationParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_k_scrn_averaging_scheme(KScrnAveragingScheme::from_cells(tokens).ok().flatten())
             .maybe_spin_polarized(SpinPolarized::from_cells(tokens).ok().flatten())
             .maybe_xc_functional(XcFunctional::from_cells(tokens).ok().flatten())
@@ -42,8 +43,11 @@ impl FromCellFile for ExchangeCorrelationParams {
             .maybe_nlxc_page_ex_pot(NlxcPageExPot::from_cells(tokens).ok().flatten())
             .maybe_nlxc_ppd_size_x(NlxcPpdSizeX::from_cells(tokens).ok().flatten())
             .maybe_nlxc_ppd_size_y(NlxcPpdSizeY::from_cells(tokens).ok().flatten())
-            .maybe_nlxc_ppd_size_z(NlxcPpdSizeZ::from_cells(tokens).ok().flatten())
-            .maybe_xc_definition(XcDefinition::from_cells(tokens).ok())
+            .maybe_nlxc_ppd_size_z(NlxcPpdSizeZ::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
+            .maybe_xc_definition(XcDefinition::from_cells(tokens).ok());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -64,6 +68,7 @@ impl ToCellFile for ExchangeCorrelationParams {
         if let Some(v) = &self.nlxc_ppd_size_x { cells.push(v.to_cell()); }
         if let Some(v) = &self.nlxc_ppd_size_y { cells.push(v.to_cell()); }
         if let Some(v) = &self.nlxc_ppd_size_z { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.xc_definition { cells.push(v.to_cell()); }
         cells
     }

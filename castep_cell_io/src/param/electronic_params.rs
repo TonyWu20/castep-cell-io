@@ -16,15 +16,24 @@ pub struct ElectronicParams {
     pub nup: Option<Nup>,
     pub perc_extra_bands: Option<PercExtraBands>,
     pub sedc_apply: Option<SedcApply>,
+    #[cfg(feature = "castep-23")]
     pub sedc_d_g06: Option<SedcDG06>,
+    #[cfg(feature = "castep-23")]
     pub sedc_d_jchs: Option<SedcDJchs>,
+    #[cfg(feature = "castep-23")]
     pub sedc_d_ts: Option<SedcDTs>,
+    #[cfg(feature = "castep-23")]
     pub sedc_lambda_obs: Option<SedcLambdaObs>,
+    #[cfg(feature = "castep-23")]
     pub sedc_n_obs: Option<SedcNObs>,
+    #[cfg(feature = "castep-23")]
     pub sedc_s6_g06: Option<SedcS6G06>,
+    #[cfg(feature = "castep-23")]
     pub sedc_s6_jchs: Option<SedcS6Jchs>,
     pub sedc_scheme: Option<SedcScheme>,
+    #[cfg(feature = "castep-23")]
     pub sedc_sr_jchs: Option<SedcSrJchs>,
+    #[cfg(feature = "castep-23")]
     pub sedc_sr_ts: Option<SedcSrTs>,
     pub spin: Option<Spin>,
 }
@@ -49,7 +58,7 @@ impl ElectronicParams {
 
 impl FromCellFile for ElectronicParams {
     fn from_cell_file(tokens: &[Cell<'_>]) -> CResult<Self> {
-        Self::builder()
+        let builder = Self::builder()
             .maybe_charge(Charge::from_cells(tokens).ok().flatten())
             .maybe_nbands(Nbands::from_cells(tokens).ok().flatten())
             .maybe_ndown(Ndown::from_cells(tokens).ok().flatten())
@@ -58,6 +67,10 @@ impl FromCellFile for ElectronicParams {
             .maybe_nup(Nup::from_cells(tokens).ok().flatten())
             .maybe_perc_extra_bands(PercExtraBands::from_cells(tokens).ok().flatten())
             .maybe_sedc_apply(SedcApply::from_cells(tokens).ok().flatten())
+            .maybe_sedc_scheme(SedcScheme::from_cells(tokens).ok().flatten())
+            .maybe_spin(Spin::from_cells(tokens).ok().flatten());
+        #[cfg(feature = "castep-23")]
+        let builder = builder
             .maybe_sedc_d_g06(SedcDG06::from_cells(tokens).ok().flatten())
             .maybe_sedc_d_jchs(SedcDJchs::from_cells(tokens).ok().flatten())
             .maybe_sedc_d_ts(SedcDTs::from_cells(tokens).ok().flatten())
@@ -65,10 +78,9 @@ impl FromCellFile for ElectronicParams {
             .maybe_sedc_n_obs(SedcNObs::from_cells(tokens).ok().flatten())
             .maybe_sedc_s6_g06(SedcS6G06::from_cells(tokens).ok().flatten())
             .maybe_sedc_s6_jchs(SedcS6Jchs::from_cells(tokens).ok().flatten())
-            .maybe_sedc_scheme(SedcScheme::from_cells(tokens).ok().flatten())
             .maybe_sedc_sr_jchs(SedcSrJchs::from_cells(tokens).ok().flatten())
-            .maybe_sedc_sr_ts(SedcSrTs::from_cells(tokens).ok().flatten())
-            .maybe_spin(Spin::from_cells(tokens).ok().flatten())
+            .maybe_sedc_sr_ts(SedcSrTs::from_cells(tokens).ok().flatten());
+        builder
             .build()
             .validate()
             .map_err(|e| Error::Message(e.to_string()))
@@ -86,15 +98,24 @@ impl ToCellFile for ElectronicParams {
         if let Some(v) = &self.nup { cells.push(v.to_cell()); }
         if let Some(v) = &self.perc_extra_bands { cells.push(v.to_cell()); }
         if let Some(v) = &self.sedc_apply { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_d_g06 { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_d_jchs { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_d_ts { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_lambda_obs { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_n_obs { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_s6_g06 { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_s6_jchs { cells.push(v.to_cell()); }
         if let Some(v) = &self.sedc_scheme { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_sr_jchs { cells.push(v.to_cell()); }
+        #[cfg(feature = "castep-23")]
         if let Some(v) = &self.sedc_sr_ts { cells.push(v.to_cell()); }
         if let Some(v) = &self.spin { cells.push(v.to_cell()); }
         cells
