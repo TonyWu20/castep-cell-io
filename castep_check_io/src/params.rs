@@ -55,21 +55,15 @@ impl ParamsLayout {
 /// ```toml
 /// [params]
 /// devel_code_len = 256
-///
-/// [read.params]
-/// devel_code_len = 80
 /// ```
 ///
-/// The `params` side is the write width. The `read` side is the input
-/// width. Missing sides take the standard values.
+/// The width applies to both the read and the write of one command.
+/// It names the build in use. Missing keys take the standard values.
 #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct LayoutConfig {
-    /// The write section widths.
+    /// The parameters section widths.
     pub params: ParamsLayout,
-    /// The read side. Absent: the standard layout reads the input.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub read: Option<Box<LayoutConfig>>,
 }
 
 impl LayoutConfig {
@@ -85,14 +79,9 @@ impl LayoutConfig {
         Self::parse_toml(&String::from_utf8_lossy(&data))
     }
 
-    /// The write layout.
-    pub fn write_layout(&self) -> ParamsLayout {
+    /// The layout for the read and the write.
+    pub fn layout(&self) -> ParamsLayout {
         self.params
-    }
-
-    /// The read layout. The standard layout when unset.
-    pub fn read_layout(&self) -> ParamsLayout {
-        self.read.as_ref().map(|c| c.params).unwrap_or_default()
     }
 }
 

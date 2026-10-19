@@ -107,9 +107,11 @@ codec:
   writer. The writer pads `devel_code` to the target width and refuses to
   truncate a wider stored value (`LayoutOverflow`). The config is
   authoritative. The crate ships no auto-detection of file widths.
-  The `toml` dependency parses a layout config file. The `params` side is
-  the write width, the `read` side is the input width. The
-  `castep-check-io` command exposes both as flags.
+  One width names one build, and the command and the config apply it to
+  the read and the write alike. Cross-width conversion is a library flow
+  (read, `with_layout`, write), not a command flag. The `toml` dependency
+  parses the layout config file. The `castep-check-io` command exposes the
+  width as the `--devel-code-len` flag and a `--layout-config` file.
 - **Local build variants break the read side, not the layout.** The Sep 30
   `~/Downloads/CASTEP-6.11-nixos` build carries a local patch that widens
   `devel_code` from the standard 80 bytes to `file_maxpath` (256 bytes).

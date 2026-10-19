@@ -15,24 +15,22 @@ struct Cli {
     input: PathBuf,
     /// An optional output path. Absent: inspect only.
     output: Option<PathBuf>,
-    /// The write layout.
+    /// The layout for the read and the write.
     layout: ParamsLayout,
-    /// The input read layout.
-    read_layout: ParamsLayout,
 }
 
 /// Parses the command line.
 ///
-/// Usage: `castep-check-io [--devel-code-len N] [--read-devel-code-len N]
-/// [--layout-config PATH] INPUT [OUTPUT]`
+/// Usage: `castep-check-io [--devel-code-len N | --layout-config PATH]
+/// INPUT [OUTPUT]`
 ///
-/// `--devel-code-len` sets the write width. `--read-devel-code-len` sets the
-/// input width. A flag wins over a config file value on its side.
+/// The width names the build in use. It applies to both the read and the
+/// write. A flag wins over a config file value. Cross-width conversion is
+/// a library flow: read with one layout, `with_layout`, write.
 fn parse_args(args: &[String]) -> CResult<Cli> {
     let mut input: Option<PathBuf> = None;
     let mut output: Option<PathBuf> = None;
     let mut layout = ParamsLayout::default();
-    let mut read_layout = ParamsLayout::default();
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -46,26 +44,13 @@ fn parse_args(args: &[String]) -> CResult<Cli> {
                     .map_err(|_| CheckError::Section(format!("bad width {value}")))?;
                 layout.devel_code_len = n;
             }
-            "--read-devel-code-len" => {
-                i += 1;
-                let value = args
-                    .get(i)
-                    .ok_or_else(|| CheckError::Section(
-                        "--read-devel-code-len needs a value".into(),
-                    ))?;
-                let n = value
-                    .parse::<u32>()
-                    .map_err(|_| CheckError::Section(format!("bad width {value}")))?;
-                read_layout.devel_code_len = n;
-            }
             "--layout-config" => {
                 i += 1;
                 let path = args
                     .get(i)
                     .ok_or_else(|| CheckError::Section("--layout-config needs a path".into()))?;
                 let config = LayoutConfig::from_file(path)?;
-                layout = config.write_layout();
-                read_layout = config.read_layout();
+                layout = config.layout();
             }
             other => {
                 if other.starts_with('-') {
@@ -88,7 +73,7 @@ fn parse_args(args: &[String]) -> CResult<Cli> {
     }
     let input = input
         .ok_or_else(|| CheckError::Section("missing INPUT argument".into()))?;
-    Ok(Cli { input, output, layout, read_layout })
+    Ok(Cli { input, output, layout })
 }
 
 /// One summary line for an inspected document.
@@ -109,9 +94,9 @@ fn summary(doc: &CheckDocument) -> String {
 /// Runs one command.
 fn run(cli: &Cli) -> CResult<()> {
     let doc = if cli.input.extension().is_some_and(|e| e == "castep_bin") {
-        CheckDocument::from_castep_bin_file_with(&cli.input, &cli.read_layout)?
+        CheckDocument::from_castep_bin_file_with(&cli.input, &cli.layout)?
     } else {
-        CheckDocument::from_check_file_with(&cli.input, &cli.read_layout)?
+        CheckDocument::from_check_file_with(&cli.input, &cli.layout)?
     };
     let doc = if let Some(out) = &cli.output {
         let doc = doc.with_layout(cli.layout);
@@ -183,7 +168,7 @@ mod tests {
     }
 
     #[test]
-    fn write_flag_beats_config_file_value() {
+    fn flag_beats_config_file_value() {
         let dir = std::env::temp_dir().join("castep_check_io_cli_test.toml");
         std::fs::write(&dir, "[params]\ndevel_code_len = 256\n").unwrap();
         let args = vec![
@@ -199,39 +184,13 @@ mod tests {
     }
 
     #[test]
-    fn config_file_sets_both_sides() {
+    fn config_file_sets_the_width() {
         let dir = std::env::temp_dir().join("castep_check_io_cli_test2.toml");
-        std::fs::write(
-            &dir,
-            "[params]\ndevel_code_len = 256\n\n[read.params]\ndevel_code_len = 128\n",
-        )
-        .unwrap();
+        std::fs::write(&dir, "[params]\ndevel_code_len = 256\n").unwrap();
         let args = vec!["a.check".into(), "--layout-config".into(), dir.to_str().unwrap().to_string()];
         let cli = parse_args(&args).unwrap();
         assert_eq!(cli.layout.devel_code_len, 256);
-        assert_eq!(cli.read_layout.devel_code_len, 128);
         let _ = std::fs::remove_file(&dir);
-    }
-
-    #[test]
-    fn read_flag_sets_the_input_width() {
-        let args = vec![
-            "a.check".into(),
-            "--read-devel-code-len".into(),
-            "256".into(),
-            "--devel-code-len".into(),
-            "128".into(),
-        ];
-        let cli = parse_args(&args).unwrap();
-        assert_eq!(cli.read_layout.devel_code_len, 256);
-        assert_eq!(cli.layout.devel_code_len, 128);
-    }
-
-    #[test]
-    fn default_read_layout_is_standard() {
-        let args = vec!["a.check".into()];
-        let cli = parse_args(&args).unwrap();
-        assert_eq!(cli.read_layout.devel_code_len, 80);
     }
 
     #[test]
@@ -254,12 +213,7 @@ mod tests {
     }
 
     fn cli(input: PathBuf, output: Option<PathBuf>, layout: castep_check_io::ParamsLayout) -> Cli {
-        Cli {
-            input,
-            output,
-            layout,
-            read_layout: castep_check_io::ParamsLayout::default(),
-        }
+        Cli { input, output, layout }
     }
 
     #[test]
@@ -272,43 +226,53 @@ mod tests {
         assert!(run(&c).is_ok());
     }
 
-    #[test]
-    fn run_writes_a_wide_castep_bin() {
+    fn wide_input_file(suffix: &str) -> Option<std::path::PathBuf> {
         let Some(path) = fixture("Cu111_CO.castep_bin") else {
+            return None;
+        };
+        let doc = castep_check_io::CheckDocument::from_castep_bin_file(&path).ok()?;
+        let wide_in = std::env::temp_dir()
+            .join(format!("castep_check_io_main_widein_{suffix}.castep_bin"));
+        doc.with_layout(castep_check_io::ParamsLayout { devel_code_len: 256 })
+            .to_castep_bin_file(&wide_in)
+            .ok()?;
+        Some(wide_in)
+    }
+
+    #[test]
+    fn run_rewrites_a_wide_castep_bin() {
+        let Some(wide_in) = wide_input_file("b") else {
             eprintln!("SKIP: fixture missing");
             return;
         };
         let out = std::env::temp_dir().join("castep_check_io_main_wide.castep_bin");
         let wide = castep_check_io::ParamsLayout { devel_code_len: 256 };
-        let c = cli(path, Some(out.clone()), wide);
+        let c = cli(wide_in, Some(out.clone()), wide);
         assert!(run(&c).is_ok());
         assert!(out.exists());
         let _ = std::fs::remove_file(&out);
     }
 
-    fn read_wide_cli(input: PathBuf, output: Option<PathBuf>) -> Cli {
-        Cli {
-            input,
-            output,
-            layout: castep_check_io::ParamsLayout::default(),
-            read_layout: castep_check_io::ParamsLayout { devel_code_len: 256 },
-        }
+    #[test]
+    fn run_reads_a_wide_file_wide() {
+        let Some(wide_in) = wide_input_file("a") else {
+            eprintln!("SKIP: fixture missing");
+            return;
+        };
+        let wide = castep_check_io::ParamsLayout { devel_code_len: 256 };
+        let c = cli(wide_in.clone(), None, wide);
+        assert!(run(&c).is_ok());
     }
 
     #[test]
-    fn run_reads_a_wide_file_back_to_standard() {
+    fn run_refuses_to_read_a_standard_file_wide() {
         let Some(path) = fixture("Cu111_CO.castep_bin") else {
             eprintln!("SKIP: fixture missing");
             return;
         };
-        let wide_out = std::env::temp_dir().join("castep_check_io_main_wide2.castep_bin");
         let wide = castep_check_io::ParamsLayout { devel_code_len: 256 };
-        assert!(run(&cli(path.clone(), Some(wide_out.clone()), wide)).is_ok());
-        let back = std::env::temp_dir().join("castep_check_io_main_narrow.castep_bin");
-        let c = read_wide_cli(wide_out.clone(), Some(back.clone()));
-        assert!(run(&c).is_ok());
-        let _ = std::fs::remove_file(&wide_out);
-        let _ = std::fs::remove_file(&back);
+        let c = cli(path, None, wide);
+        assert!(run(&c).is_err());
     }
 
     #[test]
