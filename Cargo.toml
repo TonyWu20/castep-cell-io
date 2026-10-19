@@ -1,5 +1,6 @@
 [workspace]
 members = [
 "castep_cell_fmt",
-"castep_cell_io"]
+"castep_cell_io",
+"castep_check_io"]
 resolver= "3"

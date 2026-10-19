@@ -1,0 +1,26 @@
+[package]
+name = "castep-check-io"
+version = "0.1.0"
+edition = "2024"
+authors = ["TonyWu20"]
+description = "Typed reader and writer for CASTEP binary .check and .castep_bin model files"
+homepage = "https://github.com/TonyWu20/castep-cell-io"
+repository = "https://github.com/TonyWu20/castep-cell-io"
+license = "MIT"
+keywords = ["castep", "chemistry"]
+
+[dependencies]
+castep-cell-fmt = { version = "0.3.0", path = "../castep_cell_fmt" }
+thiserror = "2.0.8"
+
+# Target CASTEP release. The `castep-6-11` feature selects the 6.11 binary
+# layout, the default target. The writer always emits the target layout and
+# the target version string.
+#
+# `castep-23` is a placeholder for a later release. It enables no binary
+# layout yet. It propagates to `castep-cell-fmt` and is not a default
+# feature.
+[features]
+default = ["castep-6-11"]
+castep-6-11 = ["castep-cell-fmt/castep-6-11"]
+castep-23 = ["castep-cell-fmt/castep-23"]

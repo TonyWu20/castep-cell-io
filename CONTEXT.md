@@ -265,3 +265,17 @@ Prohibited patterns:
 - Circular round-trips (synthetic data → encode → decode → assert)
 - Placeholder bounds without source citation
 - Synthetic data that mirrors parser expectations
+
+### Binary Model Files (`castep-check-io`)
+
+**Check file** (`.check`):
+The binary model file CASTEP writes between SCF and ionic steps. It carries the full resolved state: parameters, the cell and original cell sections, the wavefunction block, band eigenvalues, the charge density grid, and optional analysis sections. Records are 4-byte-marker framed and big-endian.
+_Avoid_: checkpoint, state file
+
+**Castep binary file** (`.castep_bin`):
+The analysis variant of the model file: the same sections without the wavefunction block, led by a 10-byte `CASTEP_BIN` magic record.
+_Avoid_: binary model, analysis file
+
+**Model document** (`CheckDocument`):
+The typed in-memory form of one model file. The sections store raw record payloads so a write replays them byte-exact.
+_Avoid_: checkpoint struct, model buffer

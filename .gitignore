@@ -28,3 +28,4 @@ castep-param-io
 .claude/
 castep_cell_fmt/Cargo.lock
 sessions/
+slurm_output_*.txt

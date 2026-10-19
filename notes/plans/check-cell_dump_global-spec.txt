@@ -1,0 +1,116 @@
+  0  my_node_id.eq.root_node_id                           TAG:BEGIN_CELL_GLOBAL                None
+  1  my_node_id.eq.root_node_id                           TAG:NKPTS                            None
+  2  my_node_id.eq.root_node_id                           NKPTS                                nkpts
+  3  my_node_id.eq.root_node_id                           TAG:KPOINTS                          None
+  4  my_node_id.eq.root_node_id                           KPOINTS                              kpoints
+  5  my_node_id.eq.root_node_id                           TAG:KPOINT_WEIGHTS                   None
+  6  my_node_id.eq.root_node_id                           KPOINT_WEIGHTS                       kpoint_weights
+  7  my_node_id.eq.root_node_id                           TAG:NUM_SYMMETRY_OPERATIONS          None
+  8  my_node_id.eq.root_node_id                           NUM_SYMMETRY_OPERATIONS              num_symmetry_operations
+  9  my_node_id.eq.root_node_id & num_symmetry_operations > 0 TAG:SYMMETRY_OPERATIONS              None
+ 10  my_node_id.eq.root_node_id & num_symmetry_operations > 0 SYMMETRY_OPERATIONS                  symmetry_operations
+ 11  my_node_id.eq.root_node_id & num_symmetry_operations > 0 TAG:SYMMETRY_DISPS                   None
+ 12  my_node_id.eq.root_node_id & num_symmetry_operations > 0 SYMMETRY_DISPS                       symmetry_disps
+ 13  my_node_id.eq.root_node_id & num_symmetry_operations > 0 TAG:SYMMETRY_EQUIV_ATOMS             None
+ 14  my_node_id.eq.root_node_id & num_symmetry_operations > 0 SYMMETRY_EQUIV_ATOMS                 symmetry_equiv_atoms
+ 15  my_node_id.eq.root_node_id                           TAG:NUM_CRYSTAL_SYMMETRY_OPERATIONS  None
+ 16  my_node_id.eq.root_node_id                           NUM_CRYSTAL_SYMMETRY_OPERATIONS      num_crystal_symmetry_operations
+ 17  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 TAG:CRYSTAL_SYMMETRY_OPERATIONS      None
+ 18  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 CRYSTAL_SYMMETRY_OPERATIONS          crystal_symmetry_operations
+ 19  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 TAG:CRYSTAL_SYMMETRY_DISPS           None
+ 20  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 CRYSTAL_SYMMETRY_DISPS               crystal_symmetry_disps
+ 21  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 TAG:CRYSTAL_SYMMETRY_EQUIV_ATOMS     None
+ 22  my_node_id.eq.root_node_id & num_crystal_symmetry_operations > 0 CRYSTAL_SYMMETRY_EQUIV_ATOMS         crystal_symmetry_equiv_atoms
+ 23  my_node_id.eq.root_node_id                           TAG:CELL_SYMMETRY_ION_CONSTRAINTS    None
+ 24  my_node_id.eq.root_node_id                           CELL_SYMMETRY_ION_CONSTRAINTS        cell_symmetry_ion_constraints
+ 25  my_node_id.eq.root_node_id                           TAG:NUM_IONIC_CONSTRAINTS            None
+ 26  my_node_id.eq.root_node_id                           NUM_IONIC_CONSTRAINTS                num_ionic_constraints
+ 27  my_node_id.eq.root_node_id & num_ionic_constraints > 0 TAG:IONIC_CONSTRAINTS                None
+ 28  my_node_id.eq.root_node_id & num_ionic_constraints > 0 IONIC_CONSTRAINTS                    ionic_constraints
+ 29  my_node_id.eq.root_node_id                           TAG:NUM_CELL_CONSTRAINTS             None
+ 30  my_node_id.eq.root_node_id                           NUM_CELL_CONSTRAINTS                 num_cell_constraints
+ 31  my_node_id.eq.root_node_id                           TAG:CELL_CONSTRAINTS                 None
+ 32  my_node_id.eq.root_node_id                           CELL_CONSTRAINTS                     cell_constraints
+ 33  my_node_id.eq.root_node_id                           TAG:EXTERNAL_PRESSURE                None
+ 34  my_node_id.eq.root_node_id                           EXTERNAL_PRESSURE                    external_pressure
+ 35  my_node_id.eq.root_node_id                           TAG:EXTERNAL_EFIELD                  None
+ 36  my_node_id.eq.root_node_id                           EXTERNAL_EFIELD                      external_efield
+ 37  my_node_id.eq.root_node_id                           TAG:NUM_BS_KPOINTS                   None
+ 38  my_node_id.eq.root_node_id                           NUM_BS_KPOINTS                       num_bs_kpoints
+ 39  my_node_id.eq.root_node_id                           TAG:BS_KPOINTS                       None
+ 40  my_node_id.eq.root_node_id                           BS_KPOINTS                           bs_kpoints
+ 41  my_node_id.eq.root_node_id                           TAG:BS_KPOINT_WEIGHTS                None
+ 42  my_node_id.eq.root_node_id                           BS_KPOINT_WEIGHTS                    bs_kpoint_weights
+ 43  my_node_id.eq.root_node_id                           TAG:NUM_SPECTRAL_KPOINTS             None
+ 44  my_node_id.eq.root_node_id                           NUM_SPECTRAL_KPOINTS                 num_spectral_kpoints
+ 45  my_node_id.eq.root_node_id                           TAG:SPECTRAL_KPOINTS                 None
+ 46  my_node_id.eq.root_node_id                           SPECTRAL_KPOINTS                     spectral_kpoints
+ 47  my_node_id.eq.root_node_id                           TAG:SPECTRAL_KPOINT_WEIGHTS          None
+ 48  my_node_id.eq.root_node_id                           SPECTRAL_KPOINT_WEIGHTS              spectral_kpoint_weights
+ 49  my_node_id.eq.root_node_id                           TAG:NUM_PHONON_KPOINTS               None
+ 50  my_node_id.eq.root_node_id                           NUM_PHONON_KPOINTS                   num_phonon_kpoints
+ 51  my_node_id.eq.root_node_id                           TAG:PHONON_KPOINTS                   None
+ 52  my_node_id.eq.root_node_id                           PHONON_KPOINTS                       phonon_kpoints
+ 53  my_node_id.eq.root_node_id                           TAG:NUM_PHONON_GAMMA_DIRECTIONS      None
+ 54  my_node_id.eq.root_node_id                           NUM_PHONON_GAMMA_DIRECTIONS          num_phonon_gamma_directions
+ 55  my_node_id.eq.root_node_id & num_phonon_gamma_directions > 0 TAG:PHONON_GAMMA_DIRECTIONS          None
+ 56  my_node_id.eq.root_node_id & num_phonon_gamma_directions > 0 PHONON_GAMMA_DIRECTIONS              phonon_gamma_directions
+ 57  my_node_id.eq.root_node_id                           TAG:PHONON_KPOINT_WEIGHTS            None
+ 58  my_node_id.eq.root_node_id                           PHONON_KPOINT_WEIGHTS                phonon_kpoint_weights
+ 59  my_node_id.eq.root_node_id                           TAG:NUM_PHONON_FINE_KPOINTS          None
+ 60  my_node_id.eq.root_node_id                           NUM_PHONON_FINE_KPOINTS              num_phonon_fine_kpoints
+ 61  my_node_id.eq.root_node_id                           TAG:PHONON_FINE_KPOINTS              None
+ 62  my_node_id.eq.root_node_id                           PHONON_FINE_KPOINTS                  phonon_fine_kpoints
+ 63  my_node_id.eq.root_node_id                           TAG:PHONON_FINE_KPOINT_WEIGHTS       None
+ 64  my_node_id.eq.root_node_id                           PHONON_FINE_KPOINT_WEIGHTS           phonon_fine_kpoint_weights
+ 65  my_node_id.eq.root_node_id                           TAG:NUM_SCF_KPOINTS                  None
+ 66  my_node_id.eq.root_node_id                           NUM_SCF_KPOINTS                      num_scf_kpoints
+ 67  my_node_id.eq.root_node_id                           TAG:SCF_KPOINTS                      None
+ 68  my_node_id.eq.root_node_id                           SCF_KPOINTS                          scf_kpoints
+ 69  my_node_id.eq.root_node_id                           TAG:SCF_KPOINT_WEIGHTS               None
+ 70  my_node_id.eq.root_node_id                           SCF_KPOINT_WEIGHTS                   scf_kpoint_weights
+ 71  my_node_id.eq.root_node_id                           TAG:NUM_MAGRES_KPOINTS               None
+ 72  my_node_id.eq.root_node_id                           NUM_MAGRES_KPOINTS                   num_magres_kpoints
+ 73  my_node_id.eq.root_node_id                           TAG:MAGRES_KPOINTS                   None
+ 74  my_node_id.eq.root_node_id                           MAGRES_KPOINTS                       magres_kpoints
+ 75  my_node_id.eq.root_node_id                           TAG:MAGRES_KPOINT_WEIGHTS            None
+ 76  my_node_id.eq.root_node_id                           MAGRES_KPOINT_WEIGHTS                magres_kpoint_weights
+ 77  my_node_id.eq.root_node_id                           TAG:NUM_ELNES_KPOINTS                None
+ 78  my_node_id.eq.root_node_id                           NUM_ELNES_KPOINTS                    num_elnes_kpoints
+ 79  my_node_id.eq.root_node_id                           TAG:ELNES_KPOINTS                    None
+ 80  my_node_id.eq.root_node_id                           ELNES_KPOINTS                        elnes_kpoints
+ 81  my_node_id.eq.root_node_id                           TAG:ELNES_KPOINT_WEIGHTS             None
+ 82  my_node_id.eq.root_node_id                           ELNES_KPOINT_WEIGHTS                 elnes_kpoint_weights
+ 83  my_node_id.eq.root_node_id                           TAG:CELL_SYMMORPHIC                  None
+ 84  my_node_id.eq.root_node_id                           CELL_SYMMORPHIC                      cell_symmorphic
+ 85  my_node_id.eq.root_node_id                           TAG:KPOINT_MP_GRID                   None
+ 86  my_node_id.eq.root_node_id                           KPOINT_MP_GRID                       kpoint_mp_grid
+ 87  my_node_id.eq.root_node_id                           TAG:KPOINT_MP_OFFSET                 None
+ 88  my_node_id.eq.root_node_id                           KPOINT_MP_OFFSET                     kpoint_mp_offset
+ 89  my_node_id.eq.root_node_id                           TAG:KPOINT_MP_DENSITY                None
+ 90  my_node_id.eq.root_node_id                           KPOINT_MP_DENSITY                    kpoint_mp_density
+ 91  my_node_id.eq.root_node_id                           TAG:FIX_COM                          None
+ 92  my_node_id.eq.root_node_id                           FIX_COM                              fix_com
+ 93  my_node_id.eq.root_node_id                           TAG:FIX_ALL_IONS                     None
+ 94  my_node_id.eq.root_node_id                           FIX_ALL_IONS                         fix_all_ions
+ 95  my_node_id.eq.root_node_id                           TAG:FIX_ALL_CELL                     None
+ 96  my_node_id.eq.root_node_id                           FIX_ALL_CELL                         fix_all_cell
+ 97  my_node_id.eq.root_node_id                           TAG:SYMMETRY_GENERATE                None
+ 98  my_node_id.eq.root_node_id                           SYMMETRY_GENERATE                    symmetry_generate
+ 99  my_node_id.eq.root_node_id                           TAG:SYMMETRY_TOL                     None
+100  my_node_id.eq.root_node_id                           SYMMETRY_TOL                         symmetry_tol
+101  my_node_id.eq.root_node_id                           TAG:NUM_OPTICS_KPOINTS               None
+102  my_node_id.eq.root_node_id                           NUM_OPTICS_KPOINTS                   num_optics_kpoints
+103  my_node_id.eq.root_node_id                           TAG:OPTICS_KPOINTS                   None
+104  my_node_id.eq.root_node_id                           OPTICS_KPOINTS                       optics_kpoints
+105  my_node_id.eq.root_node_id                           TAG:OPTICS_KPOINT_WEIGHTS            None
+106  my_node_id.eq.root_node_id                           OPTICS_KPOINT_WEIGHTS                optics_kpoint_weights
+107  my_node_id.eq.root_node_id                           TAG:OPTICS_KPOINT_MP_GRID            None
+108  my_node_id.eq.root_node_id                           OPTICS_KPOINT_MP_GRID                optics_kpoint_mp_grid
+109  my_node_id.eq.root_node_id                           TAG:OPTICS_KPOINT_MP_OFFSET          None
+110  my_node_id.eq.root_node_id                           OPTICS_KPOINT_MP_OFFSET              optics_kpoint_mp_offset
+111  my_node_id.eq.root_node_id                           TAG:OPTICS_KPOINT_MP_DENSITY         None
+112  my_node_id.eq.root_node_id                           OPTICS_KPOINT_MP_DENSITY             optics_kpoint_mp_density
+113  my_node_id.eq.root_node_id                           TAG:QUANTISATION_AXIS                None
+114  my_node_id.eq.root_node_id                           QUANTISATION_AXIS                    Quantisation_axis
+115  my_node_id.eq.root_node_id                           TAG:END_CELL_GLOBAL                  None

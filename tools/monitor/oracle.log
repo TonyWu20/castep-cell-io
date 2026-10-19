@@ -1,0 +1,5 @@
+job left the queue. log: 
+--- reuse and error lines ---
+rg: : IO error for operation on : No such file or directory (os error 2)
+--- final lines ---
+tail: cannot open '' for reading: No such file or directory

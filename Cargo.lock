@@ -85,6 +85,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "castep-check-io"
+version = "0.1.0"
+dependencies = [
+ "castep-cell-fmt",
+ "thiserror",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
