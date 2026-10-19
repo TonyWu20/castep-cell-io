@@ -95,11 +95,13 @@ byte-exact.
    `from_bytes` -> `to_bytes` for Cu111_CO.check, Cu111_CO.castep_bin,
    Cu111_CO_F7.check, Fe2O3.castep_bin, and the 0614 spin job `.check`.
    `tests/codec.rs` covers the error paths and synthetic streams.
-9. [in progress] CASTEP-6.11 oracle via slurm (see below). Job 3592
-   submitted with the eigensolve binary (root cause of the 3590/3591
-   failures: the Sep 30 `~/Downloads` build has a local `devel_code`
-   256-byte patch, so it cannot read standard-layout model files; the
-   0614 seed `.check` is standard layout, 80-byte `devel_code`).
+9. [in progress] CASTEP-6.11 oracle via slurm (see below). Verified
+   locally: the eigensolve build reads our `.check` and prints the
+   ground-state reuse lines (exit 0). Slurm job 3595 pending.
+   Root cause of the 3590/3591 failures: the Sep 30 `~/Downloads`
+   build has a local `devel_code` 256-byte patch, so it cannot read
+   standard-layout model files. The 0614 seed `.check` is standard
+   layout, 80-byte `devel_code`.
 10. [done] Docs: ADR-0005 carries the fixed layout facts. The crate
     README, CHANGELOG entry, and CONTEXT note are written.
 
@@ -129,6 +131,26 @@ byte-exact.
   `ParamDocument` and the matching record in `.check` via `CheckDocument`.
   Expect a clean recompute, no error.
 
+## Oracle run notes
+
+- The job dir also needs the pseudopotential files
+  (`C_00PBE.usp`, `Cu_00PBE.usp`, `O_00PBE.usp`) from
+  `/export/Potentials/`. CASTEP reads them when the stored model
+  matches and the SCF restarts.
+- Slurm places the rank CWD outside the job dir. The launch wraps
+  CASTEP in `bash -c "cd <job dir> && exec castep.mpi <seed>"` so the
+  app always starts in the job dir. Submit from the job dir too
+  (the proven 0604 warm-start pattern).
+- Local verification: the same mpirun command run from the login node
+  exits 0 and prints `Continuing from previous run with ground state
+  wavefunction.` and `Continuing from previous run with ground state
+  density.` in the `.castep` log. The `.check` written by
+  `CheckDocument` was read back without error.
+- Job history: 3590/3591 used the Downloads build and aborted in
+  `parameters_restore` (256-byte `devel_code` patch). 3592/3593
+  failed to open `.castep` under mpirun (rank CWD). 3595 runs the
+  eigensolve build with the cd wrapper.
+
 ## Open items (need owner decision at oracle time)
 
 - [settled] Seed job for the spin test: `Cu111_CO_Single_Point_0614_spin_cpu_serial`.
@@ -144,5 +166,18 @@ byte-exact.
   A wider typed set can land later without a format change.
 
 ## Coverage target
+
+- [done] Measured with `cargo llvm-cov` on 2026-10-19. The nix rust
+  toolchain has no llvm-tools-preview, but the store drv for it builds:
+  `nix-store --realise` the
+  `llvm-tools-preview-stable-2026-10-01.drv` and export
+  `LLVM_COV` / `LLVM_PROFDATA` to
+  `<store>/lib/rustlib/x86_64-unknown-linux-gnu/bin/llvm-cov`
+  (and `llvm-profdata`).
+- Result: every module of `castep-check-io` is at or above 85 percent
+  region coverage. Totals: `cell` 92.07, `document` 85.89,
+  `electronic` 88.00, `error` 100, `params` 86.23, `record` 97.49,
+  `version` 94.04. Crate total 91.08 percent regions.
+
 
 >= 85% unit coverage on all new modules, per repo convention.
