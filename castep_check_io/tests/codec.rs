@@ -268,6 +268,47 @@ fn document_file_apis_read_fixtures() {
 }
 
 #[test]
+fn document_file_apis_mismatch_kind() {
+    let Some(path) = fixture("Cu111_CO.check") else {
+        eprintln!("SKIP: fixture missing");
+        return;
+    };
+    let err = castep_check_io::document::CheckDocument::from_castep_bin_file(&path).unwrap_err();
+    assert!(matches!(err, castep_check_io::CheckError::Section(_)));
+}
+
+#[test]
+fn document_check_file_success_path() {
+    let Some(path) = fixture("Cu111_CO.check") else {
+        eprintln!("SKIP: fixture missing");
+        return;
+    };
+    let doc = castep_check_io::document::CheckDocument::from_check_file(&path).unwrap();
+    assert_eq!(doc.kind, castep_check_io::CheckKind::Check);
+}
+
+#[test]
+fn document_to_check_file_writes_a_readable_file() {
+    let Some(path) = fixture("Cu111_CO_F7.check") else {
+        eprintln!("SKIP: fixture missing");
+        return;
+    };
+    let doc = castep_check_io::document::CheckDocument::from_check_file(&path).unwrap();
+    let tmp = std::env::temp_dir().join("castep_check_io_tof.check");
+    doc.to_check_file(&tmp).unwrap();
+    let back =
+        castep_check_io::document::CheckDocument::from_check_file(&tmp).unwrap();
+    assert_eq!(doc.to_check_bytes().unwrap(), back.to_check_bytes().unwrap());
+    let _ = std::fs::remove_file(&tmp);
+}
+
+#[test]
+fn file_version_displays_major_minor() {
+    assert_eq!(FileVersion::new(6, 11).to_string(), "6.11");
+    assert_eq!(FileVersion::new(3, 0).to_string(), "3.0");
+}
+
+#[test]
 fn document_write_file_apis_work() {
     let Some(path) = fixture("Fe2O3.castep_bin") else {
         eprintln!("SKIP: fixture missing");

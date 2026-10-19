@@ -44,11 +44,12 @@ nix develop __CASTEP_NIX_TREE__ --command bash -c \
        --mca pmix s1 \
        --mca btl tcp,self \
 	--map-by numa --bind-to numa \
-    __CASTEP_BIN__ __SEEDNAME__"
+    bash -c \"cd __JOB_DIR__ && exec __CASTEP_BIN__ __SEEDNAME__\""
 JOB
   sed -i -e "s|__CASTEP_NIX_TREE__|$CASTEP_NIX_TREE|g" \
     -e "s|__CASTEP_BIN__|$CASTEP_BIN|g" \
-    -e "s|__SEEDNAME__|$SEEDNAME|g" "$out"
+    -e "s|__SEEDNAME__|$SEEDNAME|g" \
+    -e "s|__JOB_DIR__|$JOB_DIR|g" "$out"
   chmod +x "$out"
 }
 
@@ -57,6 +58,8 @@ setup() {
   mkdir -p "$JOB_DIR"
   cp "$SEED/$SEEDNAME.cell" "$JOB_DIR/$SEEDNAME.cell"
   cp "$SEED/$SEEDNAME.param" "$JOB_DIR/$SEEDNAME.param"
+  # the pseudopotential files the live parameters reference
+  cp /export/Potentials/C_00PBE.usp /export/Potentials/Cu_00PBE.usp /export/Potentials/O_00PBE.usp "$JOB_DIR/"
   # continuation: default maps to <seedname>.check in the working directory.
   if ! grep -q '^CONTINUATION' "$JOB_DIR/$SEEDNAME.param"; then
     printf '\nCONTINUATION :  default\n' >> "$JOB_DIR/$SEEDNAME.param"
@@ -78,7 +81,7 @@ case "${1:-submit}" in
     ;;
   submit)
     setup
-    sbatch "$JOB_DIR/slurm_job.sh"
+    (cd "$JOB_DIR" && sbatch slurm_job.sh)
     ;;
   *)
     echo "unknown mode: $1" >&2

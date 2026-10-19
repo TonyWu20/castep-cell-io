@@ -11,7 +11,7 @@ echo "$TASK_PID" > /home/tony/programming/castep-cell-io/tools/monitor/oracle.pi
 wait "$TASK_PID"
 RC=$?
 if [ "$RC" -eq 0 ]; then
-  rushi run "$SESSION" "oracle job 3592 finished. Review $LOG" \
+  rushi run "$SESSION" "oracle job 3595 finished. Review $LOG" \
     --sessions-root "$SESS_ROOT" --cwd "$PROJ"
 else
   rushi run "$SESSION" "oracle monitor child exited $RC. Review $LOG" \
