@@ -33,6 +33,18 @@ pub enum CheckError {
     #[error("i/o error: {0}")]
     IoError(#[from] std::io::Error),
 
+    #[error("i/o error on layout config file {path}: {source}")]
+    ConfigFile {
+        path: std::path::PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("layout config parse error: {0}")]
+    Config(#[from] toml::de::Error),
+
+    #[error("{field} is {len} bytes, but the target layout width is {target}; refusing to truncate")]
+    LayoutOverflow { field: &'static str, len: u32, target: u32 },
+
     #[error("truncated record at offset {offset}")]
     Truncated { offset: u64 },
 

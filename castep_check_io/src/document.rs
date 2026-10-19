@@ -8,7 +8,7 @@
 use crate::cell::{read_cell_section, write_cell_section, CELL_GLOBAL, RawCell, UNIT_CELL};
 use crate::electronic::{read_electronic, write_electronic, RawElectronic};
 use crate::error::{CResult, CheckError};
-use crate::params::{read_params, write_params, RawParams};
+use crate::params::{read_params, write_params, ParamsLayout, RawParams};
 use crate::record::{RecordReader, RecordWriter};
 use crate::version::CheckKind;
 
@@ -29,6 +29,9 @@ pub struct CheckDocument {
     pub orig_cell_global: RawCell,
     /// The electronic section.
     pub electronic: RawElectronic,
+    /// The layout the file was read with, and the layout the writer
+    /// emits unless replaced with `with_layout`.
+    pub layout: ParamsLayout,
 }
 
 impl CheckDocument {
@@ -36,7 +39,16 @@ impl CheckDocument {
     ///
     /// The kind is detected from the first record: a 10-byte
     /// `CASTEP_BIN` magic means `.castep_bin`, otherwise `.check`.
+    /// Record widths use the standard layout.
     pub fn from_bytes(data: &[u8]) -> CResult<Self> {
+        Self::from_bytes_with(data, &ParamsLayout::default())
+    }
+
+    /// Parses a model file from bytes with an explicit layout.
+    ///
+    /// The `devel_code` record width follows the layout. A file written by
+    /// a local build with a widened record is read under that layout.
+    pub fn from_bytes_with(data: &[u8], layout: &ParamsLayout) -> CResult<Self> {
         let mut reader = RecordReader::new(data);
         let first = reader.read_record()?;
         let kind = if first.len() == 10 && crate::record::char_str(crate::record::char_field(&first)) == "CASTEP_BIN" {
@@ -45,13 +57,13 @@ impl CheckDocument {
             CheckKind::Check
         };
         // The first record is the parameters tag. Re-read from the start.
-        Self::from_recorded(data, kind)
+        Self::from_recorded(data, kind, layout)
     }
 
-    fn from_recorded(data: &[u8], kind: CheckKind) -> CResult<Self> {
+    fn from_recorded(data: &[u8], kind: CheckKind, layout: &ParamsLayout) -> CResult<Self> {
         let mut reader = RecordReader::new(data);
         let is_bin = kind == CheckKind::CastepBin;
-        let params = read_params(&mut reader, is_bin)?;
+        let params = read_params(&mut reader, is_bin, layout)?;
         let zero = crate::cell::Counts::default();
         let cell = read_cell_section(&mut reader, UNIT_CELL, &zero)?;
         let cell_counts = cell.counts();
@@ -71,14 +83,23 @@ impl CheckDocument {
             orig_cell,
             orig_cell_global,
             electronic,
+            layout: *layout,
         })
     }
 
-    /// Parses a `.check` file from disk.
+    /// Parses a `.check` file from disk under the standard layout.
     pub fn from_check_file(path: impl AsRef<std::path::Path>) -> CResult<Self> {
+        Self::from_check_file_with(path, &ParamsLayout::default())
+    }
+
+    /// Parses a `.check` file from disk with an explicit layout.
+    pub fn from_check_file_with(
+        path: impl AsRef<std::path::Path>,
+        layout: &ParamsLayout,
+    ) -> CResult<Self> {
         let data = std::fs::read(path.as_ref())
             .map_err(|e| CheckError::Io { path: path.as_ref().to_path_buf(), source: e })?;
-        let doc = Self::from_bytes(&data)?;
+        let doc = Self::from_bytes_with(&data, layout)?;
         if doc.kind != CheckKind::Check {
             return Err(CheckError::Section(
                 "expected a .check file, found a .castep_bin file".into(),
@@ -87,11 +108,19 @@ impl CheckDocument {
         Ok(doc)
     }
 
-    /// Parses a `.castep_bin` file from disk.
+    /// Parses a `.castep_bin` file from disk under the standard layout.
     pub fn from_castep_bin_file(path: impl AsRef<std::path::Path>) -> CResult<Self> {
+        Self::from_castep_bin_file_with(path, &ParamsLayout::default())
+    }
+
+    /// Parses a `.castep_bin` file from disk with an explicit layout.
+    pub fn from_castep_bin_file_with(
+        path: impl AsRef<std::path::Path>,
+        layout: &ParamsLayout,
+    ) -> CResult<Self> {
         let data = std::fs::read(path.as_ref())
             .map_err(|e| CheckError::Io { path: path.as_ref().to_path_buf(), source: e })?;
-        let doc = Self::from_bytes(&data)?;
+        let doc = Self::from_bytes_with(&data, layout)?;
         if doc.kind != CheckKind::CastepBin {
             return Err(CheckError::Section(
                 "expected a .castep_bin file, found a .check file".into(),
@@ -132,13 +161,23 @@ impl CheckDocument {
         Ok(())
     }
 
+    /// Returns a copy of the document that writes under a different layout.
+    ///
+    /// The stored payloads stay raw. The writer adapts the `devel_code`
+    /// record to the new width, padding with spaces and refusing to
+    /// truncate an overflowing value.
+    pub fn with_layout(mut self, layout: ParamsLayout) -> Self {
+        self.layout = layout;
+        self
+    }
+
     fn write_into<W: std::io::Write>(
         &self,
         writer: &mut RecordWriter<W>,
         kind: CheckKind,
     ) -> CResult<()> {
         let is_bin = kind == CheckKind::CastepBin;
-        write_params(writer, &self.params, is_bin)?;
+        write_params(writer, &self.params, is_bin, &self.layout)?;
         let zero = crate::cell::Counts::default();
         let cell_counts = self.cell.counts();
         write_cell_section(writer, &self.cell, UNIT_CELL, &zero)?;
@@ -173,6 +212,7 @@ impl Default for CheckDocument {
             cell_global: RawCell::new(),
             orig_cell: RawCell::new(),
             orig_cell_global: RawCell::new(),
+            layout: crate::params::ParamsLayout::default(),
             electronic: RawElectronic {
                 found_gs_wvfn: false,
                 found_gs_den: false,

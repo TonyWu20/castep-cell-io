@@ -99,6 +99,17 @@ codec:
   holds for `Cu111_CO.castep_bin`, `Cu111_CO.check` (with wavefunction),
   `Cu111_CO_F7.check`, `Fe2O3.castep_bin`, and a live 0614 spin-job
   `.check`. The tests live in `castep_check_io/tests/roundtrip.rs`.
+- **Local build variants are a layout axis, not a version axis.**
+  `ParamsLayout` carries the record widths a local build can change inside
+  one release. The first knob is `devel_code_len`, standard 80, some local
+  builds 256. The reader and the writer each take a layout. A document
+  stores the layout it was read with, and `with_layout` retargets the
+  writer. The writer pads `devel_code` to the target width and refuses to
+  truncate a wider stored value (`LayoutOverflow`). The config is
+  authoritative. The crate ships no auto-detection of file widths.
+  The `toml` dependency parses a layout config file. The `params` side is
+  the write width, the `read` side is the input width. The
+  `castep-check-io` command exposes both as flags.
 - **Local build variants break the read side, not the layout.** The Sep 30
   `~/Downloads/CASTEP-6.11-nixos` build carries a local patch that widens
   `devel_code` from the standard 80 bytes to `file_maxpath` (256 bytes).

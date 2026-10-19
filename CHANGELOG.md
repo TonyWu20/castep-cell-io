@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New member crate `castep-check-io`: typed reader and writer for the CASTEP binary model files `.check` and `.castep_bin`. The public type is `CheckDocument`; `from_bytes`, `from_check_file`, `from_castep_bin_file`, `to_check_bytes`, `to_castep_bin_bytes`, `to_check_file`, and `to_castep_bin_file` cover the entry points. A roundtrip is byte-exact on the fixture files, including a 161 MB wavefunction file.
 - The parameters section is a 340-field table with the 6.11 version gate levels; the cell sections carry derived record sizes and count-gated pairs; the optional analysis sections are typed for `E_FERMI`, `FORCES`, `STRESS`, and `MD` and pass through raw otherwise.
 - Release features `castep-6-11` (default) and `castep-23` (placeholder) propagate to `castep-cell-fmt`, mirroring the text crates.
+- `ParamsLayout` configures local build variants: the reader and the writer take a layout, the document stores the read layout, and `with_layout` retargets the writer. The writer pads `devel_code` to the target width and errors (`LayoutOverflow`) instead of truncating a wider value.
+- A TOML layout config (`LayoutConfig`) sets the write and read widths. A `castep-check-io` command inspects a model file or rewrites it under configured widths, with `--devel-code-len`, `--read-devel-code-len`, and `--layout-config` flags.
 
 ## [0.7.0] - 2026-09-30
 

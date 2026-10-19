@@ -12,6 +12,8 @@ keywords = ["castep", "chemistry"]
 [dependencies]
 castep-cell-fmt = { version = "0.3.0", path = "../castep_cell_fmt" }
 thiserror = "2.0.8"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
 
 # Target CASTEP release. The `castep-6-11` feature selects the 6.11 binary
 # layout, the default target. The writer always emits the target layout and

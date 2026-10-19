@@ -15,6 +15,87 @@ use crate::error::{CResult, CheckError, FileVersion};
 use crate::record::{char_field, char_str, parse_f64s, parse_i32s, parse_logical4s, RecordReader, RecordWriter};
 use crate::version::{check_file_version, gate_open, parse_version_record, target_version_record};
 
+/// Record widths that vary across local CASTEP builds.
+///
+/// The version axis (ADR-0005) covers release-to-release layout changes.
+/// Local builds can change record widths inside one release. The standard
+/// CASTEP 6.11 values are the default. A file read with a layout is
+/// written with that layout unless replaced with `CheckDocument::with_layout`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct ParamsLayout {
+    /// Byte width of the `devel_code` record in the DEVEL block.
+    ///
+    /// Standard 6.11 is 80. A local build may widen it, for example to
+    /// `file_maxpath` (256). The writer space-pads to this width and
+    /// refuses to truncate a stored value that exceeds it.
+    #[serde(default = "ParamsLayout::default_devel_code_len")]
+    pub devel_code_len: u32,
+}
+
+impl Default for ParamsLayout {
+    fn default() -> Self {
+        Self { devel_code_len: 80 }
+    }
+}
+
+impl ParamsLayout {
+    fn default_devel_code_len() -> u32 {
+        80
+    }
+
+    /// The width the reader and writer use for the `devel_code` record.
+    pub fn devel_code_width(&self) -> u32 {
+        self.devel_code_len
+    }
+}
+
+/// The root of a layout config file.
+///
+/// ```toml
+/// [params]
+/// devel_code_len = 256
+///
+/// [read.params]
+/// devel_code_len = 80
+/// ```
+///
+/// The `params` side is the write width. The `read` side is the input
+/// width. Missing sides take the standard values.
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct LayoutConfig {
+    /// The write section widths.
+    pub params: ParamsLayout,
+    /// The read side. Absent: the standard layout reads the input.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read: Option<Box<LayoutConfig>>,
+}
+
+impl LayoutConfig {
+    /// Parses a layout config from a TOML string.
+    pub fn parse_toml(s: &str) -> CResult<Self> {
+        Ok(toml::from_str(s)?)
+    }
+
+    /// Reads and parses a layout config file.
+    pub fn from_file(path: impl AsRef<std::path::Path>) -> CResult<Self> {
+        let data = std::fs::read(path.as_ref())
+            .map_err(|e| CheckError::ConfigFile { path: path.as_ref().to_path_buf(), source: e })?;
+        Self::parse_toml(&String::from_utf8_lossy(&data))
+    }
+
+    /// The write layout.
+    pub fn write_layout(&self) -> ParamsLayout {
+        self.params
+    }
+
+    /// The read layout. The standard layout when unset.
+    pub fn read_layout(&self) -> ParamsLayout {
+        self.read.as_ref().map(|c| c.params).unwrap_or_default()
+    }
+}
+
 /// The kind of a parameter record.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
@@ -518,6 +599,7 @@ impl RawParams {
 pub fn read_params(
     reader: &mut RecordReader<&[u8]>,
     is_castep_bin: bool,
+    layout: &ParamsLayout,
 ) -> CResult<RawParams> {
     if is_castep_bin {
         let magic = reader.read_fixed(10)?;
@@ -546,7 +628,8 @@ pub fn read_params(
             payloads.push(None);
             continue;
         }
-        let payload = reader.read_fixed(field.size)?;
+        let size = record_width(field, layout);
+        let payload = reader.read_fixed(size)?;
         if field
             .tag()
             .is_some_and(|tag| char_field(&payload) != tag.as_bytes())
@@ -580,14 +663,43 @@ fn pad_right(bytes: &[u8], n: usize) -> Vec<u8> {
     out
 }
 
-/// Writes the parameters section in the target 6.11 layout.
+/// The record width of a field under a layout.
+///
+/// `devel_code` follows the layout. Every other field keeps its table width.
+fn record_width(field: &Field, layout: &ParamsLayout) -> usize {
+    if field.name == "devel_code" {
+        layout.devel_code_width() as usize
+    } else {
+        field.size
+    }
+}
+
+/// Adapts the stored `devel_code` payload to the target width.
+///
+/// Space-pads a short value. Refuses to truncate a value that exceeds the
+/// target width, because that would drop developer code.
+fn adapt_devel_code(payload: &[u8], target: u32) -> CResult<Vec<u8>> {
+    let content = char_field(payload);
+    if content.len() > target as usize {
+        return Err(CheckError::LayoutOverflow {
+            field: "devel_code",
+            len: content.len() as u32,
+            target,
+        });
+    }
+    Ok(pad_right(content, target as usize))
+}
+
+/// Writes the parameters section in the target layout.
 ///
 /// Stored payloads are replayed byte-exact. The version record is the target
-/// version record. Absent records get default encodings.
+/// version record. Absent records get default encodings. The `devel_code`
+/// record is emitted at the layout width.
 pub fn write_params<W: std::io::Write>(
     writer: &mut RecordWriter<W>,
     params: &RawParams,
     is_castep_bin: bool,
+    layout: &ParamsLayout,
 ) -> CResult<()> {
     if is_castep_bin {
         writer.write_record(b"CASTEP_BIN")?;
@@ -601,6 +713,14 @@ pub fn write_params<W: std::io::Write>(
                 if i == 1 {
                     // The version record is always the target version string.
                     writer.write_record(&target_version_record())?;
+                    continue;
+                }
+                if field.name == "devel_code" {
+                    let payload = match params.payloads.get(i) {
+                        Some(Some(payload)) => adapt_devel_code(payload, layout.devel_code_width())?,
+                        _ => vec![b' '; layout.devel_code_width() as usize],
+                    };
+                    writer.write_record(&payload)?;
                     continue;
                 }
                 match params.payloads.get(i) {

@@ -129,7 +129,7 @@ fn params_read_real_fixture() {
     };
     let data = std::fs::read(&path).unwrap();
     let mut reader = RecordReader::new(data.as_slice());
-    let params = castep_check_io::params::read_params(&mut reader, true).unwrap();
+    let params = castep_check_io::params::read_params(&mut reader, true, &castep_check_io::ParamsLayout::default()).unwrap();
     assert_eq!(params.version, FileVersion::new(6, 11));
     assert_eq!(params.text("xc_functional").unwrap(), "PBE");
     let seed = params.text("seedname").unwrap();
@@ -148,10 +148,10 @@ fn params_write_fills_absent_records() {
     p.set_text("seedname", "X").unwrap();
     let mut out = Vec::new();
     let mut w = RecordWriter::new(&mut out);
-    params::write_params(&mut w, &p, false).unwrap();
+    params::write_params(&mut w, &p, false, &castep_check_io::ParamsLayout::default()).unwrap();
     // The full 340-record stream must re-parse.
     let mut reader = RecordReader::new(out.as_slice());
-    let reparsed = params::read_params(&mut reader, false).unwrap();
+    let reparsed = params::read_params(&mut reader, false, &castep_check_io::ParamsLayout::default()).unwrap();
     assert_eq!(reparsed.i32("iprint").unwrap(), Some(1));
     assert_eq!(reparsed.text("seedname"), Some("X"));
 }
@@ -164,7 +164,7 @@ fn cell_read_real_fixture() {
     };
     let data = std::fs::read(&path).unwrap();
     let mut reader = RecordReader::new(data.as_slice());
-    let _ = castep_check_io::params::read_params(&mut reader, true).unwrap();
+    let _ = castep_check_io::params::read_params(&mut reader, true, &castep_check_io::ParamsLayout::default()).unwrap();
     use castep_check_io::cell::{read_cell_section, Counts, UNIT_CELL};
     let cell = read_cell_section(&mut reader, UNIT_CELL, &Counts::default()).unwrap();
     assert_eq!(cell.i32s("CELL%NUM_SPECIES").unwrap(), vec![3]);
@@ -306,6 +306,72 @@ fn document_to_check_file_writes_a_readable_file() {
 fn file_version_displays_major_minor() {
     assert_eq!(FileVersion::new(6, 11).to_string(), "6.11");
     assert_eq!(FileVersion::new(3, 0).to_string(), "3.0");
+}
+
+#[test]
+fn layout_writes_and_rereads_the_devel_code_width() {
+    let Some(path) = fixture("Cu111_CO.castep_bin") else {
+        eprintln!("SKIP: fixture missing");
+        return;
+    };
+    let wide_layout = castep_check_io::ParamsLayout { devel_code_len: 256 };
+    let doc = castep_check_io::document::CheckDocument::from_castep_bin_file(&path).unwrap();
+    assert_eq!(doc.params.raw("devel_code").unwrap().len(), 80);
+    let wide = doc.with_layout(wide_layout);
+    assert_eq!(wide.params.raw("devel_code").unwrap().len(), 80);
+    let wide_bytes = wide.to_castep_bin_bytes().unwrap();
+    let back = castep_check_io::document::CheckDocument::from_bytes_with(
+        &wide_bytes,
+        &wide_layout,
+    )
+    .unwrap();
+    assert_eq!(back.params.raw("devel_code").unwrap().len(), 256);
+    assert_eq!(back.to_castep_bin_bytes().unwrap(), wide_bytes);
+}
+
+#[test]
+fn narrow_write_refuses_to_truncate_devel_code() {
+    let Some(path) = fixture("Cu111_CO.castep_bin") else {
+        eprintln!("SKIP: fixture missing");
+        return;
+    };
+    let wide_layout = castep_check_io::ParamsLayout { devel_code_len: 256 };
+    let doc = castep_check_io::document::CheckDocument::from_castep_bin_file(&path).unwrap();
+    let wide_bytes = doc
+        .with_layout(wide_layout)
+        .to_castep_bin_bytes()
+        .unwrap();
+    let back = castep_check_io::document::CheckDocument::from_bytes_with(
+        &wide_bytes,
+        &wide_layout,
+    )
+    .unwrap();
+    let mut doc = back.with_layout(castep_check_io::ParamsLayout::default());
+    let i = castep_check_io::params::RawParams::index_of("devel_code").unwrap();
+    let long = format!("PROF:{}", "X".repeat(200));
+    let mut payload = long.into_bytes();
+    payload.resize(256, b' ');
+    doc.params.payloads[i] = Some(payload);
+    let err = doc.to_castep_bin_bytes().unwrap_err();
+    assert!(matches!(err, castep_check_io::CheckError::LayoutOverflow { .. }));
+}
+
+#[test]
+fn layout_config_parses_toml() {
+    let cfg = castep_check_io::LayoutConfig::parse_toml("[params]\ndevel_code_len = 256\n").unwrap();
+    assert_eq!(cfg.params.devel_code_len, 256);
+    let empty = castep_check_io::LayoutConfig::parse_toml("").unwrap();
+    assert_eq!(empty.params.devel_code_len, 80);
+    let bad = castep_check_io::LayoutConfig::parse_toml(
+        "[params]\ndevel_code_len = \"wide\"\n",
+    );
+    assert!(matches!(bad, Err(castep_check_io::CheckError::Config(_))));
+}
+
+#[test]
+fn layout_config_file_errors_name_the_path() {
+    let err = castep_check_io::LayoutConfig::from_file("/no/such/layout.toml").unwrap_err();
+    assert!(matches!(err, castep_check_io::CheckError::ConfigFile { .. }));
 }
 
 #[test]

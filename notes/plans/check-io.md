@@ -102,6 +102,13 @@ byte-exact.
    build has a local `devel_code` 256-byte patch, so it cannot read
    standard-layout model files. The 0614 seed `.check` is standard
    layout, 80-byte `devel_code`.
+11. [done] Layout axis for local build variants. `ParamsLayout`
+   (default 80-byte `devel_code`), read and write sides, hard
+   `LayoutOverflow` error on truncation, TOML `LayoutConfig`, and the
+   `castep-check-io` command with `--devel-code-len` and
+   `--read-devel-code-len` flags. Decided 2026-10-19: the `toml`
+   dependency lives in the core crate, the flags live on the crate
+   command, no auto-detection, overflow is a hard error.
 10. [done] Docs: ADR-0005 carries the fixed layout facts. The crate
     README, CHANGELOG entry, and CONTEXT note are written.
 
