@@ -30,3 +30,5 @@ castep_cell_fmt/Cargo.lock
 sessions/
 slurm_output_*.txt
 result
+tools/monitor/oracle.log
+tools/monitor/oracle.pid
