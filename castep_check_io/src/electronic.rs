@@ -131,8 +131,9 @@ fn header_value_size(header: &str, counts: &Counts) -> Option<Vec<usize>> {
     match header {
         "E_FERMI" => Some(vec![8]),
         "FORCES" => Some(vec![3 * counts.mi as usize * counts.ns as usize * 8]),
-        "STRESS" => Some(vec![48, 48]),
         "MD" => Some(vec![4, 8]),
+        // STRESS is consumed raw: some 6.11 builds write the strain
+        // tensor as a 72-byte record (9 f64) instead of 48.
         _ => None,
     }
 }
@@ -366,7 +367,7 @@ mod tests {
         };
         assert_eq!(header_value_size("E_FERMI", &c).unwrap(), vec![8usize]);
         assert_eq!(header_value_size("FORCES", &c).unwrap(), vec![720usize]);
-        assert_eq!(header_value_size("STRESS", &c).unwrap(), vec![48usize, 48]);
+        assert_eq!(header_value_size("STRESS", &c), None); // raw
         assert_eq!(header_value_size("MD", &c).unwrap(), vec![4usize, 8]);
         assert!(header_value_size("MD_NOSE", &c).is_none());
     }
