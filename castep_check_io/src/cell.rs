@@ -292,6 +292,38 @@ impl RawCell {
         parse_f64s(self.get(tag).ok_or_else(|| CheckError::Section(tag.into()))?)
     }
 
+
+    /// Decodes a 3x3 f64 lattice payload into vectors-as-rows.
+    ///
+    /// The payload is component-major: `raw[3c + v]` holds component `c`
+    /// (0=x, 1=y, 2=z) of lattice vector `v`. Row `v` of the decoded
+    /// matrix is therefore `(raw[v], raw[v+3], raw[v+6])`, the transpose
+    /// of a naive consecutive-triple read. Both reads agree for
+    /// orthogonal and 60-degree rhombic in-plane lattices; for a general
+    /// hexagonal lattice only this decode is correct. A transposed read
+    /// corrupts every in-plane G-vector magnitude (V_loc interpolation
+    /// and the Z/G^2 Coulomb tail), which is a silent physics bug.
+    pub fn lattice_3x3(&self, tag: &str) -> CResult<[[f64; 3]; 3]> {
+        let v = self.f64s(tag)?;
+        if v.len() != 9 {
+            return Err(CheckError::BadPayloadLength(v.len() * 8));
+        }
+        Ok([
+            [v[0], v[3], v[6]],
+            [v[1], v[4], v[7]],
+            [v[2], v[5], v[8]],
+        ])
+    }
+
+    /// `CELL%REAL_LATTICE` decoded as vectors-as-rows.
+    pub fn real_lattice(&self) -> CResult<[[f64; 3]; 3]> {
+        self.lattice_3x3("CELL%REAL_LATTICE")
+    }
+
+    /// `CELL%RECIP_LATTICE` decoded as vectors-as-rows.
+    pub fn recip_lattice(&self) -> CResult<[[f64; 3]; 3]> {
+        self.lattice_3x3("CELL%RECIP_LATTICE")
+    }
     /// Reads a value as 4-byte logicals.
     pub fn logicals(&self, tag: &str) -> CResult<Vec<bool>> {
         parse_logical4s(self.get(tag).ok_or_else(|| CheckError::Section(tag.into()))?)
@@ -512,6 +544,83 @@ pub fn write_cell_section<W: std::io::Write>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn f64_be(values: &[f64]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(values.len() * 8);
+        for v in values {
+            out.extend_from_slice(&v.to_be_bytes());
+        }
+        out
+    }
+
+    // Ground truth from mos2_1t_rhom_b5: the .geom final frame gives
+    // a1=(6.0225, 0, 0), a2=(-3.0113, 5.2157, 0) Bohr (non-orthogonal,
+    // gamma ~ 116 degrees), so the decode order is observable.
+    const RHOM_REAL_RAW: [f64; 9] = [
+        6.022526552, -3.011263276, 0.0, -0.0, 5.215660989, -0.0, 0.0, -0.0, 43.644714182,
+    ];
+    const RHOM_RECIP_RAW: [f64; 9] = [
+        1.043280632, 0.0, -0.0, 0.602338354, 1.204676707, 0.0, -0.0, 0.0, 0.143962114,
+    ];
+
+    #[test]
+    fn lattice_3x3_decodes_non_orthogonal_rhom() {
+        let mut cell = RawCell::new();
+        cell.set_payload("CELL%REAL_LATTICE".into(), f64_be(&RHOM_REAL_RAW));
+        cell.set_payload("CELL%RECIP_LATTICE".into(), f64_be(&RHOM_RECIP_RAW));
+        let a = cell.real_lattice().unwrap();
+        let b = cell.recip_lattice().unwrap();
+        assert_eq!(a[0], [6.022526552, 0.0, 0.0]);
+        assert_eq!(a[1], [-3.011263276, 5.215660989, 0.0]);
+        assert_eq!(a[2], [0.0, 0.0, 43.644714182]);
+        // The stored reciprocal must satisfy B @ A^T = 2 pi * I.
+        let two_pi = 2.0 * std::f64::consts::PI;
+        for i in 0..3 {
+            for j in 0..3 {
+                let s: f64 = (0..3).map(|k| b[i][k] * a[j][k]).sum();
+                let want = if i == j { two_pi } else { 0.0 };
+                assert!(
+                    (s - want).abs() < 1e-6,
+                    "B[{i}][{j}]@A^T = {s}, want {want}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn lattice_3x3_naive_read_disagrees_with_geom() {
+        // The old consecutive-triple read is the transpose. It is a
+        // consistent reciprocal pair, so B @ A^T = 2 pi I cannot catch
+        // it. The discriminator is the .geom ground truth: the physical
+        // in-plane vectors are a1=(6.0225, 0, 0), a2=(-3.0113, 5.2157, 0).
+        let geom_a: [[f64; 3]; 3] = [
+            [6.022526552, 0.0, 0.0],
+            [-3.011263276, 5.215660989, 0.0],
+            [0.0, 0.0, 43.644714182],
+        ];
+        let naive: [[f64; 3]; 3] = [
+            [RHOM_REAL_RAW[0], RHOM_REAL_RAW[1], RHOM_REAL_RAW[2]],
+            [RHOM_REAL_RAW[3], RHOM_REAL_RAW[4], RHOM_REAL_RAW[5]],
+            [RHOM_REAL_RAW[6], RHOM_REAL_RAW[7], RHOM_REAL_RAW[8]],
+        ];
+        let mut cell = RawCell::new();
+        cell.set_payload("CELL%REAL_LATTICE".into(), f64_be(&RHOM_REAL_RAW));
+        let decoded = cell.real_lattice().unwrap();
+        for i in 0..3 {
+            for j in 0..3 {
+                assert_eq!(decoded[i][j], geom_a[i][j], "decoded[{i}][{j}]");
+            }
+        }
+        assert_ne!(naive[1][0], geom_a[1][0], "naive read must not match .geom a2x");
+    }
+
+    #[test]
+    fn lattice_3x3_rejects_wrong_length() {
+        let mut cell = RawCell::new();
+        cell.set_payload("CELL%REAL_LATTICE".into(), f64_be(&[0.0; 8]));
+        assert!(cell.real_lattice().is_err());
+    }
+
 
     #[test]
     fn tables_have_unique_tags() {
