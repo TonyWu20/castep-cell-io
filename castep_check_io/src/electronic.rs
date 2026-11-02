@@ -381,4 +381,157 @@ mod tests {
         assert_eq!(sec.header, "E_FERMI");
         assert_eq!(sec.values.len(), 1);
     }
+
+
+    fn i32_be(values: &[i32]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(values.len() * 4);
+        for v in values {
+            out.extend_from_slice(&v.to_be_bytes());
+        }
+        out
+    }
+
+    fn f64_be(values: &[f64]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(values.len() * 8);
+        for v in values {
+            out.extend_from_slice(&v.to_be_bytes());
+        }
+        out
+    }
+
+    /// One density column record: (nx, ny) header plus the charge values.
+    fn column_record(
+        nx: i32,
+        ny: i32,
+        up: &[f64],
+        down: Option<&[f64]>,
+    ) -> Vec<u8> {
+        let mut rec = i32_be(&[nx, ny]);
+        rec.extend_from_slice(&f64_be(up));
+        if let Some(d) = down {
+            rec.extend_from_slice(&f64_be(d));
+        }
+        rec
+    }
+
+    fn raw_electronic(nspins: i32, fine_grid: [i32; 3], columns: Vec<Vec<u8>>) -> RawElectronic {
+        RawElectronic {
+            found_gs_wvfn: false,
+            found_gs_den: true,
+            total_energy: 0.0,
+            fermi: 0.0,
+            nbands_max: 0,
+            nspins,
+            wave: None,
+            eigen: vec![],
+            fine_grid,
+            density_columns: columns,
+            optional: vec![],
+        }
+    }
+
+    #[test]
+    fn charge_decodes_fine_grid_c_order() {
+        // grid (2, 1, 2), one spin: 1-based headers, each record holds
+        // the z-stack of one (x, y) column. Output is C order for
+        // shape (2, 1, 2): index (x * 1 + y) * 2 + z.
+        let cols = vec![
+            column_record(1, 1, &[1.0, 9.0, 3.0, 9.1], None),
+            column_record(2, 1, &[4.0, 9.2, 5.0, 9.3], None),
+        ];
+        let out = raw_electronic(1, [2, 1, 2], cols).charge().unwrap();
+        assert_eq!(out, vec![1.0, 3.0, 4.0, 5.0]);
+    }
+
+    #[test]
+    fn charge_sums_spin_columns() {
+        let cols = vec![column_record(
+            1,
+            1,
+            &[1.0, 0.0, 3.0, 0.0],
+            Some(&[10.0, 0.0, 30.0, 0.0]),
+        )];
+        let out = raw_electronic(2, [1, 1, 2], cols).charge().unwrap();
+        assert_eq!(out, vec![11.0, 33.0]);
+    }
+
+    #[test]
+    fn charge_rejects_bad_column_count() {
+        let cols = vec![column_record(1, 1, &[1.0, 0.0], None)];
+        let e = raw_electronic(1, [2, 1, 1], cols).charge();
+        assert!(e.is_err());
+    }
+
+    #[test]
+    fn charge_rejects_out_of_range_index() {
+        let cols = vec![column_record(3, 1, &[1.0, 0.0], None)];
+        let e = raw_electronic(1, [2, 1, 1], cols).charge();
+        assert!(e.is_err());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Fine-grid charge decoding
+// ---------------------------------------------------------------------------
+
+/// Decodes one big-endian f64 from `bytes` at `offset`.
+fn be_f64_at(bytes: &[u8], offset: usize) -> f64 {
+    f64::from_be_bytes(bytes[offset..offset + 8].try_into().unwrap())
+}
+
+impl RawElectronic {
+    /// Total charge on the fine grid, C order for shape
+    /// `(ngx, ngy, ngz)`: `x` slowest, `z` fastest,
+    /// `ngx * ngy * ngz` values.
+    ///
+    /// Each `density_columns` record carries a big-endian `(nx, ny)`
+    /// header (1-based, so `1 <= nx <= ngx`) and `ngz` complex charge
+    /// values (real, imag pairs, big-endian). For `nspins == 2` a
+    /// second `ngz` column of down-spin charge follows; the two are
+    /// summed into the total charge.
+    pub fn charge(&self) -> CResult<Vec<f64>> {
+        let ngx = self.fine_grid[0].max(0) as usize;
+        let ngy = self.fine_grid[1].max(0) as usize;
+        let ngz = self.fine_grid[2].max(0) as usize;
+        if self.density_columns.len() != ngx * ngy {
+            return Err(CheckError::Section(format!(
+                "expected {} density column records, found {}",
+                ngx * ngy,
+                self.density_columns.len()
+            )));
+        }
+        let per = 8 + 16 * ngz;
+        let mut out = vec![0.0f64; ngx * ngy * ngz];
+        for rec in &self.density_columns {
+            if rec.len() < per + if self.nspins == 2 { 16 * ngz } else { 0 } {
+                return Err(CheckError::Section("short density column record".into()));
+            }
+            // 1-based headers: nx in 1..=ngx, ny in 1..=ngy.
+            let nx = parse_i32s(&rec[0..4])?[0];
+            let ny = parse_i32s(&rec[4..8])?[0];
+            if nx < 1 || nx as usize > ngx || ny < 1 || ny as usize > ngy {
+                return Err(CheckError::Section(format!(
+                    "density column index out of range: nx={nx}, ny={ny} (grid {ngx}x{ngy})"
+                )));
+            }
+            // 1-based headers: nx in 1..=ngx, ny in 1..=ngy.
+            let nx = parse_i32s(&rec[0..4])?[0];
+            let ny = parse_i32s(&rec[4..8])?[0];
+            if nx < 1 || nx as usize > ngx || ny < 1 || ny as usize > ngy {
+                return Err(CheckError::Section(format!(
+                    "density column index out of range: nx={nx}, ny={ny} (grid {ngx}x{ngy})"
+                )));
+            }
+            let (cx, cy) = (nx as usize - 1, ny as usize - 1);
+            for z in 0..ngz {
+                let mut v = be_f64_at(rec, 8 + 16 * z);
+                if self.nspins == 2 {
+                    v += be_f64_at(rec, 8 + 16 * ngz + 16 * z);
+                }
+                // C order for shape (ngx, ngy, ngz): x slowest, z fastest.
+                out[(cx * ngy + cy) * ngz + z] = v;
+            }
+        }
+        Ok(out)
+    }
 }

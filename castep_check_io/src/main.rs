@@ -6,7 +6,9 @@
 
 use std::path::PathBuf;
 
-use castep_check_io::{CheckDocument, CheckError, CResult, LayoutConfig, ParamsLayout};
+use castep_check_io::{
+    write_density_npy, CheckDocument, CheckError, CResult, LayoutConfig, ParamsLayout,
+};
 
 /// Parsed command line.
 #[derive(Debug)]
@@ -17,6 +19,10 @@ struct Cli {
     output: Option<PathBuf>,
     /// The layout for the read and the write.
     layout: ParamsLayout,
+    /// Print the cell section as a one-line JSON summary on stdout.
+    json_summary: bool,
+    /// Write the fine-grid total charge to a `.npy` file.
+    extract_density: Option<PathBuf>,
 }
 
 /// Parses the command line.
@@ -31,6 +37,8 @@ fn parse_args(args: &[String]) -> CResult<Cli> {
     let mut input: Option<PathBuf> = None;
     let mut output: Option<PathBuf> = None;
     let mut layout = ParamsLayout::default();
+    let mut json_summary = false;
+    let mut extract_density: Option<PathBuf> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -51,6 +59,16 @@ fn parse_args(args: &[String]) -> CResult<Cli> {
                     .ok_or_else(|| CheckError::Section("--layout-config needs a path".into()))?;
                 let config = LayoutConfig::from_file(path)?;
                 layout = config.layout();
+            }
+            "--json-summary" => {
+                json_summary = true;
+            }
+            "--extract-density" => {
+                i += 1;
+                let value = args
+                    .get(i)
+                    .ok_or_else(|| CheckError::Section("--extract-density needs a value".into()))?;
+                extract_density = Some(PathBuf::from(value));
             }
             other => {
                 if other.starts_with('-') {
@@ -73,7 +91,13 @@ fn parse_args(args: &[String]) -> CResult<Cli> {
     }
     let input = input
         .ok_or_else(|| CheckError::Section("missing INPUT argument".into()))?;
-    Ok(Cli { input, output, layout })
+    Ok(Cli {
+        input,
+        output,
+        layout,
+        json_summary,
+        extract_density,
+    })
 }
 
 /// One summary line for an inspected document.
@@ -90,6 +114,88 @@ fn summary(doc: &CheckDocument) -> String {
         doc.layout.devel_code_len
     )
 }
+
+
+
+/// One-line JSON summary of the cell section and the grid metadata.
+///
+/// Floats use 17 significant digits, so a Python `float(...)` roundtrip
+/// is exact. Positions and lattice vectors follow the checkpoint order.
+fn json_summary(doc: &CheckDocument) -> CResult<String> {
+    let cell = &doc.cell;
+    let elec = &doc.electronic;
+    let fmt = |v: f64| format!("{v:.17e}");
+    let lattice_a0 = cell.real_lattice()?;
+    let lattice_ang = cell.real_lattice_angstrom()?;
+    let mut out = String::from("{");
+    out.push_str(&format!(
+        "\"num_ions\": {}, ",
+        cell.i32s("CELL%NUM_IONS")?[0]
+    ));
+    out.push_str(&format!(
+        "\"species_symbols\": [{}], ",
+        cell
+            .species_symbols()?
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "\"num_ions_in_species\": [{}], ",
+        cell
+            .num_ions_in_species()?
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "\"ionic_species\": [{}], ",
+        cell
+            .ionic_species()?
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "\"positions_frac\": [{}], ",
+        cell
+            .ionic_positions_frac()?
+            .iter()
+            .map(|p| format!("[{},{},{}]", fmt(p[0]), fmt(p[1]), fmt(p[2])))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "\"lattice_cart\": [{}], ",
+        lattice_ang
+            .iter()
+            .map(|r| format!("[{},{},{}]", fmt(r[0]), fmt(r[1]), fmt(r[2])))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "\"lattice_cart_a0\": [{}], ",
+        lattice_a0
+            .iter()
+            .map(|r| format!("[{},{},{}]", fmt(r[0]), fmt(r[1]), fmt(r[2])))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!("\"volume_ang3\": {}, ", fmt(cell.volume_angstrom3()?)));
+    out.push_str(&format!("\"volume_a0\": {}, ", fmt(cell.volume_a0()?)));
+    out.push_str(&format!(
+        "\"fine_grid\": [{},{},{}], ",
+        elec.fine_grid[0], elec.fine_grid[1], elec.fine_grid[2]
+    ));
+    out.push_str(&format!("\"nspins\": {}", elec.nspins));
+    out.push('}');
+    out.push('\n');
+    Ok(out)
+}
+
 
 /// Runs one command.
 fn run(cli: &Cli) -> CResult<()> {
@@ -128,7 +234,22 @@ fn run(cli: &Cli) -> CResult<()> {
     } else {
         doc
     };
-    println!("{}", summary(&doc));
+    if cli.json_summary {
+        println!("{}", json_summary(&doc)?);
+    }
+    if let Some(path) = &cli.extract_density {
+        let charge = doc.electronic.charge()?;
+        let shape = [
+            doc.electronic.fine_grid[0].max(0) as usize,
+            doc.electronic.fine_grid[1].max(0) as usize,
+            doc.electronic.fine_grid[2].max(0) as usize,
+        ];
+        write_density_npy(path, shape, &charge)?;
+        eprintln!("wrote {} (fine grid {:?})", path.display(), shape);
+    }
+    if !cli.json_summary {
+        println!("{}", summary(&doc));
+    }
     Ok(())
 }
 
@@ -213,7 +334,13 @@ mod tests {
     }
 
     fn cli(input: PathBuf, output: Option<PathBuf>, layout: castep_check_io::ParamsLayout) -> Cli {
-        Cli { input, output, layout }
+        Cli {
+            input,
+            output,
+            layout,
+            json_summary: false,
+            extract_density: None,
+        }
     }
 
     #[test]
