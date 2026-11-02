@@ -1,8 +1,14 @@
-//! A minimal NumPy `.npy` (v1.0) writer for the fine-grid charge array.
+//! The shared NumPy `.npy` (v1.0) writer for real-space charge grids.
 //!
-//! Writes float64 data in C order. The format contract is fixed by the
-//! NumPy spec; the writer mirrors the one in `chemrust-hamiltonian`
-//! (that crate's `npy` module), so the two can stay in lockstep.
+//! Writes float64 data in C order. This is the single source of truth
+//! for the file format in this workspace: `chemrust-hamiltonian`'s
+//! `npy` module delegates here instead of duplicating the layout.
+//!
+//! Format notes:
+//! - NPY v1.0 stores the header length as a 2-byte little-endian u16.
+//!   v2.0 uses a 4-byte u32. Writing a 4-byte length with v1.0 version
+//!   bytes makes NumPy misparse the header and reject the file.
+//! - The 10-byte prefix plus the header block must be 64-byte aligned.
 
 use std::fs::File;
 use std::io::Write;
