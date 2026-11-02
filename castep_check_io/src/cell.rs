@@ -387,6 +387,103 @@ impl RawCell {
         }
     }
 
+    /// Bohr radius in Angstrom. Used by the unit-convenience helpers.
+    pub const BOHR_TO_ANG: f64 = 0.529177210903;
+
+    /// Species symbols, one per species in CASTEP internal order.
+    ///
+    /// `CELL%SPECIES_SYMBOL` is `PerNsChar(8)`: an 8-byte Fortran
+    /// character per species. Trailing NULs and spaces are trimmed.
+    pub fn species_symbols(&self) -> CResult<Vec<String>> {
+        let ns = self
+            .i32s("CELL%NUM_SPECIES")?
+            .first()
+            .copied()
+            .unwrap_or(0) as usize;
+        let raw = self
+            .get("CELL%SPECIES_SYMBOL")
+            .ok_or_else(|| CheckError::Section("CELL%SPECIES_SYMBOL".into()))?;
+        if raw.len() < 8 * ns {
+            return Err(CheckError::BadPayloadLength(raw.len()));
+        }
+        Ok(raw
+            .chunks_exact(8)
+            .take(ns)
+            .map(|c| char_str(c).to_string())
+            .collect())
+    }
+
+    /// Ion counts per species.
+    pub fn num_ions_in_species(&self) -> CResult<Vec<i32>> {
+        self.i32s("CELL%NUM_IONS_IN_SPECIES")
+    }
+
+    /// The ion-count grid stride (max over species).
+    pub fn max_ions_in_species(&self) -> CResult<i32> {
+        self.i32s("CELL%MAX_IONS_IN_SPECIES")?
+            .first()
+            .copied()
+            .ok_or_else(|| CheckError::Section("CELL%MAX_IONS_IN_SPECIES".into()))
+    }
+
+    /// One species symbol per active ion, in the order of
+    /// `ionic_positions_frac`. Ions are grouped by species, matching the
+    /// checkpoint ion order.
+    pub fn ionic_species(&self) -> CResult<Vec<String>> {
+        let symbols = self.species_symbols()?;
+        let counts = self.num_ions_in_species()?;
+        let mut out = Vec::new();
+        for (s, &n) in counts.iter().enumerate() {
+            for _ in 0..n.max(0) {
+                out.push(symbols[s].clone());
+            }
+        }
+        Ok(out)
+    }
+
+    /// Fractional ionic positions, one row per active ion.
+    ///
+    /// `CELL%IONIC_POSITIONS` is stored per species: species `s`, ion
+    /// `i`, coordinate `j` sits at flat index `s * mi * 3 + i * 3 + j`
+    /// with `mi = max_ions_in_species`. Rows follow the species-grouped
+    /// ion order.
+    pub fn ionic_positions_frac(&self) -> CResult<Vec<[f64; 3]>> {
+        let all = self.f64s("CELL%IONIC_POSITIONS")?;
+        let mi = self.max_ions_in_species()? as usize;
+        let counts = self.num_ions_in_species()?;
+        let need = counts.iter().map(|&n| n.max(0) as usize).sum::<usize>() * 3;
+        if all.len() < need {
+            return Err(CheckError::BadPayloadLength(all.len() * 8));
+        }
+        let mut out = Vec::with_capacity(need / 3);
+        for (s, &n) in counts.iter().enumerate() {
+            let mut start = s * mi * 3;
+            for _ in 0..n.max(0) {
+                out.push([all[start], all[start + 1], all[start + 2]]);
+                start += 3;
+            }
+        }
+        Ok(out)
+    }
+
+    /// Cell volume in a0^3.
+    pub fn volume_a0(&self) -> CResult<f64> {
+        self.f64s("CELL%VOLUME")?
+            .first()
+            .copied()
+            .ok_or_else(|| CheckError::Section("CELL%VOLUME".into()))
+    }
+
+    /// Cell volume in Angstrom^3.
+    pub fn volume_angstrom3(&self) -> CResult<f64> {
+        Ok(self.volume_a0()? * Self::BOHR_TO_ANG.powi(3))
+    }
+
+    /// `CELL%REAL_LATTICE` in Angstrom, vectors as rows.
+    pub fn real_lattice_angstrom(&self) -> CResult<[[f64; 3]; 3]> {
+        Ok(self.real_lattice()?.map(|row| row.map(|v| v * Self::BOHR_TO_ANG)))
+    }
+
 }
 
 impl Counts {
@@ -707,5 +804,60 @@ mod tests {
         assert_eq!(c.nkpts, 5);
         assert_eq!(Counts::update(&mut c, "volume", &[0u8; 8]), None);
         assert!(c.nkpts == 5);
+    }
+
+
+    fn i32_be(values: &[i32]) -> Vec<u8> {
+        let mut out = Vec::with_capacity(values.len() * 4);
+        for v in values {
+            out.extend_from_slice(&v.to_be_bytes());
+        }
+        out
+    }
+
+    #[test]
+    fn cell_helpers_decode_species_positions_volume() {
+        let mut cell = RawCell::new();
+        cell.set_payload("CELL%NUM_SPECIES".into(), i32_be(&[2]));
+        cell.set_payload("CELL%NUM_IONS".into(), i32_be(&[6]));
+        cell.set_payload("CELL%MAX_IONS_IN_SPECIES".into(), i32_be(&[4]));
+        cell.set_payload(
+            "CELL%NUM_IONS_IN_SPECIES".into(),
+            i32_be(&[2, 4]),
+        );
+        // Two 8-byte Fortran characters: NUL-padded and space-padded.
+        let mut symbols = Vec::new();
+        symbols.extend_from_slice(b"Mo\0\0\0\0\0\0");
+        symbols.extend_from_slice(b"S       ");
+        cell.set_payload("CELL%SPECIES_SYMBOL".into(), symbols);
+        // flat order: species s, ion i, coord j; padding slots are zero.
+        let positions = [
+            0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8,
+        ];
+        cell.set_payload("CELL%IONIC_POSITIONS".into(), f64_be(&positions));
+        cell.set_payload("CELL%VOLUME".into(), f64_be(&[123.0]));
+        let raw_lattice = [
+            1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0,
+        ];
+        cell.set_payload("CELL%REAL_LATTICE".into(), f64_be(&raw_lattice));
+
+        assert_eq!(cell.species_symbols().unwrap(), vec!["Mo", "S"]);
+        assert_eq!(
+            cell.ionic_species().unwrap(),
+            vec!["Mo", "Mo", "S", "S", "S", "S"]
+        );
+        let pos = cell.ionic_positions_frac().unwrap();
+        assert_eq!(pos.len(), 6);
+        assert_eq!(pos[0], [0.1, 0.2, 0.3]);
+        assert_eq!(pos[2], [0.7, 0.8, 0.9]);
+        assert_eq!(pos[5], [1.6, 1.7, 1.8]);
+        assert_eq!(cell.volume_a0().unwrap(), 123.0);
+        let a0 = RawCell::BOHR_TO_ANG;
+        assert!((cell.volume_angstrom3().unwrap() - 123.0 * a0.powi(3)).abs() < 1e-9);
+        let ang = cell.real_lattice_angstrom().unwrap();
+        assert_eq!(ang[0][0], 1.0 * a0);
+        assert_eq!(ang[1][1], 2.0 * a0);
+        assert_eq!(ang[2][2], 3.0 * a0);
     }
 }
