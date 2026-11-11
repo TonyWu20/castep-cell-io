@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 authors = ["TonyWu20"]
 description = "Typed reader and writer for CASTEP binary .check and .castep_bin model files"
+readme = "README.md"
 homepage = "https://github.com/TonyWu20/castep-cell-io"
 repository = "https://github.com/TonyWu20/castep-cell-io"
 license = "MIT"

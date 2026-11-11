@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-11 (castep-check-io)
+
+First release of the new member crate `castep-check-io`.
+
 ### Added
 - New member crate `castep-check-io`: typed reader and writer for the CASTEP binary model files `.check` and `.castep_bin`. The public type is `CheckDocument`; `from_bytes`, `from_check_file`, `from_castep_bin_file`, `to_check_bytes`, `to_castep_bin_bytes`, `to_check_file`, and `to_castep_bin_file` cover the entry points. A roundtrip is byte-exact on the fixture files, including a 161 MB wavefunction file.
 - The parameters section is a 340-field table with the 6.11 version gate levels; the cell sections carry derived record sizes and count-gated pairs; the optional analysis sections are typed for `E_FERMI`, `FORCES`, `STRESS`, and `MD` and pass through raw otherwise.
 - Release features `castep-6-11` (default) and `castep-23` (placeholder) propagate to `castep-cell-fmt`, mirroring the text crates.
 - `ParamsLayout` configures local build variants: the reader and the writer take a layout, the document stores the read layout, and `with_layout` retargets the writer. The writer pads `devel_code` to the target width and errors (`LayoutOverflow`) instead of truncating a wider value.
 - A TOML layout config (`LayoutConfig`) names the build widths for one command. A `castep-check-io` command inspects a model file or rewrites it under the configured width, with `--devel-code-len` and `--layout-config` flags. The width applies to the read and the write. Cross-width conversion is a library flow.
+- `RawCell::lattice_3x3` with `real_lattice` and `recip_lattice` accessors. The decode reads the 3x3 lattice payload as vectors-as-rows. The payload is component-major. A naive consecutive-triple read transposes the matrix for non-orthogonal lattices and corrupts the in-plane G magnitudes.
+- `RawCell` convenience helpers: `species_symbols`, `num_ions_in_species`, `max_ions_in_species`, `ionic_species`, `ionic_positions_frac`, `volume_a0`, `volume_angstrom3`, `real_lattice_angstrom`, and the `BOHR_TO_ANG` constant. Positions follow the per-species checkpoint ion order.
+- `RawElectronic::charge` decodes the fine-grid total charge from the raw density columns. The output is C order for shape `(ngx, ngy, ngz)`. For `nspins == 2` the up-spin and down-spin columns sum into the total.
+- `write_density_npy` in the new `npy` module: a NumPy v1.0 float64 writer for the fine-grid charge. It is the single source of truth for the `.npy` layout, and `chemrust-hamiltonian`'s `npy` module delegates here.
+- CLI flags on `castep-check-io`: `--json-summary` prints a one-line JSON summary of the cell section and grid metadata. `--extract-density PATH` writes the fine-grid total charge to a `.npy` file.
+- Examples: `inspect_model` and `dump_records` inspect a model file. `patch_hubbard_u` patches one Hubbard U entry. `check_oracle` verifies byte-exact writes for a CASTEP oracle run.
+
+### Changed
+- The optional `STRESS` section is consumed raw. Some 6.11 builds write a 72-byte strain record. The typed reader no longer assumes the 48-byte layout.
 
 ## [0.7.0] - 2026-09-30
 
