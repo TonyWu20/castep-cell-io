@@ -8,7 +8,7 @@
     };
     devshell.url = "github:numtide/devshell";
     rushi-config = {
-      url = "git+ssh://git@github.com/TonyWu20/rushi-config";
+      url = "github:TonyWu20/my-rushi-config";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.fenix.follows = "fenix";
     };
@@ -44,7 +44,6 @@
         let
           pkgs = pkgsFor system;
           rushi = rushi-config.packages.${system}.default;
-          rushi-tui = rushi-config.packages.${system}.rushi-tui;
         in
         {
           default = pkgs.devshell.mkShell {
@@ -70,7 +69,6 @@
                 ))
                 uv
                 rushi
-                rushi-tui
               ]
               ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
                 pkgs.libiconv
